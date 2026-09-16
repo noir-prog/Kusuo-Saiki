@@ -665,6 +665,8 @@ async def telegram_webhook(request: Request):
 
 @app.on_event("startup")
 async def startup():
+    await init_db()
+    
     webhook_url = "https://kusuo-saiki.onrender.com/webhook"
 
     await bot.set_webhook(
