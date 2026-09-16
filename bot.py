@@ -435,25 +435,75 @@ async def handle_business_message(message):
                     ),
                 )
 
-        # ================== REPLY TO VIDEO ==================
+                # ================== REPLY TO VIDEO ==================
 
         elif message.reply_to_message and message.reply_to_message.video:
             original = message.reply_to_message
 
-            await bot.send_video(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
-                video=original.video.file_id,
-                caption=(
-                    info_text
-                    + "\n🎥 Видео"
-                    + (
-                        f"\n📝 Подпись:\n{original.caption}"
-                        if original.caption
-                        else ""
-                    )
-                ),
-            )
+            try:
+                from io import BytesIO
+                from aiogram.types import BufferedInputFile
+
+                file_info = await bot.get_file(
+                    original.video.file_id
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO GET FILE | file_id=%s | file_path=%s",
+                    original.video.file_id,
+                    file_info.file_path,
+                )
+
+                video_buffer = BytesIO()
+
+                await bot.download_file(
+                    file_info.file_path,
+                    destination=video_buffer,
+                )
+
+                video_buffer.seek(0)
+
+                video_data = video_buffer.read()
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO DOWNLOADED | size=%s",
+                    len(video_data),
+                )
+
+                video_file = BufferedInputFile(
+                    video_data,
+                    filename="self_destruct_video.mp4",
+                )
+
+                await bot.send_video(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    video=video_file,
+                    caption=(
+                        info_text
+                        + "\n🎥 Видео"
+                        + (
+                            f"\n📝 Подпись:\n{original.caption}"
+                            if original.caption
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO SAVED | connection=%s | topic=%s | "
+                    "original_message=%s | reply_message=%s",
+                    message.business_connection_id,
+                    topic_id,
+                    original.message_id,
+                    message.message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "SELF-DESTRUCT VIDEO PROCESS ERROR: %s",
+                    e,
+                )
 
             if message.text:
                 await bot.send_message(
@@ -464,15 +514,6 @@ async def handle_business_message(message):
                         f"📝 {message.text}"
                     ),
                 )
-
-            logger.info(
-                "REPLY VIDEO SAVED | connection=%s | topic=%s | "
-                "original_message=%s | reply_message=%s",
-                message.business_connection_id,
-                topic_id,
-                original.message_id,
-                message.message_id,
-            )
 
         # ================== TEXT ==================
 
