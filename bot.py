@@ -38,11 +38,53 @@ dp = Dispatcher()
 app = FastAPI()
 
 
-# ================== TELEGRAM UPDATE ==================
+# ================== MESSAGE STORAGE ==================
 
-@dp.update()
-async def handle_update(update: Update):
-    logger.info("Telegram update received: %s", update.model_dump())
+message_history = {}
+
+
+# ================== BUSINESS MESSAGES ==================
+
+@dp.business_message()
+async def handle_business_message(message):
+    key = (message.chat.id, message.message_id)
+
+    message_history[key] = {
+        "text": message.text or message.caption or "",
+    }
+
+    logger.info(
+        "NEW MESSAGE | chat=%s | message=%s | text=%s",
+        message.chat.id,
+        message.message_id,
+        message.text or message.caption or "",
+    )
+
+
+# ================== EDITED BUSINESS MESSAGES ==================
+
+@dp.edited_business_message()
+async def handle_edited_business_message(message):
+    key = (message.chat.id, message.message_id)
+
+    old_data = message_history.get(key)
+    old_text = old_data["text"] if old_data else "[старый текст не сохранён]"
+
+    new_text = message.text or message.caption or ""
+
+    logger.info(
+        "MESSAGE EDITED | chat=%s | message=%s\n"
+        "BEFORE: %s\n"
+        "AFTER: %s",
+        message.chat.id,
+        message.message_id,
+        old_text,
+        new_text,
+    )
+
+    message_history[key] = {
+        "text": new_text,
+    }
 
 
 # ================== WEBHOOK ==================
