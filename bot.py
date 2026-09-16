@@ -515,6 +515,81 @@ async def handle_business_message(message):
                     ),
                 )
 
+
+        # ================== REPLY TO VOICE ==================
+
+        elif message.reply_to_message and message.reply_to_message.voice:
+            original = message.reply_to_message
+
+            try:
+                from io import BytesIO
+                from aiogram.types import BufferedInputFile
+
+                file_info = await bot.get_file(
+                    original.voice.file_id
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VOICE GET FILE | file_id=%s | file_path=%s",
+                    original.voice.file_id,
+                    file_info.file_path,
+                )
+
+                voice_buffer = BytesIO()
+
+                await bot.download_file(
+                    file_info.file_path,
+                    destination=voice_buffer,
+                )
+
+                voice_buffer.seek(0)
+
+                voice_data = voice_buffer.read()
+
+                logger.info(
+                    "SELF-DESTRUCT VOICE DOWNLOADED | size=%s",
+                    len(voice_data),
+                )
+
+                voice_file = BufferedInputFile(
+                    voice_data,
+                    filename="self_destruct_voice.ogg",
+                )
+
+                await bot.send_voice(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    voice=voice_file,
+                    caption=info_text + "\n🎤 Одноразовое голосовое сообщение",
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VOICE SAVED | connection=%s | topic=%s | "
+                    "original_message=%s | reply_message=%s",
+                    message.business_connection_id,
+                    topic_id,
+                    original.message_id,
+                    message.message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "SELF-DESTRUCT VOICE PROCESS ERROR: %s",
+                    e,
+                )
+
+            if message.text:
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
+                        f"📝 {message.text}"
+                    ),
+                )
+                
+                
+                
         # ================== TEXT ==================
 
         elif message.text:
