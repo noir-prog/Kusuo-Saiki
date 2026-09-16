@@ -2,6 +2,7 @@
 
 import os
 import logging
+import asyncpg
 
 from fastapi import FastAPI, Request
 from aiogram import Bot, Dispatcher
