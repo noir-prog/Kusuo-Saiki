@@ -42,6 +42,9 @@ app = FastAPI()
 
 message_history = {}
 
+# Связь Business-подключения с топиком в LOG-группе
+business_topics = {}
+
 
 # ================== LOG CHAT ID ==================
 
