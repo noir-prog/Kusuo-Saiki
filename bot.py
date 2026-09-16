@@ -355,6 +355,22 @@ async def handle_business_message(message):
             f"🆔 Message ID: {message.message_id}\n"
         )
 
+        # ================== PROFILE BUTTONS ==================
+
+        profile_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="👤 Отправитель",
+                        url=f"tg://user?id={message.from_user.id}",
+                    ),
+                    InlineKeyboardButton(
+                        text="📨 Получатель",
+                        url=f"tg://user?id={user.id}",
+                    ),
+                ]
+            ]
+        )
         # ================== REPLY TO PHOTO ==================
 
         if message.reply_to_message and message.reply_to_message.photo:
@@ -667,7 +683,7 @@ async def handle_business_message(message):
                 )
                 
                 
-        # ================== TEXT ==================
+                # ================== TEXT ==================
 
         elif message.text:
             await bot.send_message(
@@ -677,9 +693,10 @@ async def handle_business_message(message):
                     info_text
                     + f"\n📝 Текст:\n{message.text}"
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== PHOTO ==================
+                # ================== PHOTO ==================
 
         elif message.photo:
             await bot.send_photo(
@@ -695,9 +712,10 @@ async def handle_business_message(message):
                         else ""
                     )
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== VIDEO ==================
+                # ================== VIDEO ==================
 
         elif message.video:
             await bot.send_video(
@@ -713,9 +731,10 @@ async def handle_business_message(message):
                         else ""
                     )
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== AUDIO ==================
+                # ================== AUDIO ==================
 
         elif message.audio:
             await bot.send_audio(
@@ -731,9 +750,10 @@ async def handle_business_message(message):
                         else ""
                     )
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== VOICE ==================
+                # ================== VOICE ==================
 
         elif message.voice:
             await bot.send_voice(
@@ -741,9 +761,10 @@ async def handle_business_message(message):
                 message_thread_id=topic_id,
                 voice=message.voice.file_id,
                 caption=info_text + "\n🎤 Голосовое сообщение",
+                reply_markup=profile_keyboard,
             )
 
-        # ================== DOCUMENT ==================
+                # ================== DOCUMENT ==================
 
         elif message.document:
             await bot.send_document(
@@ -759,15 +780,17 @@ async def handle_business_message(message):
                         else ""
                     )
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== STICKER ==================
+                # ================== STICKER ==================
 
         elif message.sticker:
             await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n😀 Стикер",
+                reply_markup=profile_keyboard,
             )
 
             await bot.send_sticker(
@@ -776,7 +799,7 @@ async def handle_business_message(message):
                 sticker=message.sticker.file_id,
             )
 
-        # ================== ANIMATION / GIF ==================
+                # ================== ANIMATION / GIF ==================
 
         elif message.animation:
             await bot.send_animation(
@@ -792,15 +815,17 @@ async def handle_business_message(message):
                         else ""
                     )
                 ),
+                reply_markup=profile_keyboard,
             )
 
-        # ================== VIDEO NOTE / CIRCLE ==================
+                # ================== VIDEO NOTE / CIRCLE ==================
 
         elif message.video_note:
             await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n📹 Видеосообщение",
+                reply_markup=profile_keyboard,
             )
 
             await bot.send_video_note(
@@ -808,8 +833,8 @@ async def handle_business_message(message):
                 message_thread_id=topic_id,
                 video_note=message.video_note.file_id,
             )
-
-        # ================== LOCATION ==================
+            
+                # ================== LOCATION ==================
 
         elif message.location:
             await bot.send_location(
@@ -823,9 +848,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n📍 Геолокация",
+                reply_markup=profile_keyboard,
             )
 
-        # ================== CONTACT ==================
+                # ================== CONTACT ==================
 
         elif message.contact:
             await bot.send_contact(
@@ -841,9 +867,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n👤 Контакт",
+                reply_markup=profile_keyboard,
             )
 
-        # ================== UNKNOWN MESSAGE ==================
+                # ================== UNKNOWN MESSAGE ==================
 
         else:
             await bot.send_message(
@@ -853,6 +880,7 @@ async def handle_business_message(message):
                     info_text
                     + "\n❓ Неподдерживаемый тип сообщения"
                 ),
+                reply_markup=profile_keyboard,
             )
 
         logger.info(
