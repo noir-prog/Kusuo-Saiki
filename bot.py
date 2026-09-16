@@ -57,20 +57,49 @@ async def detect_log_chat(message):
     
 # ================== BUSINESS MESSAGES ==================
 
+LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
+
+
 @dp.business_message()
 async def handle_business_message(message):
     key = (message.chat.id, message.message_id)
 
+    text = message.text or message.caption or ""
+
     message_history[key] = {
-        "text": message.text or message.caption or "",
+        "text": text,
     }
 
     logger.info(
         "NEW MESSAGE | chat=%s | message=%s | text=%s",
         message.chat.id,
         message.message_id,
-        message.text or message.caption or "",
+        text,
     )
+
+    # ================== SAVE TO TELEGRAM LOG ==================
+
+    if LOG_CHAT_ID:
+        try:
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                text=(
+                    "📥 НОВОЕ СООБЩЕНИЕ\n\n"
+                    f"👤 Business connection: {message.business_connection_id}\n"
+                    f"💬 Chat ID: {message.chat.id}\n"
+                    f"🆔 Message ID: {message.message_id}\n\n"
+                    f"📝 Текст:\n{text or '[без текста]'}"
+                ),
+            )
+
+            logger.info(
+                "LOG SAVED | original_chat=%s | original_message=%s",
+                message.chat.id,
+                message.message_id,
+            )
+
+        except Exception as e:
+            logger.exception("LOG SAVE ERROR: %s", e)
 
 
 # ================== EDITED BUSINESS MESSAGES ==================
