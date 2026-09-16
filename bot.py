@@ -13,7 +13,7 @@ from aiogram.types import Update
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "lastmod-secret")
-
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # ================== LOGGING ==================
 
