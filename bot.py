@@ -268,6 +268,9 @@ async def handle_business_message(message):
             original = message.reply_to_message
 
             try:
+                from io import BytesIO
+                from aiogram.types import BufferedInputFile
+
                 file_info = await bot.get_file(
                     original.photo[-1].file_id
                 )
@@ -278,8 +281,6 @@ async def handle_business_message(message):
                     file_info.file_path,
                 )
 
-                from io import BytesIO
-
                 photo_buffer = BytesIO()
 
                 await bot.download_file(
@@ -289,15 +290,22 @@ async def handle_business_message(message):
 
                 photo_buffer.seek(0)
 
+                photo_data = photo_buffer.read()
+
                 logger.info(
                     "SELF-DESTRUCT PHOTO DOWNLOADED | size=%s",
-                    photo_buffer.getbuffer().nbytes,
+                    len(photo_data),
+                )
+
+                photo_file = BufferedInputFile(
+                    photo_data,
+                    filename="self_destruct_photo.jpg",
                 )
 
                 await bot.send_photo(
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
-                    photo=photo_buffer,
+                    photo=photo_file,
                     caption=(
                         info_text
                         + "\n🖼 Фото"
