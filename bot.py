@@ -125,6 +125,71 @@ async def handle_business_message(message):
         text,
     )
 
+    # ================== GET BUSINESS OWNER ==================
+
+    business_connection = await bot.get_business_connection(
+        business_connection_id=message.business_connection_id
+    )
+
+    user = business_connection.user
+
+    # ================== CREATE USER TOPIC ==================
+
+    topic_id = business_topics.get(message.business_connection_id)
+
+    if topic_id is None:
+        try:
+            topic = await bot.create_forum_topic(
+                chat_id=int(LOG_CHAT_ID),
+                name=f"👤 {user.first_name}",
+            )
+
+            topic_id = topic.message_thread_id
+
+            business_topics[message.business_connection_id] = topic_id
+
+            logger.info(
+                "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s | user=%s",
+                message.business_connection_id,
+                topic_id,
+                user.id,
+            )
+
+        except Exception as e:
+            logger.exception(
+                "BUSINESS TOPIC CREATE ERROR | connection=%s | error=%s",
+                message.business_connection_id,
+                e,
+            )
+            return
+
+    # ================== SAVE MESSAGE TO USER TOPIC ==================
+
+    try:
+        await bot.send_message(
+            chat_id=int(LOG_CHAT_ID),
+            message_thread_id=topic_id,
+            text=(
+                "📥 НОВОЕ СООБЩЕНИЕ\n\n"
+                f"👤 {user.first_name} {user.last_name or ''}\n"
+                f"🆔 User ID: {user.id}\n"
+                f"🔑 Business connection: {message.business_connection_id}\n"
+                f"💬 Chat ID: {message.chat.id}\n"
+                f"🆔 Message ID: {message.message_id}\n\n"
+                f"📝 Текст:\n{text or '[без текста]'}"
+            ),
+        )
+
+        logger.info(
+            "LOG SAVED | connection=%s | topic=%s | original_message=%s",
+            message.business_connection_id,
+            topic_id,
+            message.message_id,
+        )
+
+    except Exception as e:
+        logger.exception("LOG SAVE ERROR: %s", e)
+
     # ================== SAVE TO TELEGRAM LOG ==================
 
     if LOG_CHAT_ID:
