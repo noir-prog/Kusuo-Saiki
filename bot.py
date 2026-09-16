@@ -166,7 +166,7 @@ LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
 
 @dp.business_message()
 async def handle_business_message(message):
-        logger.info(
+    logger.info(
         "MESSAGE DEBUG | message_id=%s | photo=%s | video=%s | "
         "reply=%s | reply_id=%s | reply_photo=%s | reply_video=%s | "
         "external_reply=%s | quote=%s",
