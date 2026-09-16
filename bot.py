@@ -166,13 +166,25 @@ LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
 
 @dp.business_message()
 async def handle_business_message(message):
-    logger.info(
-        "MESSAGE MEDIA INFO | message_id=%s | photo=%s | video=%s | ttl_photo=%s | ttl_video=%s",
+        logger.info(
+        "MESSAGE DEBUG | message_id=%s | photo=%s | video=%s | "
+        "reply=%s | reply_id=%s | reply_photo=%s | reply_video=%s | "
+        "external_reply=%s | quote=%s",
         message.message_id,
         bool(message.photo),
         bool(message.video),
-        getattr(message.photo[-1], "ttl_seconds", None) if message.photo else None,
-        getattr(message.video, "ttl_seconds", None) if message.video else None,
+        bool(message.reply_to_message),
+        message.reply_to_message.message_id
+        if message.reply_to_message
+        else None,
+        bool(message.reply_to_message.photo)
+        if message.reply_to_message
+        else False,
+        bool(message.reply_to_message.video)
+        if message.reply_to_message
+        else False,
+        bool(message.external_reply),
+        bool(message.quote),
     )
 
     key = (message.chat.id, message.message_id)
