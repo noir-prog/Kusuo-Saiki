@@ -699,7 +699,7 @@ async def handle_business_message(message):
                 # ================== TEXT ==================
 
         elif message.text:
-            await bot.send_message(
+            sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=(
@@ -708,6 +708,18 @@ async def handle_business_message(message):
                 ),
                 reply_markup=profile_keyboard,
             )
+
+            message_history[
+                (
+                    message.business_connection_id,
+                    message.chat.id,
+                    message.message_id,
+                )
+            ] = {
+                "text": message.text,
+                "log_message_id": sent_message.message_id,
+                "topic_id": topic_id,
+            }
 
                 # ================== PHOTO ==================
 
