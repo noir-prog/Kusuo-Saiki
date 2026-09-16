@@ -75,7 +75,15 @@ async def telegram_webhook(request: Request):
 
 @app.on_event("startup")
 async def startup():
+    webhook_url = "https://kusuo-saiki.onrender.com/webhook"
+
+    await bot.set_webhook(
+        url=webhook_url,
+        secret_token=WEBHOOK_SECRET,
+    )
+
     logger.info("LastMod Business Bot started")
+    logger.info("Webhook set: %s", webhook_url)
 
 
 # ================== SHUTDOWN ==================
