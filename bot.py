@@ -921,10 +921,19 @@ async def handle_business_message(message):
 
 @dp.edited_business_message()
 async def handle_edited_business_message(message):
-    key = (message.chat.id, message.message_id)
+    key = (
+        message.business_connection_id,
+        message.chat.id,
+        message.message_id,
+    )
 
     old_data = message_history.get(key)
-    old_text = old_data["text"] if old_data else "[старый текст не сохранён]"
+
+    old_text = (
+        old_data["text"]
+        if old_data
+        else "[старый текст не сохранён]"
+    )
 
     new_text = message.text or message.caption or ""
 
@@ -974,6 +983,12 @@ async def handle_edited_business_message(message):
 
     # ================== SAVE EDIT TO LOG ==================
 
+    log_message_id = (
+        old_data["log_message_id"]
+        if old_data
+        else None
+    )
+
     await bot.send_message(
         chat_id=int(LOG_CHAT_ID),
         message_thread_id=topic_id,
@@ -985,11 +1000,22 @@ async def handle_edited_business_message(message):
             "➡️ СТАЛО:\n"
             f"{new_text}"
         ),
+        reply_parameters=(
+            {
+                "message_id": log_message_id
+            }
+            if log_message_id
+            else None
+        ),
     )
 
     message_history[key] = {
         "text": new_text,
+        "log_message_id": log_message_id,
+        "topic_id": topic_id,
     }
+    
+    
 # ================== WEBHOOK ==================
 
 @app.get("/")
