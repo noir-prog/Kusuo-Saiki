@@ -241,10 +241,34 @@ async def handle_business_message(message):
 
     user = business_connection.user
 
-    # ================== CREATE USER TOPIC ==================
+        # ================== GET OR CREATE USER TOPIC ==================
 
     topic_id = business_topics.get(message.business_connection_id)
 
+    # Сначала ищем пользователя в PostgreSQL
+    if topic_id is None:
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT topic_id
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                user.id,
+            )
+
+        if row:
+            topic_id = row["topic_id"]
+
+            business_topics[message.business_connection_id] = topic_id
+
+            logger.info(
+                "BUSINESS TOPIC LOADED FROM DATABASE | user=%s | topic_id=%s",
+                user.id,
+                topic_id,
+            )
+
+    # Если пользователя в базе ещё нет — создаём новый топик
     if topic_id is None:
         try:
             log_chat = await bot.get_chat(int(LOG_CHAT_ID))
@@ -265,8 +289,37 @@ async def handle_business_message(message):
 
             business_topics[message.business_connection_id] = topic_id
 
+            async with db_pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO business_accounts (
+                        telegram_user_id,
+                        business_connection_id,
+                        topic_id,
+                        first_name,
+                        last_name,
+                        username
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (telegram_user_id)
+                    DO UPDATE SET
+                        business_connection_id = EXCLUDED.business_connection_id,
+                        topic_id = EXCLUDED.topic_id,
+                        first_name = EXCLUDED.first_name,
+                        last_name = EXCLUDED.last_name,
+                        username = EXCLUDED.username,
+                        updated_at = NOW()
+                    """,
+                    user.id,
+                    message.business_connection_id,
+                    topic_id,
+                    user.first_name,
+                    user.last_name,
+                    user.username,
+                )
+
             logger.info(
-                "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s | user=%s",
+                "BUSINESS TOPIC CREATED AND SAVED | connection=%s | topic_id=%s | user=%s",
                 message.business_connection_id,
                 topic_id,
                 user.id,
