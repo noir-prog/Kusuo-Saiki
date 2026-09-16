@@ -6,7 +6,7 @@ import asyncpg
 
 from fastapi import FastAPI, Request
 from aiogram import Bot, Dispatcher
-from aiogram.types import Update
+from aiogram.types import Update, InlineKeyboardMarkup, InlineKeyboardButton
 
 
 # ================== SETTINGS ==================
