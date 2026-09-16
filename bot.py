@@ -267,6 +267,16 @@ async def handle_business_message(message):
         if message.reply_to_message and message.reply_to_message.photo:
             original = message.reply_to_message
 
+            file_info = await bot.get_file(
+                original.photo[-1].file_id
+            )
+
+            logger.info(
+                "SELF-DESTRUCT PHOTO GET FILE | file_id=%s | file_path=%s",
+                original.photo[-1].file_id,
+                file_info.file_path,
+            )
+
             await bot.send_photo(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
