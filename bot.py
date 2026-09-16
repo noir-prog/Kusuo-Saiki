@@ -589,6 +589,83 @@ async def handle_business_message(message):
                 )
                 
                 
+                        # ================== REPLY TO VIDEO NOTE ==================
+
+        elif message.reply_to_message and message.reply_to_message.video_note:
+            original = message.reply_to_message
+
+            try:
+                from io import BytesIO
+                from aiogram.types import BufferedInputFile
+
+                file_info = await bot.get_file(
+                    original.video_note.file_id
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO NOTE GET FILE | file_id=%s | file_path=%s",
+                    original.video_note.file_id,
+                    file_info.file_path,
+                )
+
+                video_note_buffer = BytesIO()
+
+                await bot.download_file(
+                    file_info.file_path,
+                    destination=video_note_buffer,
+                )
+
+                video_note_buffer.seek(0)
+
+                video_note_data = video_note_buffer.read()
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO NOTE DOWNLOADED | size=%s",
+                    len(video_note_data),
+                )
+
+                video_note_file = BufferedInputFile(
+                    video_note_data,
+                    filename="self_destruct_video_note.mp4",
+                )
+
+                await bot.send_video_note(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    video_note=video_note_file,
+                )
+
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=info_text + "\n⭕ Одноразовый кружок",
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT VIDEO NOTE SAVED | connection=%s | topic=%s | "
+                    "original_message=%s | reply_message=%s",
+                    message.business_connection_id,
+                    topic_id,
+                    original.message_id,
+                    message.message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "SELF-DESTRUCT VIDEO NOTE PROCESS ERROR: %s",
+                    e,
+                )
+
+            if message.text:
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
+                        f"📝 {message.text}"
+                    ),
+                )
+                
                 
         # ================== TEXT ==================
 
