@@ -159,36 +159,45 @@ async def handle_business_connection(connection):
         user.last_name or "",
     )
 
-    # Если для этого подключения топик уже существует —
-    # ничего не создаём.
-    if business_connection_id in business_topics:
+    # ================== CHECK DATABASE ==================
+
+    if db_pool is None:
+        logger.error("DATABASE POOL IS NOT INITIALIZED")
         return
 
-    if not LOG_CHAT_ID:
-        logger.error("LOG_CHAT_ID is not configured")
-        return
-
-    try:
-        topic = await bot.create_forum_topic(
-            chat_id=int(LOG_CHAT_ID),
-            name=f"👤 {user.first_name}",
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT topic_id
+            FROM business_accounts
+            WHERE telegram_user_id = $1
+            """,
+            user.id,
         )
 
-        business_topics[business_connection_id] = topic.message_thread_id
+    if row:
+        topic_id = row["topic_id"]
+
+        business_topics[business_connection_id] = topic_id
 
         logger.info(
-            "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s",
+            "BUSINESS CONNECTION TOPIC LOADED FROM DATABASE | "
+            "user=%s | connection=%s | topic_id=%s",
+            user.id,
             business_connection_id,
-            topic.message_thread_id,
+            topic_id,
         )
 
-    except Exception as e:
-        logger.exception(
-            "BUSINESS TOPIC CREATE ERROR | connection=%s | error=%s",
-            business_connection_id,
-            e,
-        )
-        
+        return
+
+    # Если пользователя ещё нет в базе —
+    # новый топик создаст handle_business_message().
+    logger.info(
+        "BUSINESS CONNECTION NOT IN DATABASE | "
+        "user=%s | connection=%s",
+        user.id,
+        business_connection_id,
+    )
         
 # ================== BUSINESS MESSAGES ==================
 
