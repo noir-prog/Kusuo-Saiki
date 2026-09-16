@@ -47,6 +47,36 @@ message_history = {}
 business_topics = {}
 
 
+# ================== DATABASE ==================
+
+db_pool = None
+
+
+async def init_db():
+    global db_pool
+
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not configured")
+
+    db_pool = await asyncpg.create_pool(DATABASE_URL)
+
+    async with db_pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS business_accounts (
+                telegram_user_id BIGINT PRIMARY KEY,
+                business_connection_id TEXT UNIQUE NOT NULL,
+                topic_id BIGINT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                username TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+
+    logger.info("DATABASE INITIALIZED")
+    
+
 # ================== LOG CHAT ID ==================
 
 @dp.message()
