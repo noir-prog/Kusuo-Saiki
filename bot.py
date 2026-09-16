@@ -229,7 +229,7 @@ async def handle_business_message(message):
             )
             return
 
-        # ================== SAVE MESSAGE TO USER TOPIC ==================
+    # ================== SAVE MESSAGE TO USER TOPIC ==================
 
     try:
         info_text = (
@@ -241,7 +241,21 @@ async def handle_business_message(message):
             f"🆔 Message ID: {message.message_id}\n"
         )
 
-        if message.photo:
+        # ================== TEXT ==================
+
+        if message.text:
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    info_text
+                    + f"\n📝 Текст:\n{message.text}"
+                ),
+            )
+
+        # ================== PHOTO ==================
+
+        elif message.photo:
             await bot.send_photo(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
@@ -249,9 +263,164 @@ async def handle_business_message(message):
                 caption=(
                     info_text
                     + "\n🖼 Фото"
-                    + (f"\n📝 Подпись:\n{text}" if text else "")
+                    + (
+                        f"\n📝 Подпись:\n{message.caption}"
+                        if message.caption
+                        else ""
+                    )
                 ),
             )
+
+        # ================== VIDEO ==================
+
+        elif message.video:
+            await bot.send_video(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                video=message.video.file_id,
+                caption=(
+                    info_text
+                    + "\n🎥 Видео"
+                    + (
+                        f"\n📝 Подпись:\n{message.caption}"
+                        if message.caption
+                        else ""
+                    )
+                ),
+            )
+
+        # ================== AUDIO ==================
+
+        elif message.audio:
+            await bot.send_audio(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                audio=message.audio.file_id,
+                caption=(
+                    info_text
+                    + "\n🎵 Аудио"
+                    + (
+                        f"\n📝 Подпись:\n{message.caption}"
+                        if message.caption
+                        else ""
+                    )
+                ),
+            )
+
+        # ================== VOICE ==================
+
+        elif message.voice:
+            await bot.send_voice(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                voice=message.voice.file_id,
+                caption=(
+                    info_text
+                    + "\n🎤 Голосовое сообщение"
+                ),
+            )
+
+        # ================== DOCUMENT ==================
+
+        elif message.document:
+            await bot.send_document(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                document=message.document.file_id,
+                caption=(
+                    info_text
+                    + "\n📎 Документ"
+                    + (
+                        f"\n📝 Подпись:\n{message.caption}"
+                        if message.caption
+                        else ""
+                    )
+                ),
+            )
+
+        # ================== STICKER ==================
+
+        elif message.sticker:
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=info_text + "\n😀 Стикер",
+            )
+
+            await bot.send_sticker(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                sticker=message.sticker.file_id,
+            )
+
+        # ================== ANIMATION / GIF ==================
+
+        elif message.animation:
+            await bot.send_animation(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                animation=message.animation.file_id,
+                caption=(
+                    info_text
+                    + "\n🎞 GIF / Анимация"
+                    + (
+                        f"\n📝 Подпись:\n{message.caption}"
+                        if message.caption
+                        else ""
+                    )
+                ),
+            )
+
+        # ================== VIDEO NOTE / CIRCLE ==================
+
+        elif message.video_note:
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=info_text + "\n📹 Видеосообщение",
+            )
+
+            await bot.send_video_note(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                video_note=message.video_note.file_id,
+            )
+
+        # ================== LOCATION ==================
+
+        elif message.location:
+            await bot.send_location(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                latitude=message.location.latitude,
+                longitude=message.location.longitude,
+            )
+
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=info_text + "\n📍 Геолокация",
+            )
+
+        # ================== CONTACT ==================
+
+        elif message.contact:
+            await bot.send_contact(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                phone_number=message.contact.phone_number,
+                first_name=message.contact.first_name,
+                last_name=message.contact.last_name,
+                vcard=message.contact.vcard,
+            )
+
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=info_text + "\n👤 Контакт",
+            )
+
+        # ================== UNKNOWN MESSAGE ==================
 
         else:
             await bot.send_message(
@@ -259,7 +428,7 @@ async def handle_business_message(message):
                 message_thread_id=topic_id,
                 text=(
                     info_text
-                    + f"\n📝 Текст:\n{text or '[без текста]'}"
+                    + "\n❓ Неподдерживаемый тип сообщения"
                 ),
             )
 
