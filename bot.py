@@ -56,7 +56,29 @@ async def detect_log_chat(message):
         message.chat.title,
         message.chat.type,
     )
-    
+    # ================== CHECK LOG FORUM ==================
+
+@dp.message()
+async def check_log_forum(message):
+    if str(message.chat.id) != str(LOG_CHAT_ID):
+        return
+
+    try:
+        chat = await bot.get_chat(int(LOG_CHAT_ID))
+
+        logger.info(
+            "LOG CHAT CHECK | id=%s | type=%s | is_forum=%s | title=%s",
+            chat.id,
+            chat.type,
+            getattr(chat, "is_forum", None),
+            chat.title,
+        )
+
+    except Exception as e:
+        logger.exception(
+            "LOG CHAT CHECK ERROR | %s",
+            e,
+        )
     # ================== BUSINESS CONNECTIONS ==================
 
 @dp.business_connection()
