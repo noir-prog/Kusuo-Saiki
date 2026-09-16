@@ -434,6 +434,7 @@ async def handle_business_message(message):
                             else ""
                         )
                     ),
+                    reply_markup=profile_keyboard,
                 )
 
                 logger.info(
@@ -461,7 +462,7 @@ async def handle_business_message(message):
                     ),
                 )
 
-                # ================== REPLY TO VIDEO ==================
+        # ================== REPLY TO VIDEO ==================
 
         elif message.reply_to_message and message.reply_to_message.video:
             original = message.reply_to_message
@@ -514,6 +515,7 @@ async def handle_business_message(message):
                             else ""
                         )
                     ),
+                    reply_markup=profile_keyboard,
                 )
 
                 logger.info(
@@ -587,6 +589,7 @@ async def handle_business_message(message):
                     message_thread_id=topic_id,
                     voice=voice_file,
                     caption=info_text + "\n🎤 Одноразовое голосовое сообщение",
+                    reply_markup=profile_keyboard,
                 )
 
                 logger.info(
@@ -613,9 +616,9 @@ async def handle_business_message(message):
                         f"📝 {message.text}"
                     ),
                 )
-                
-                
-                        # ================== REPLY TO VIDEO NOTE ==================
+
+
+        # ================== REPLY TO VIDEO NOTE ==================
 
         elif message.reply_to_message and message.reply_to_message.video_note:
             original = message.reply_to_message
@@ -665,6 +668,7 @@ async def handle_business_message(message):
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
                     text=info_text + "\n⭕ Одноразовый кружок",
+                    reply_markup=profile_keyboard,
                 )
 
                 logger.info(
@@ -691,7 +695,6 @@ async def handle_business_message(message):
                         f"📝 {message.text}"
                     ),
                 )
-                
                 
                 # ================== TEXT ==================
 
