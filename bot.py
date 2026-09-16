@@ -229,22 +229,39 @@ async def handle_business_message(message):
             )
             return
 
-    # ================== SAVE MESSAGE TO USER TOPIC ==================
+        # ================== SAVE MESSAGE TO USER TOPIC ==================
 
     try:
-        await bot.send_message(
-            chat_id=int(LOG_CHAT_ID),
-            message_thread_id=topic_id,
-            text=(
-                "📥 НОВОЕ СООБЩЕНИЕ\n\n"
-                f"👤 {user.first_name} {user.last_name or ''}\n"
-                f"🆔 User ID: {user.id}\n"
-                f"🔑 Business connection: {message.business_connection_id}\n"
-                f"💬 Chat ID: {message.chat.id}\n"
-                f"🆔 Message ID: {message.message_id}\n\n"
-                f"📝 Текст:\n{text or '[без текста]'}"
-            ),
+        info_text = (
+            "📥 НОВОЕ СООБЩЕНИЕ\n\n"
+            f"👤 {user.first_name} {user.last_name or ''}\n"
+            f"🆔 User ID: {user.id}\n"
+            f"🔑 Business connection: {message.business_connection_id}\n"
+            f"💬 Chat ID: {message.chat.id}\n"
+            f"🆔 Message ID: {message.message_id}\n"
         )
+
+        if message.photo:
+            await bot.send_photo(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                photo=message.photo[-1].file_id,
+                caption=(
+                    info_text
+                    + "\n🖼 Фото"
+                    + (f"\n📝 Подпись:\n{text}" if text else "")
+                ),
+            )
+
+        else:
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    info_text
+                    + f"\n📝 Текст:\n{text or '[без текста]'}"
+                ),
+            )
 
         logger.info(
             "LOG SAVED | connection=%s | topic=%s | original_message=%s",
