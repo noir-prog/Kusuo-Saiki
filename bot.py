@@ -262,9 +262,87 @@ async def handle_business_message(message):
             f"🆔 Message ID: {message.message_id}\n"
         )
 
+        # ================== REPLY TO PHOTO ==================
+
+        if message.reply_to_message and message.reply_to_message.photo:
+            original = message.reply_to_message
+
+            await bot.send_photo(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                photo=original.photo[-1].file_id,
+                caption=(
+                    info_text
+                    + "\n🖼 Фото"
+                    + (
+                        f"\n📝 Подпись:\n{original.caption}"
+                        if original.caption
+                        else ""
+                    )
+                ),
+            )
+
+            if message.text:
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
+                        f"📝 {message.text}"
+                    ),
+                )
+
+            logger.info(
+                "REPLY PHOTO SAVED | connection=%s | topic=%s | "
+                "original_message=%s | reply_message=%s",
+                message.business_connection_id,
+                topic_id,
+                original.message_id,
+                message.message_id,
+            )
+
+        # ================== REPLY TO VIDEO ==================
+
+        elif message.reply_to_message and message.reply_to_message.video:
+            original = message.reply_to_message
+
+            await bot.send_video(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                video=original.video.file_id,
+                caption=(
+                    info_text
+                    + "\n🎥 Видео"
+                    + (
+                        f"\n📝 Подпись:\n{original.caption}"
+                        if original.caption
+                        else ""
+                    )
+                ),
+            )
+
+            if message.text:
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
+                        f"📝 {message.text}"
+                    ),
+                )
+
+            logger.info(
+                "REPLY VIDEO SAVED | connection=%s | topic=%s | "
+                "original_message=%s | reply_message=%s",
+                message.business_connection_id,
+                topic_id,
+                original.message_id,
+                message.message_id,
+            )
+
         # ================== TEXT ==================
 
-        if message.text:
+        elif message.text:
             await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
@@ -335,10 +413,7 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 voice=message.voice.file_id,
-                caption=(
-                    info_text
-                    + "\n🎤 Голосовое сообщение"
-                ),
+                caption=info_text + "\n🎤 Голосовое сообщение",
             )
 
         # ================== DOCUMENT ==================
@@ -462,32 +537,6 @@ async def handle_business_message(message):
 
     except Exception as e:
         logger.exception("LOG SAVE ERROR: %s", e)
-
-    # ================== SAVE TO TELEGRAM LOG ==================
-
-    if LOG_CHAT_ID:
-        try:
-            await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                text=(
-                    "📥 НОВОЕ СООБЩЕНИЕ\n\n"
-                    f"👤 Business connection: {message.business_connection_id}\n"
-                    f"💬 Chat ID: {message.chat.id}\n"
-                    f"🆔 Message ID: {message.message_id}\n\n"
-                    f"📝 Текст:\n{text or '[без текста]'}"
-                ),
-            )
-
-            logger.info(
-                "LOG SAVED | original_chat=%s | original_message=%s",
-                message.chat.id,
-                message.message_id,
-            )
-
-        except Exception as e:
-            logger.exception("LOG SAVE ERROR: %s", e)
-
-
 # ================== EDITED BUSINESS MESSAGES ==================
 
 @dp.edited_business_message()
