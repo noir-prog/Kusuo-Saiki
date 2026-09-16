@@ -267,30 +267,62 @@ async def handle_business_message(message):
         if message.reply_to_message and message.reply_to_message.photo:
             original = message.reply_to_message
 
-            file_info = await bot.get_file(
-                original.photo[-1].file_id
-            )
+            try:
+                file_info = await bot.get_file(
+                    original.photo[-1].file_id
+                )
 
-            logger.info(
-                "SELF-DESTRUCT PHOTO GET FILE | file_id=%s | file_path=%s",
-                original.photo[-1].file_id,
-                file_info.file_path,
-            )
+                logger.info(
+                    "SELF-DESTRUCT PHOTO GET FILE | file_id=%s | file_path=%s",
+                    original.photo[-1].file_id,
+                    file_info.file_path,
+                )
 
-            await bot.send_photo(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
-                photo=original.photo[-1].file_id,
-                caption=(
-                    info_text
-                    + "\n🖼 Фото"
-                    + (
-                        f"\n📝 Подпись:\n{original.caption}"
-                        if original.caption
-                        else ""
-                    )
-                ),
-            )
+                from io import BytesIO
+
+                photo_buffer = BytesIO()
+
+                await bot.download_file(
+                    file_info.file_path,
+                    destination=photo_buffer,
+                )
+
+                photo_buffer.seek(0)
+
+                logger.info(
+                    "SELF-DESTRUCT PHOTO DOWNLOADED | size=%s",
+                    photo_buffer.getbuffer().nbytes,
+                )
+
+                await bot.send_photo(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    photo=photo_buffer,
+                    caption=(
+                        info_text
+                        + "\n🖼 Фото"
+                        + (
+                            f"\n📝 Подпись:\n{original.caption}"
+                            if original.caption
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "SELF-DESTRUCT PHOTO SAVED | connection=%s | topic=%s | "
+                    "original_message=%s | reply_message=%s",
+                    message.business_connection_id,
+                    topic_id,
+                    original.message_id,
+                    message.message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "SELF-DESTRUCT PHOTO PROCESS ERROR: %s",
+                    e,
+                )
 
             if message.text:
                 await bot.send_message(
@@ -301,15 +333,6 @@ async def handle_business_message(message):
                         f"📝 {message.text}"
                     ),
                 )
-
-            logger.info(
-                "REPLY PHOTO SAVED | connection=%s | topic=%s | "
-                "original_message=%s | reply_message=%s",
-                message.business_connection_id,
-                topic_id,
-                original.message_id,
-                message.message_id,
-            )
 
         # ================== REPLY TO VIDEO ==================
 
