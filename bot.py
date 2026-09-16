@@ -43,6 +43,18 @@ app = FastAPI()
 message_history = {}
 
 
+# ================== LOG CHAT ID ==================
+
+@dp.message()
+async def detect_log_chat(message):
+    logger.info(
+        "LOG CHAT | chat_id=%s | title=%s | type=%s",
+        message.chat.id,
+        message.chat.title,
+        message.chat.type,
+    )
+    
+    
 # ================== BUSINESS MESSAGES ==================
 
 @dp.business_message()
