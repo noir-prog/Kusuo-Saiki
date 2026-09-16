@@ -250,17 +250,6 @@ async def handle_business_message(message):
 
     user = business_connection.user
 
-    logger.info(
-        "BUSINESS DEBUG | "
-        "from_user_id=%s | "
-        "chat_id=%s | "
-        "business_owner_id=%s | "
-        "business_connection_id=%s",
-        message.from_user.id if message.from_user else None,
-        message.chat.id if message.chat else None,
-        user.id if user else None,
-        message.business_connection_id,
-    )
 
         # ================== GET OR CREATE USER TOPIC ==================
 
