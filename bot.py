@@ -74,6 +74,35 @@ async def detect_log_chat(message):
                 "LOG CHAT CHECK ERROR | %s",
                 e,
             )
+            
+            # ================== CHECK BOT RIGHTS ==================
+
+@dp.message()
+async def check_bot_rights(message):
+    if str(message.chat.id) != str(LOG_CHAT_ID):
+        return
+
+    try:
+        me = await bot.get_me()
+        member = await bot.get_chat_member(
+            chat_id=int(LOG_CHAT_ID),
+            user_id=me.id,
+        )
+
+        logger.info(
+            "BOT RIGHTS | status=%s | can_manage_topics=%s | can_delete_messages=%s | can_pin_messages=%s",
+            member.status,
+            getattr(member, "can_manage_topics", None),
+            getattr(member, "can_delete_messages", None),
+            getattr(member, "can_pin_messages", None),
+        )
+
+    except Exception as e:
+        logger.exception(
+            "BOT RIGHTS CHECK ERROR | %s",
+            e,
+        )
+        
     # ================== CHECK LOG FORUM ==================
 
 @dp.message()
