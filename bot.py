@@ -57,7 +57,52 @@ async def detect_log_chat(message):
         message.chat.type,
     )
     
-    
+    # ================== BUSINESS CONNECTIONS ==================
+
+@dp.business_connection()
+async def handle_business_connection(connection):
+    business_connection_id = connection.id
+    user = connection.user
+
+    logger.info(
+        "BUSINESS CONNECTION | id=%s | user_id=%s | name=%s %s",
+        business_connection_id,
+        user.id,
+        user.first_name,
+        user.last_name or "",
+    )
+
+    # Если для этого подключения топик уже существует —
+    # ничего не создаём.
+    if business_connection_id in business_topics:
+        return
+
+    if not LOG_CHAT_ID:
+        logger.error("LOG_CHAT_ID is not configured")
+        return
+
+    try:
+        topic = await bot.create_forum_topic(
+            chat_id=int(LOG_CHAT_ID),
+            name=f"👤 {user.first_name}",
+        )
+
+        business_topics[business_connection_id] = topic.message_thread_id
+
+        logger.info(
+            "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s",
+            business_connection_id,
+            topic.message_thread_id,
+        )
+
+    except Exception as e:
+        logger.exception(
+            "BUSINESS TOPIC CREATE ERROR | connection=%s | error=%s",
+            business_connection_id,
+            e,
+        )
+        
+        
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
