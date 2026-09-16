@@ -191,33 +191,43 @@ async def handle_business_message(message):
 
     # ================== CREATE USER TOPIC ==================
 
-    topic_id = business_topics.get(message.business_connection_id)
+topic_id = business_topics.get(message.business_connection_id)
 
-    if topic_id is None:
-        try:
-            topic = await bot.create_forum_topic(
-                chat_id=int(LOG_CHAT_ID),
-                name=f"👤 {user.first_name}",
-            )
+if topic_id is None:
+    try:
+        log_chat = await bot.get_chat(int(LOG_CHAT_ID))
 
-            topic_id = topic.message_thread_id
+        logger.info(
+            "BEFORE CREATE TOPIC | chat_id=%s | type=%s | is_forum=%s",
+            log_chat.id,
+            log_chat.type,
+            getattr(log_chat, "is_forum", None),
+        )
 
-            business_topics[message.business_connection_id] = topic_id
+        topic = await bot.create_forum_topic(
+            chat_id=log_chat.id,
+            name=f"👤 {user.first_name}",
+        )
 
-            logger.info(
-                "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s | user=%s",
-                message.business_connection_id,
-                topic_id,
-                user.id,
-            )
+        topic_id = topic.message_thread_id
 
-        except Exception as e:
-            logger.exception(
-                "BUSINESS TOPIC CREATE ERROR | connection=%s | error=%s",
-                message.business_connection_id,
-                e,
-            )
-            return
+        business_topics[message.business_connection_id] = topic_id
+
+        logger.info(
+            "BUSINESS TOPIC CREATED | connection=%s | topic_id=%s | user=%s",
+            message.business_connection_id,
+            topic_id,
+            user.id,
+        )
+
+    except Exception as e:
+        logger.exception(
+            "BUSINESS TOPIC CREATE ERROR | connection=%s | chat_id=%s | error=%s",
+            message.business_connection_id,
+            LOG_CHAT_ID,
+            e,
+        )
+        return
 
     # ================== SAVE MESSAGE TO USER TOPIC ==================
 
