@@ -355,7 +355,7 @@ async def handle_business_message(message):
             f"🆔 Message ID: {message.message_id}\n"
         )
 
-                # ================== PROFILE BUTTONS ==================
+                        # ================== PROFILE BUTTONS ==================
 
         profile_keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -366,7 +366,7 @@ async def handle_business_message(message):
                     ),
                     InlineKeyboardButton(
                         text="📨 Получатель",
-                        url=f"tg://user?id={business_connection.user.id}",
+                        url=f"tg://user?id={message.chat.id}",
                     ),
                 ]
             ]
