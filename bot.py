@@ -367,18 +367,25 @@ async def handle_business_message(message):
             f"🆔 Message ID: {message.message_id}\n"
         )
 
-                        # ================== PROFILE BUTTONS ==================
+        # ================== PROFILE BUTTONS ==================
+
+        sender_id = message.from_user.id
+
+        if sender_id == user.id:
+            recipient_id = message.chat.id
+        else:
+            recipient_id = user.id
 
         profile_keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
                     InlineKeyboardButton(
                         text="👤 Отправитель",
-                        url=f"tg://user?id={message.from_user.id}",
+                        url=f"tg://user?id={sender_id}",
                     ),
                     InlineKeyboardButton(
                         text="📨 Получатель",
-                        url=f"tg://user?id={message.chat.id}",
+                        url=f"tg://user?id={recipient_id}",
                     ),
                 ]
             ]
