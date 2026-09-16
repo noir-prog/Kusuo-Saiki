@@ -166,6 +166,15 @@ LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
 
 @dp.business_message()
 async def handle_business_message(message):
+    logger.info(
+        "MESSAGE MEDIA INFO | message_id=%s | photo=%s | video=%s | ttl_photo=%s | ttl_video=%s",
+        message.message_id,
+        bool(message.photo),
+        bool(message.video),
+        getattr(message.photo[-1], "ttl_seconds", None) if message.photo else None,
+        getattr(message.video, "ttl_seconds", None) if message.video else None,
+    )
+
     key = (message.chat.id, message.message_id)
 
     text = message.text or message.caption or ""
