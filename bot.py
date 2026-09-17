@@ -5477,6 +5477,25 @@ async def telegram_webhook(request: Request):
     return {"ok": True}
 
 
+# ================== TRIAL EXPIRATION BACKGROUND TASK ==================
+
+async def trial_expiration_loop():
+
+    while True:
+
+        try:
+
+            await check_expired_trials()
+
+        except Exception:
+
+            logger.exception(
+                "TRIAL EXPIRATION LOOP ERROR"
+            )
+
+        await asyncio.sleep(300)
+        
+        
 # ================== STARTUP ==================
 
 @app.on_event("startup")
@@ -5486,6 +5505,10 @@ async def startup():
     await init_db()
     await test_d1()
 
+    asyncio.create_task(
+        trial_expiration_loop()
+    )
+    
     logger.info("STARTUP: AFTER DATABASE")
 
     webhook_url = "https://kusuo-saiki.onrender.com/webhook"
