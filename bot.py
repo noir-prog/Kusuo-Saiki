@@ -834,7 +834,38 @@ async def add_message_to_d1_batch(
     if batch_size >= MESSAGE_BATCH_SIZE:
         await flush_d1_batch(batch_key)
         
-        
+ 
+# ================== ADMIN SUBSCRIPTION STATE ==================
+
+subscription_add_waiting = set()
+
+
+@dp.message()
+async def handle_subscription_add(message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if message.from_user.id not in subscription_add_waiting:
+        return
+
+    if not message.text:
+        await message.answer(
+            "❌ Пришлите ссылку на группу или канал текстом."
+        )
+        return
+
+    link = message.text.strip()
+
+    await message.answer(
+        "🔄 Получил ссылку.\n\n"
+        "Проверяю группу или канал..."
+    )
+
+    subscription_add_waiting.discard(
+        message.from_user.id
+    )
+    
 # ================== LOG CHAT ID ==================
 
 @dp.message()
