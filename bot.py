@@ -290,7 +290,7 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         await show_settings()
 
-    # ================== CHECK CONNECTION ==================
+        # ================== CHECK CONNECTION ==================
 
     elif callback.data == "check_connection":
 
@@ -298,61 +298,78 @@ async def handle_ui_callback(callback: CallbackQuery):
             callback.from_user.id
         )
 
-        if connected:
+        try:
 
-            await callback.message.edit_text(
-                "🟢 ПОДКЛЮЧЕНИЕ НАЙДЕНО\n\n"
-                "Kusuo Saiki успешно подключён "
-                "к Telegram Business.",
-                reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            InlineKeyboardButton(
-                                text="📋 ОТКРЫТЬ МЕНЮ",
-                                callback_data="open_menu",
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="⬅️ НАЗАД",
-                                callback_data="back_start",
-                            )
-                        ],
-                    ]
-                ),
-            )
+            if connected:
 
-        else:
+                await callback.message.edit_text(
+                    "🟢 ПОДКЛЮЧЕНИЕ НАЙДЕНО\n\n"
+                    "Kusuo Saiki успешно подключён "
+                    "к Telegram Business.",
+                    reply_markup=InlineKeyboardMarkup(
+                        inline_keyboard=[
+                            [
+                                InlineKeyboardButton(
+                                    text="📋 ОТКРЫТЬ МЕНЮ",
+                                    callback_data="open_menu",
+                                )
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    text="⬅️ НАЗАД",
+                                    callback_data="back_start",
+                                )
+                            ],
+                        ]
+                    ),
+                )
 
-            await callback.message.edit_text(
-                "🔴 БОТ НЕ ПОДКЛЮЧЁН\n\n"
-                "Kusuo Saiki пока не подключён "
-                "к Telegram Business.\n\n"
-                "Подключите бота в настройках аккаунта, "
-                "а затем нажмите «Проверить подключение».",
-                reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            InlineKeyboardButton(
-                                text="⚙️ НАСТРОЙКИ АККАУНТА",
-                                url="tg://settings/edit",
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="🔄 ПРОВЕРИТЬ",
-                                callback_data="check_connection",
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="⬅️ НАЗАД",
-                                callback_data="back_start",
-                            )
-                        ],
-                    ]
-                ),
-            )
+            else:
+
+                await callback.message.edit_text(
+                    "🔴 БОТ НЕ ПОДКЛЮЧЁН\n\n"
+                    "Kusuo Saiki пока не подключён "
+                    "к Telegram Business.\n\n"
+                    "Подключите бота в настройках аккаунта, "
+                    "а затем нажмите «Проверить подключение».",
+                    reply_markup=InlineKeyboardMarkup(
+                        inline_keyboard=[
+                            [
+                                InlineKeyboardButton(
+                                    text="⚙️ НАСТРОЙКИ АККАУНТА",
+                                    url="tg://settings/edit",
+                                )
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    text="🔄 ПРОВЕРИТЬ",
+                                    callback_data="check_connection",
+                                )
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    text="⬅️ НАЗАД",
+                                    callback_data="back_start",
+                                )
+                            ],
+                        ]
+                    ),
+                )
+
+        except Exception as e:
+
+            if "message is not modified" in str(e):
+                logger.info(
+                    "CHECK CONNECTION | message already up to date | user=%s",
+                    callback.from_user.id,
+                )
+            else:
+                logger.exception(
+                    "CHECK CONNECTION MESSAGE ERROR | user=%s | error=%s",
+                    callback.from_user.id,
+                    e,
+                )
+
 
     # ================== BACK TO START ==================
 
