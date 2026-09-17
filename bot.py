@@ -651,7 +651,7 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     # ================== ADMIN USERS ==================
 
-elif callback.data == "admin_users":
+if callback.data == "admin_users":
 
     if callback.from_user.id != OWNER_ID:
         return
