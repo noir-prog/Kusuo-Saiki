@@ -76,6 +76,14 @@ def main_menu_keyboard():
 
 @dp.message(CommandStart())
 async def start_command(message):
+    # ================== OWNER ==================
+    if message.from_user.id == OWNER_ID:
+        await message.answer(
+            "👑 ДОБРО ПОЖАЛОВАТЬ, ВЛАДЕЛЕЦ!\n\n"
+            "Вы вошли в панель управления Kusuo Saiki."
+        )
+        return
+    # ================== USER ==================
     await message.answer(
         "👋 Добро пожаловать в Kusuo Saiki!\n\n"
         "Умный помощник для управления "
