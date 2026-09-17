@@ -171,7 +171,7 @@ async def handle_ui_callback(callback: CallbackQuery):
                     [
                         InlineKeyboardButton(
                             text="⚙️ НАСТРОЙКИ АККАУНТА",
-                            callback_data="account_settings",
+                            callback_data="tg://settings",
                         )
                     ],
                     [
@@ -334,7 +334,7 @@ async def handle_ui_callback(callback: CallbackQuery):
                         [
                             InlineKeyboardButton(
                                 text="⚙️ НАСТРОЙКИ АККАУНТА",
-                                callback_data="account_settings",
+                                callback_data="tg://settings",
                             )
                         ],
                         [
