@@ -241,7 +241,7 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
 
-    # ================== OWNER USER MODE ==================
+        # ================== OWNER USER MODE ==================
 
     if callback.data == "user_mode":
 
@@ -251,7 +251,32 @@ async def handle_ui_callback(callback: CallbackQuery):
             "сообщениями вашего Telegram Business.\n\n"
             "Подключите бота к Telegram Business, "
             "чтобы открыть все функции.",
-            reply_markup=main_menu_keyboard(),
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📋 МЕНЮ",
+                            callback_data="open_menu",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🛟 Поддержка",
+                            callback_data="support",
+                        ),
+                        InlineKeyboardButton(
+                            text="⚙️ Настройки",
+                            callback_data="settings",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_start",
+                        )
+                    ],
+                ]
+            ),
         )
 
         return
