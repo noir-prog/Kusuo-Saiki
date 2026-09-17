@@ -954,10 +954,10 @@ async def handle_business_message(message):
                 },
             )
 
-                # ================== VIDEO ==================
+               # ================== VIDEO ==================
 
         elif message.video:
-            await bot.send_video(
+            sent_message = await bot.send_video(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 video=message.video.file_id,
@@ -973,10 +973,23 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-                # ================== AUDIO ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "video",
+                    "file_id": message.video.file_id,
+                    "text_content": message.caption,
+                },
+            )
+
+
+# ================== AUDIO ==================
 
         elif message.audio:
-            await bot.send_audio(
+            sent_message = await bot.send_audio(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 audio=message.audio.file_id,
@@ -992,10 +1005,23 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-                # ================== VOICE ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "audio",
+                    "file_id": message.audio.file_id,
+                    "text_content": message.caption,
+                },
+            )
+
+
+# ================== VOICE ==================
 
         elif message.voice:
-            await bot.send_voice(
+            sent_message = await bot.send_voice(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 voice=message.voice.file_id,
@@ -1003,10 +1029,23 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-                # ================== DOCUMENT ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "voice",
+                    "file_id": message.voice.file_id,
+                    "text_content": None,
+                },
+            )
+
+
+# ================== DOCUMENT ==================
 
         elif message.document:
-            await bot.send_document(
+            sent_message = await bot.send_document(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 document=message.document.file_id,
@@ -1022,10 +1061,23 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-                # ================== STICKER ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "document",
+                    "file_id": message.document.file_id,
+                    "text_content": message.caption,
+                },
+            )
+
+
+# ================== STICKER ==================
 
         elif message.sticker:
-            await bot.send_message(
+            sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n😀 Стикер",
@@ -1038,10 +1090,23 @@ async def handle_business_message(message):
                 sticker=message.sticker.file_id,
             )
 
-                # ================== ANIMATION / GIF ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "sticker",
+                    "file_id": message.sticker.file_id,
+                    "text_content": None,
+                },
+            )
+
+
+# ================== ANIMATION / GIF ==================
 
         elif message.animation:
-            await bot.send_animation(
+            sent_message = await bot.send_animation(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 animation=message.animation.file_id,
@@ -1057,10 +1122,23 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-                # ================== VIDEO NOTE / CIRCLE ==================
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "animation",
+                    "file_id": message.animation.file_id,
+                    "text_content": message.caption,
+                },
+            )
+
+
+# ================== VIDEO NOTE / CIRCLE ==================
 
         elif message.video_note:
-            await bot.send_message(
+            sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=info_text + "\n📹 Видеосообщение",
@@ -1072,10 +1150,30 @@ async def handle_business_message(message):
                 message_thread_id=topic_id,
                 video_note=message.video_note.file_id,
             )
-            
-                # ================== LOCATION ==================
+
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "video_note",
+                    "file_id": message.video_note.file_id,
+                    "text_content": None,
+                },
+            )
+
+
+# ================== LOCATION ==================
 
         elif message.location:
+            sent_message = await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=info_text + "\n📍 Геолокация",
+                reply_markup=profile_keyboard,
+            )
+
             await bot.send_location(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
@@ -1083,16 +1181,31 @@ async def handle_business_message(message):
                 longitude=message.location.longitude,
             )
 
-            await bot.send_message(
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "location",
+                    "file_id": None,
+                    "text_content": None,
+                    "latitude": message.location.latitude,
+                    "longitude": message.location.longitude,
+                },
+            )
+
+
+# ================== CONTACT ==================
+
+        elif message.contact:
+            sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=info_text + "\n📍 Геолокация",
+                text=info_text + "\n👤 Контакт",
                 reply_markup=profile_keyboard,
             )
 
-                # ================== CONTACT ==================
-
-        elif message.contact:
             await bot.send_contact(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
@@ -1102,17 +1215,27 @@ async def handle_business_message(message):
                 vcard=message.contact.vcard,
             )
 
-            await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
-                text=info_text + "\n👤 Контакт",
-                reply_markup=profile_keyboard,
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "contact",
+                    "file_id": None,
+                    "text_content": None,
+                    "phone_number": message.contact.phone_number,
+                    "first_name": message.contact.first_name,
+                    "last_name": message.contact.last_name,
+                    "vcard": message.contact.vcard,
+                },
             )
 
-                # ================== UNKNOWN MESSAGE ==================
+
+# ================== UNKNOWN MESSAGE ==================
 
         else:
-            await bot.send_message(
+            sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 text=(
@@ -1122,15 +1245,17 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-        logger.info(
-            "LOG SAVED | connection=%s | topic=%s | original_message=%s",
-            message.business_connection_id,
-            topic_id,
-            message.message_id,
-        )
-
-    except Exception as e:
-        logger.exception("LOG SAVE ERROR: %s", e)
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "unknown",
+                    "file_id": None,
+                    "text_content": None,
+                },
+            )
 # ================== EDITED BUSINESS MESSAGES ==================
 
 @dp.edited_business_message()
