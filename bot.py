@@ -2555,7 +2555,23 @@ async def handle_ui_callback(callback: CallbackQuery):
         
     # ================== MAIN MENU ==================
 
-    if callback.data == "open_menu":
+        if callback.data == "open_menu":
+
+            access = await get_user_access_status(
+                callback.from_user.id
+        )
+
+        if not access["has_access"]:
+
+                await callback.answer(
+                    "⏳ Твой пробный период закончился.\n\n"
+                    "Очень жаль… 🥺\n\n"
+                    "Но ты можешь продолжить пользоваться "
+                    "Kusuo Saiki и приобрести подписку. ❤️",
+                    show_alert=True,
+                )
+
+                return
 
         connected = await is_business_connected(
             callback.from_user.id
