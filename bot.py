@@ -2580,28 +2580,15 @@ async def handle_ui_callback(callback: CallbackQuery):
                 callback.from_user.id,
             )
 
-            try:
+            await callback.answer(
+                "ТЕСТ",
+                show_alert=True,
+            )
 
-                await callback.answer(
-                    "⏳ Твой пробный период закончился.\n\n"
-                    "Очень жаль… 🥺\n\n"
-                    "Но ты можешь продолжить пользоваться "
-                    "Kusuo Saiki и приобрести подписку. ❤️",
-                    show_alert=True,
-                )
-
-                logger.info(
-                    "OPEN MENU | ALERT SENT | user=%s",
-                    callback.from_user.id,
-                )
-
-            except Exception as e:
-
-                logger.exception(
-                    "OPEN MENU | ALERT ERROR | user=%s | error=%s",
-                    callback.from_user.id,
-                    e,
-                )
+            logger.info(
+                "OPEN MENU | ALERT SENT | user=%s",
+                callback.from_user.id,
+            )
 
             return
 
