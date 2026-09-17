@@ -1124,7 +1124,7 @@ async def startup():
     logger.info("STARTUP: BEFORE DATABASE")
 
     await init_db()
-    await init_db()
+    await init_d1()
 
     logger.info("STARTUP: AFTER DATABASE")
 
