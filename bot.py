@@ -501,6 +501,127 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
 
 
+    # ================== SUBSCRIPTION DELETE CONFIRM ==================
+
+    elif callback.data.startswith("subscription_delete_confirm:"):
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        try:
+
+            subscription_id = int(
+                callback.data.split(":", 1)[1]
+            )
+
+        except (ValueError, IndexError):
+
+            await callback.message.answer(
+                "❌ Некорректный ID подписки."
+            )
+
+            return
+
+        if db_pool is None:
+
+            await callback.message.edit_text(
+                "❌ Ошибка подключения к базе данных.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        try:
+
+            async with db_pool.acquire() as conn:
+
+                deleted = await conn.fetchrow(
+                    """
+                    DELETE FROM required_subscriptions
+                    WHERE id = $1
+                    RETURNING title
+                    """,
+                    subscription_id,
+                )
+
+        except Exception as e:
+
+            logger.exception(
+                "SUBSCRIPTION DELETE ERROR | "
+                "id=%s | error=%s",
+                subscription_id,
+                e,
+            )
+
+            await callback.message.edit_text(
+                "❌ Не удалось удалить подписку.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        if not deleted:
+
+            await callback.message.edit_text(
+                "❌ Подписка не найдена.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        logger.info(
+            "SUBSCRIPTION DELETED | id=%s | title=%s",
+            subscription_id,
+            deleted["title"],
+        )
+
+        await callback.message.edit_text(
+            "✅ ПОДПИСКА УДАЛЕНА!\n\n"
+            f"📢 {deleted['title']}\n\n"
+            "Она больше не будет использоваться "
+            "для обязательной подписки.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_subscription",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+        return
+        
+        
     # ================== OWNER USER MODE ==================
     
     if callback.data == "user_mode":
