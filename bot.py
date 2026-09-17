@@ -3883,7 +3883,7 @@ async def handle_business_message(message):
 
             business_topics[message.business_connection_id] = topic_id
 
-                        async with db_pool.acquire() as conn:
+            async with db_pool.acquire() as conn:
                 await conn.execute(
                     """
                     INSERT INTO business_accounts (
