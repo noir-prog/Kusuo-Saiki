@@ -337,7 +337,7 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
         
-            # ================== SUBSCRIPTION ADD ==================
+                # ================== SUBSCRIPTION ADD ==================
 
     elif callback.data == "subscription_add":
 
@@ -353,6 +353,8 @@ async def handle_ui_callback(callback: CallbackQuery):
             "Пришлите ссылку на группу или канал, "
             "который пользователь должен будет "
             "обязательно посетить.\n\n"
+            "⚠️ Бот обязательно должен быть добавлен "
+            "в группу или канал и иметь статус администратора.\n\n"
             "Например:\n"
             "https://t.me/example",
             reply_markup=InlineKeyboardMarkup(
