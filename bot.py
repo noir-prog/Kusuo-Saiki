@@ -2582,7 +2582,7 @@ async def handle_ui_callback(callback: CallbackQuery):
 
             await callback.answer(
                 "ТЕСТ",
-                show_alert=True,
+                show_alert=False,
             )
 
             logger.info(
