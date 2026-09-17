@@ -89,6 +89,19 @@ async def start_command(message):
 
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
+
+    # ================== INSTRUCTION ==================
+
+    if callback.data == "instruction":
+        await callback.answer(
+            "📖 ИНСТРУКЦИЯ\n\n"
+            "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
+            "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
+            "3. Добавьте бота @KusuoSaikibot.",
+            show_alert=True,
+        )
+        return
+
     await callback.answer()
 
     # ================== CHECK BUSINESS CONNECTION ==================
@@ -332,18 +345,6 @@ async def handle_ui_callback(callback: CallbackQuery):
                     ]
                 ),
             )
-
-        # ================== INSTRUCTION ==================
-
-    elif callback.data == "instruction":
-
-        await callback.answer(
-            "📖 ИНСТРУКЦИЯ\n\n"
-            "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
-            "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
-            "3. Добавьте бота @KusuoSaikibot.",
-            show_alert=True,
-        )
 
     # ================== BACK TO START ==================
 
