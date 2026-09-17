@@ -290,7 +290,10 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         # ================== CALLBACK CONFIRM ==================
 
-    if callback.data != "instruction":
+    if callback.data not in (
+        "instruction",
+        "check_required_subscription",
+    ):
 
         try:
             await callback.answer()
