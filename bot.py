@@ -1049,6 +1049,154 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
         
+        # ================== USERS SEARCH STATE ==================
+
+users_search_waiting = set()
+
+
+@dp.message()
+async def handle_users_search(message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if message.from_user.id not in users_search_waiting:
+        return
+
+    if not message.text:
+        await message.answer(
+            "❌ Введите имя, фамилию или username."
+        )
+        return
+
+    search_query = message.text.strip().lower()
+
+    users_search_waiting.discard(
+        message.from_user.id
+    )
+
+    if not search_query:
+        await message.answer(
+            "❌ Поисковый запрос не может быть пустым."
+        )
+        return
+
+    users = await get_all_business_users()
+
+    # ================== SEARCH ==================
+
+    found_users = []
+
+    for user in users:
+
+        name = (
+            user["name"] or ""
+        ).lower()
+
+        username = (
+            user["username"] or ""
+        ).lower()
+
+        if (
+            search_query in name
+            or search_query in username
+        ):
+            found_users.append(user)
+
+    # ================== NO RESULTS ==================
+
+    if not found_users:
+
+        await message.answer(
+            "🔎 ПОИСК\n\n"
+            f"По запросу «{message.text.strip()}» "
+            "ничего не найдено."
+        )
+
+        return
+
+    # ================== RESULTS ==================
+
+    keyboard = []
+
+    for index in range(
+        0,
+        len(found_users),
+        2,
+    ):
+
+        row = []
+
+        first_user = found_users[index]
+
+        first_status = (
+            "✅"
+            if first_user["is_connected"]
+            else "❌"
+        )
+
+        row.append(
+            InlineKeyboardButton(
+                text=(
+                    f"{first_status} "
+                    f"{first_user['name']}"
+                ),
+                callback_data=(
+                    f"user_manage:"
+                    f"{first_user['telegram_user_id']}"
+                ),
+            )
+        )
+
+        if index + 1 < len(found_users):
+
+            second_user = found_users[
+                index + 1
+            ]
+
+            second_status = (
+                "✅"
+                if second_user["is_connected"]
+                else "❌"
+            )
+
+            row.append(
+                InlineKeyboardButton(
+                    text=(
+                        f"{second_status} "
+                        f"{second_user['name']}"
+                    ),
+                    callback_data=(
+                        f"user_manage:"
+                        f"{second_user['telegram_user_id']}"
+                    ),
+                )
+            )
+
+        keyboard.append(row)
+
+    # ================== BACK ==================
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text="⬅️ К СПИСКУ",
+                callback_data="admin_users",
+            )
+        ]
+    )
+
+    await message.answer(
+        "🔎 РЕЗУЛЬТАТЫ ПОИСКА\n\n"
+        f"Найдено пользователей: "
+        f"{len(found_users)}\n\n"
+        "Выберите пользователя:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=keyboard
+        ),
+    )
+    
+    
     # ================== ADMIN SUBSCRIPTION ==================
 
     elif callback.data == "admin_subscription":
