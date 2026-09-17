@@ -240,6 +240,23 @@ async def handle_ui_callback(callback: CallbackQuery):
             ),
         )
 
+
+    # ================== OWNER USER MODE ==================
+
+    if callback.data == "user_mode":
+
+        await callback.message.edit_text(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.\n\n"
+            "Подключите бота к Telegram Business, "
+            "чтобы открыть все функции.",
+            reply_markup=main_menu_keyboard(),
+        )
+
+        return
+        
+        
     # ================== MAIN MENU ==================
 
     if callback.data == "open_menu":
