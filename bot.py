@@ -542,6 +542,134 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
 
+    # ================== SUBSCRIPTION DELETE ==================
+
+    elif callback.data == "subscription_delete":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        if db_pool is None:
+
+            await callback.message.edit_text(
+                "❌ Ошибка подключения к базе данных.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        try:
+
+            async with db_pool.acquire() as conn:
+
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        id,
+                        title,
+                        username
+                    FROM required_subscriptions
+                    WHERE is_active = TRUE
+                    ORDER BY id ASC
+                    """
+                )
+
+        except Exception as e:
+
+            logger.exception(
+                "SUBSCRIPTION DELETE LIST ERROR | error=%s",
+                e,
+            )
+
+            await callback.message.edit_text(
+                "❌ Не удалось получить список подписок.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        # ================== EMPTY LIST ==================
+
+        if not rows:
+
+            await callback.message.edit_text(
+                "🗑 УДАЛЕНИЕ ПОДПИСКИ\n\n"
+                "Нет активных подписок для удаления.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        # ================== DELETE BUTTONS ==================
+
+        keyboard = []
+
+        for row in rows:
+
+            title = row["title"]
+
+            if row["username"]:
+                title = f"📢 {title} (@{row['username']})"
+            else:
+                title = f"📢 {title}"
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=title,
+                        callback_data=f"subscription_delete_confirm:{row['id']}",
+                    )
+                ]
+            )
+
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text="⬅️ НАЗАД",
+                    callback_data="admin_subscription",
+                )
+            ]
+        )
+
+        await callback.message.edit_text(
+            "🗑 УДАЛЕНИЕ ПОДПИСКИ\n\n"
+            "Выберите группу или канал, "
+            "который хотите удалить:",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=keyboard
+            ),
+        )
+
+        return
+        
+        
     # ================== OWNER USER MODE ==================
     
     if callback.data == "user_mode":
