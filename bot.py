@@ -408,9 +408,85 @@ async def handle_ui_callback(callback: CallbackQuery):
             )
 
             return False
+            
 
-    # ================== START SCREEN ==================
+    # ================== GET ALL BUSINESS USERS ==================
 
+    async def get_all_business_users():
+
+        if db_pool is None:
+
+            logger.error(
+                "GET BUSINESS USERS | DATABASE POOL IS NONE"
+            )
+
+            return []
+
+        try:
+
+            async with db_pool.acquire() as conn:
+
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        telegram_user_id,
+                        business_connection_id,
+                        first_name,
+                        last_name,
+                        username
+                    FROM business_accounts
+                    ORDER BY first_name ASC, last_name ASC
+                    """
+                )
+
+            users = []
+
+            for row in rows:
+
+                is_connected = await get_business_connection_status(
+                    row["business_connection_id"]
+                )
+
+                first_name = row["first_name"] or ""
+                last_name = row["last_name"] or ""
+
+                full_name = (
+                    f"{first_name} {last_name}"
+                    .strip()
+                )
+
+                if not full_name:
+
+                    full_name = "Без имени"
+
+                users.append(
+                    {
+                        "telegram_user_id": row["telegram_user_id"],
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "username": row["username"],
+                        "name": full_name,
+                        "is_connected": is_connected,
+                    }
+                )
+
+            logger.info(
+                "GET BUSINESS USERS | total=%s",
+                len(users),
+            )
+
+            return users
+
+        except Exception as e:
+
+            logger.exception(
+                "GET BUSINESS USERS ERROR | error=%s",
+                e,
+            )
+
+            return []
+            
+            
     # ================== START SCREEN ==================
 
     async def show_start_screen():
@@ -572,6 +648,86 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         return
 
+
+    # ================== ADMIN USERS ==================
+
+    elif callback.data == "admin_users":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        users = await get_all_business_users()
+
+        # ================== EMPTY LIST ==================
+
+        if not users:
+
+            await callback.message.edit_text(
+                "👥 ПОЛЬЗОВАТЕЛИ\n\n"
+                "Пока нет пользователей, "
+                "подключавших Telegram Business.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_panel",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        # ================== USER BUTTONS ==================
+
+        keyboard = []
+
+        for user in users:
+
+            status = (
+                "✅"
+                if user["is_connected"]
+                else "❌"
+            )
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"{status} {user['name']}",
+                        callback_data=(
+                            f"user_manage:"
+                            f"{user['telegram_user_id']}"
+                        ),
+                    )
+                ]
+            )
+
+        # ================== SHOW USERS ==================
+
+        await callback.message.edit_text(
+            "👥 ПОЛЬЗОВАТЕЛИ\n\n"
+            f"Всего пользователей: {len(users)}\n\n"
+            "Выберите пользователя:",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=(
+                    keyboard
+                    + [
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_panel",
+                            )
+                        ]
+                    ]
+                ),
+            ),
+        )
+
+        return
+        
+        
     # ================== ADMIN SUBSCRIPTION ==================
 
     elif callback.data == "admin_subscription":
