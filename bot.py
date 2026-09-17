@@ -322,17 +322,55 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         return
 
+        # ================== BUSINESS CONNECTION STATUS ==================
+
+    async def get_business_connection_status(
+        business_connection_id
+    ):
+
+        try:
+
+            connection = await bot.get_business_connection(
+                business_connection_id=business_connection_id
+            )
+
+            logger.info(
+                "BUSINESS CONNECTION STATUS | "
+                "connection=%s | enabled=%s",
+                business_connection_id,
+                connection.is_enabled,
+            )
+
+            return connection.is_enabled
+
+        except Exception as e:
+
+            logger.exception(
+                "BUSINESS CONNECTION STATUS ERROR | "
+                "connection=%s | error=%s",
+                business_connection_id,
+                e,
+            )
+
+            return False
+
+
     # ================== CHECK BUSINESS CONNECTION ==================
 
     async def is_business_connected(user_id):
+
         if db_pool is None:
+
             logger.error(
                 "BUSINESS CONNECTION CHECK | DATABASE POOL IS NONE"
             )
+
             return False
 
         try:
+
             async with db_pool.acquire() as conn:
+
                 row = await conn.fetchrow(
                     """
                     SELECT business_connection_id
@@ -343,29 +381,25 @@ async def handle_ui_callback(callback: CallbackQuery):
                 )
 
             if not row:
+
                 logger.info(
-                    "BUSINESS CONNECTION CHECK | user=%s | no database record",
+                    "BUSINESS CONNECTION CHECK | "
+                    "user=%s | no database record",
                     user_id,
                 )
+
                 return False
 
-            business_connection_id = row["business_connection_id"]
+            business_connection_id = row[
+                "business_connection_id"
+            ]
 
-            connection = await bot.get_business_connection(
-                business_connection_id=business_connection_id
+            return await get_business_connection_status(
+                business_connection_id
             )
-
-            logger.info(
-                "BUSINESS CONNECTION CHECK | "
-                "user=%s | connection=%s | enabled=%s",
-                user_id,
-                business_connection_id,
-                connection.is_enabled,
-            )
-
-            return connection.is_enabled
 
         except Exception as e:
+
             logger.exception(
                 "BUSINESS CONNECTION CHECK ERROR | "
                 "user=%s | error=%s",
@@ -374,6 +408,8 @@ async def handle_ui_callback(callback: CallbackQuery):
             )
 
             return False
+
+    # ================== START SCREEN ==================
 
     # ================== START SCREEN ==================
 
