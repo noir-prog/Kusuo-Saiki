@@ -1387,13 +1387,13 @@ async def handle_deleted_business_messages(message):
 
         batch = d1_message_batches.get(batch_key)
 
-        if batch:
+                if batch:
             for item in batch["messages"]:
                 if item.get("message_id") == deleted_message_id:
                     ram_data = item
                     break
 
-                if ram_data:
+        if ram_data:
             logger.info(
                 "DELETED MESSAGE FOUND IN RAM | "
                 "connection=%s | chat=%s | message=%s | data=%s",
