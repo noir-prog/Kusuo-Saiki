@@ -3148,6 +3148,76 @@ async def get_user_access_status(user_id):
     }
     
 
+# ================== TRIAL EXPIRATION CHECKER ==================
+
+async def check_expired_trials():
+
+    if db_pool is None:
+        logger.error(
+            "TRIAL EXPIRATION CHECK | DATABASE POOL IS NOT INITIALIZED"
+        )
+        return
+
+    async with db_pool.acquire() as conn:
+
+        users = await conn.fetch(
+            """
+            SELECT
+                telegram_user_id,
+                first_name,
+                last_name
+            FROM business_accounts
+            WHERE
+                trial_until IS NOT NULL
+                AND trial_until <= NOW()
+                AND trial_expired_notified = FALSE
+            """
+        )
+
+    for user in users:
+
+        user_id = user["telegram_user_id"]
+
+        try:
+
+            await bot.send_message(
+                user_id,
+                (
+                    "🥺 Твой пробный период подошёл к концу.\n\n"
+                    "Очень жаль… Но ты можешь продлить мою жизнь — "
+                    "и я продолжу помогать тебе дальше. ❤️\n\n"
+                    "Если хочешь продолжить пользоваться ботом, "
+                    "ты можешь приобрести подписку."
+                )
+            )
+
+            async with db_pool.acquire() as conn:
+
+                await conn.execute(
+                    """
+                    UPDATE business_accounts
+                    SET
+                        trial_expired_notified = TRUE,
+                        updated_at = NOW()
+                    WHERE telegram_user_id = $1
+                    """,
+                    user_id,
+                )
+
+            logger.info(
+                "TRIAL EXPIRED NOTIFICATION SENT | user=%s",
+                user_id,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "TRIAL EXPIRED NOTIFICATION ERROR | user=%s | error=%s",
+                user_id,
+                e,
+            )
+            
+            
 # ================== CLOUDFLARE D1 ==================
 
 import httpx
