@@ -74,8 +74,196 @@ def main_menu_keyboard():
     )
 
 
+# ================== REQUIRED SUBSCRIPTION CHECK ==================
+
+async def get_required_subscriptions():
+
+    if db_pool is None:
+        logger.error(
+            "REQUIRED SUBSCRIPTION CHECK | DATABASE POOL IS NONE"
+        )
+        return []
+
+    try:
+
+        async with db_pool.acquire() as conn:
+
+            rows = await conn.fetch(
+                """
+                SELECT
+                    id,
+                    chat_id,
+                    title,
+                    username,
+                    invite_link
+                FROM required_subscriptions
+                WHERE is_active = TRUE
+                ORDER BY id ASC
+                """
+            )
+
+        return rows
+
+    except Exception as e:
+
+        logger.exception(
+            "REQUIRED SUBSCRIPTION LOAD ERROR | error=%s",
+            e,
+        )
+
+        return []
+
+
+async def get_unsubscribed_required_chats(user_id):
+
+    subscriptions = await get_required_subscriptions()
+
+    if not subscriptions:
+        return []
+
+    unsubscribed = []
+
+    for subscription in subscriptions:
+
+        try:
+
+            member = await bot.get_chat_member(
+                chat_id=subscription["chat_id"],
+                user_id=user_id,
+            )
+
+            if member.status not in (
+                "member",
+                "administrator",
+                "creator",
+            ):
+
+                unsubscribed.append(subscription)
+
+        except Exception as e:
+
+            logger.warning(
+                "REQUIRED SUBSCRIPTION CHECK ERROR | "
+                "user=%s | chat_id=%s | error=%s",
+                user_id,
+                subscription["chat_id"],
+                e,
+            )
+
+            unsubscribed.append(subscription)
+
+    return unsubscribed
+
+
+async def show_required_subscription_screen(
+    message,
+    user_id,
+):
+
+    subscriptions = await get_unsubscribed_required_chats(
+        user_id
+    )
+
+    if not subscriptions:
+        return False
+
+    keyboard = []
+
+    for subscription in subscriptions:
+
+        if subscription["invite_link"]:
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"📢 {subscription['title']}",
+                        url=subscription["invite_link"],
+                    )
+                ]
+            )
+
+        elif subscription["username"]:
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"📢 {subscription['title']}",
+                        url=f"https://t.me/{subscription['username']}",
+                    )
+                ]
+            )
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text="🔄 ПРОВЕРИТЬ ПОДПИСКУ",
+                callback_data="check_required_subscription",
+            )
+        ]
+    )
+
+    await message.edit_text(
+        "📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА\n\n"
+        "Чтобы пользоваться Kusuo Saiki, "
+        "необходимо подписаться на следующие "
+        "группы или каналы:\n\n"
+        "После подписки нажмите "
+        "«🔄 ПРОВЕРИТЬ ПОДПИСКУ».",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=keyboard
+        ),
+    )
+
+    return True
+
+
 @dp.message(CommandStart())
 async def start_command(message):
+
+    # ================== OWNER ==================
+
+    if message.from_user.id == OWNER_ID:
+
+        await message.answer(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="👑 АДМИН",
+                            callback_data="admin_panel",
+                        ),
+                        InlineKeyboardButton(
+                            text="👤 ПОЛЬЗОВАТЕЛЬ",
+                            callback_data="user_mode",
+                        ),
+                    ]
+                ]
+            ),
+        )
+
+        return
+
+    # ================== REQUIRED SUBSCRIPTION ==================
+
+    has_unsubscribed = await show_required_subscription_screen(
+        message,
+        message.from_user.id,
+    )
+
+    if has_unsubscribed:
+        return
+
+    # ================== USER ==================
+
+    await message.answer(
+        "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+        "Умный помощник для управления "
+        "сообщениями вашего Telegram Business.",
+        reply_markup=main_menu_keyboard(),
+    )
 
     # ================== OWNER ==================
 
