@@ -370,6 +370,176 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
         return
+
+
+    # ================== SUBSCRIPTION LIST ==================
+
+    elif callback.data == "subscription_list":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        if db_pool is None:
+
+            await callback.message.edit_text(
+                "❌ Ошибка подключения к базе данных.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        try:
+
+            async with db_pool.acquire() as conn:
+
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        id,
+                        chat_id,
+                        title,
+                        username,
+                        invite_link,
+                        is_active
+                    FROM required_subscriptions
+                    ORDER BY id ASC
+                    """
+                )
+
+        except Exception as e:
+
+            logger.exception(
+                "SUBSCRIPTION LIST ERROR | error=%s",
+                e,
+            )
+
+            await callback.message.edit_text(
+                "❌ Не удалось получить список подписок.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        # ================== EMPTY LIST ==================
+
+        if not rows:
+
+            await callback.message.edit_text(
+                "📋 СПИСОК ПОДПИСОК\n\n"
+                "Пока нет добавленных групп или каналов.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="admin_subscription",
+                            )
+                        ]
+                    ]
+                ),
+            )
+
+            return
+
+        # ================== BUILD LIST ==================
+
+        text = "📋 СПИСОК ПОДПИСОК\n\n"
+
+        for index, row in enumerate(rows, start=1):
+
+            status = (
+                "🟢 Активна"
+                if row["is_active"]
+                else "🔴 Выключена"
+            )
+
+            if row["username"]:
+                chat_link = f"@{row['username']}"
+            else:
+                chat_link = row["invite_link"]
+
+            text += (
+                f"{index}. 📢 {row['title']}\n"
+                f"   {chat_link}\n"
+                f"   {status}\n\n"
+            )
+
+        # ================== SHOW LIST ==================
+
+        await callback.message.edit_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_subscription",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+        return
+
+
+    # ================== OWNER USER MODE ==================
+    
+    if callback.data == "user_mode":
+
+        await callback.message.edit_text(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.\n\n"
+            "Подключите бота к Telegram Business, "
+            "чтобы открыть все функции.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📋 МЕНЮ",
+                            callback_data="open_menu",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🛟 Поддержка",
+                            callback_data="support",
+                        ),
+                        InlineKeyboardButton(
+                            text="⚙️ Настройки",
+                            callback_data="settings",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_start",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+        return
         
 
     # ================== OWNER USER MODE ==================
