@@ -26,6 +26,12 @@ CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 D1_DATABASE_ID = os.getenv("D1_DATABASE_ID")
 OWNER_ID = 6925580275
 
+
+# ================== USER ACTIONS STATE ==================
+
+trial_days_waiting = {}
+
+
 # ================== LOGGING ==================
 
 logging.basicConfig(
