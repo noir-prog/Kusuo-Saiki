@@ -672,16 +672,75 @@ async def check_log_forum(message):
 
 @dp.business_connection()
 async def handle_business_connection(connection):
+
     business_connection_id = connection.id
     user = connection.user
 
     logger.info(
-        "BUSINESS CONNECTION | id=%s | user_id=%s | name=%s %s",
+        "BUSINESS CONNECTION | id=%s | user_id=%s | name=%s %s | enabled=%s",
         business_connection_id,
         user.id,
         user.first_name,
         user.last_name or "",
+        connection.is_enabled,
     )
+
+    if db_pool is None:
+        logger.error("DATABASE POOL IS NOT INITIALIZED")
+        return
+
+    async with db_pool.acquire() as conn:
+
+        row = await conn.fetchrow(
+            """
+            SELECT topic_id
+            FROM business_accounts
+            WHERE telegram_user_id = $1
+            """,
+            user.id,
+        )
+
+        if row:
+
+            topic_id = row["topic_id"]
+
+            await conn.execute(
+                """
+                UPDATE business_accounts
+                SET
+                    business_connection_id = $1,
+                    first_name = $2,
+                    last_name = $3,
+                    username = $4,
+                    updated_at = NOW()
+                WHERE telegram_user_id = $5
+                """,
+                business_connection_id,
+                user.first_name,
+                user.last_name,
+                user.username,
+                user.id,
+            )
+
+            business_topics[business_connection_id] = topic_id
+
+            logger.info(
+                "BUSINESS CONNECTION UPDATED | "
+                "user=%s | connection=%s | topic_id=%s | enabled=%s",
+                user.id,
+                business_connection_id,
+                topic_id,
+                connection.is_enabled,
+            )
+
+        else:
+
+            logger.info(
+                "BUSINESS CONNECTION NOT IN DATABASE | "
+                "user=%s | connection=%s",
+                user.id,
+                business_connection_id,
+            )
 
     # ================== CHECK DATABASE ==================
 
