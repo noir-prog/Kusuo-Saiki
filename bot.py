@@ -119,17 +119,25 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     # ================== CALLBACK CONFIRM ==================
 
+    try:
+        await callback.answer()
+    except Exception as e:
+        logger.warning(
+            "CALLBACK ANSWER ERROR | data=%s | error=%s",
+            callback.data,
+            e,
+        )
+
     if callback.data == "instruction":
-        await callback.answer(
+
+        await callback.message.answer(
             "📖 ИНСТРУКЦИЯ\n\n"
             "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
             "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
-            "3. Добавьте бота @KusuoSaikibot.",
-            show_alert=True,
+            "3. Добавьте бота @KusuoSaikibot."
         )
-        return
 
-    await callback.answer()
+        return
 
     # ================== CHECK BUSINESS CONNECTION ==================
 
