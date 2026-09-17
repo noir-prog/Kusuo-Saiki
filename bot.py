@@ -1070,6 +1070,164 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
 
 
+    # ================== USER ACTIONS ==================
+
+    elif callback.data.startswith("user_actions:"):
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        try:
+
+            target_user_id = int(
+                callback.data.split(":", 1)[1]
+            )
+
+        except (ValueError, IndexError):
+
+            await callback.answer(
+                "❌ Некорректный пользователь.",
+                show_alert=True,
+            )
+
+            return
+
+        if db_pool is None:
+
+            await callback.answer(
+                "❌ База данных недоступна.",
+                show_alert=True,
+            )
+
+            return
+
+        async with db_pool.acquire() as conn:
+
+            user = await conn.fetchrow(
+                """
+                SELECT
+                    telegram_user_id,
+                    first_name,
+                    last_name
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                target_user_id,
+            )
+
+        if not user:
+
+            await callback.answer(
+                "❌ Пользователь не найден.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== USER NAME ==================
+
+        name_parts = []
+
+        if user["first_name"]:
+            name_parts.append(
+                user["first_name"]
+            )
+
+        if user["last_name"]:
+            name_parts.append(
+                user["last_name"]
+            )
+
+        user_name = " ".join(
+            name_parts
+        ).strip()
+
+        if not user_name:
+            user_name = "Без имени"
+
+        # ================== ACTIONS KEYBOARD ==================
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="🎁 ВЫДАТЬ ПРОБНЫЙ ПЕРИОД",
+                        callback_data=(
+                            f"action_trial:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="🆓 ВЫДАТЬ ПОЛНЫЙ ДОСТУП БЕСПЛАТНО",
+                        callback_data=(
+                            f"action_free:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="💸 СДЕЛАТЬ СКИДКУ",
+                        callback_data=(
+                            f"action_discount:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="🚫 ЗАБЛОКИРОВАТЬ",
+                        callback_data=(
+                            f"action_block:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="🔓 РАЗБЛОКИРОВАТЬ",
+                        callback_data=(
+                            f"action_unblock:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="🗑 УДАЛИТЬ ПОЛЬЗОВАТЕЛЯ",
+                        callback_data=(
+                            f"action_delete:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⬅️ НАЗАД",
+                        callback_data=(
+                            f"user_manage:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+            ]
+        )
+
+        await callback.message.edit_text(
+            "🛠 ДЕЙСТВИЯ\n\n"
+            f"Пользователь: {user_name}\n"
+            f"Telegram ID: {target_user_id}\n\n"
+            "Выберите действие:",
+            reply_markup=keyboard,
+        )
+
+        await callback.answer()
+
+        return
+        
+        
     # ================== USER SUBSCRIPTION ==================
 
     elif callback.data.startswith("user_subscription:"):
