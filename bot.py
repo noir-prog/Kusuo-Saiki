@@ -249,6 +249,32 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
 
+    # ================== ADMIN PANEL ==================
+
+    if callback.data == "admin_panel":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        await callback.message.edit_text(
+            "👑 АДМИН-ПАНЕЛЬ\n\n"
+            "Добро пожаловать в панель управления Kusuo Saiki.\n\n"
+            "Здесь будут находиться все административные функции.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_start",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+        return
+        
+        
         # ================== OWNER USER MODE ==================
 
     if callback.data == "user_mode":
