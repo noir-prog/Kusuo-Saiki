@@ -1363,7 +1363,16 @@ async def handle_edited_business_message(message):
         "log_message_id": log_message_id,
         "topic_id": topic_id,
     }
-    
+    # ================== DELETED BUSINESS MESSAGES ==================
+
+@dp.deleted_business_messages()
+async def handle_deleted_business_messages(message):
+    logger.info(
+        "BUSINESS MESSAGES DELETED | connection=%s | chat=%s | messages=%s",
+        message.business_connection_id,
+        message.chat.id,
+        message.message_ids,
+    )
     
 # ================== WEBHOOK ==================
 
