@@ -258,7 +258,8 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         await callback.message.edit_text(
             "👑 АДМИН-ПАНЕЛЬ\n\n"
-            "Выберите раздел:",
+            "Добро пожаловать в панель управления Kusuo Saiki.\n\n"
+            "Здесь находятся все административные функции."
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
