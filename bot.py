@@ -117,26 +117,34 @@ async def start_command(message):
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
 
-    # ================== CALLBACK CONFIRM ==================
+        # ================== CALLBACK CONFIRM ==================
 
-    try:
-        await callback.answer()
-    except Exception as e:
-        logger.warning(
-            "CALLBACK ANSWER ERROR | data=%s | error=%s",
-            callback.data,
-            e,
-        )
+    if callback.data != "instruction":
+
+        try:
+            await callback.answer()
+        except Exception as e:
+            logger.warning(
+                "CALLBACK ANSWER ERROR | data=%s | error=%s",
+                callback.data,
+                e,
+            )
 
     if callback.data == "instruction":
 
-        await callback.answer(
-            "📖 ИНСТРУКЦИЯ\n\n"
-            "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
-            "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
-            "3. Добавьте бота @KusuoSaikibot.",
-            show_alert=True,
-        )
+        try:
+            await callback.answer(
+                "📖 ИНСТРУКЦИЯ\n\n"
+                "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
+                "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
+                "3. Добавьте бота @KusuoSaikibot.",
+                show_alert=True,
+            )
+        except Exception as e:
+            logger.warning(
+                "INSTRUCTION CALLBACK ERROR | error=%s",
+                e,
+            )
 
         return
 
