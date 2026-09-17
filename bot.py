@@ -133,7 +133,24 @@ async def d1_query(sql: str, params=None):
         )
 
     return data
-    
+
+
+# ================== D1 TEST ==================
+
+async def test_d1():
+    try:
+        result = await d1_query("SELECT 1 AS test")
+
+        logger.info(
+            "D1 CONNECTION SUCCESS | result=%s",
+            result,
+        )
+
+    except Exception as e:
+        logger.exception(
+            "D1 CONNECTION ERROR | %s",
+            e,
+        )
     
 # ================== LOG CHAT ID ==================
 
@@ -1106,6 +1123,7 @@ async def telegram_webhook(request: Request):
 async def startup():
     logger.info("STARTUP: BEFORE DATABASE")
 
+    await init_db()
     await init_db()
 
     logger.info("STARTUP: AFTER DATABASE")
