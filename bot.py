@@ -202,17 +202,36 @@ async def show_required_subscription_screen(
         ]
     )
 
-    await message.edit_text(
+    text = (
         "📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА\n\n"
         "Чтобы пользоваться Kusuo Saiki, "
         "необходимо подписаться на следующие "
         "группы или каналы:\n\n"
         "После подписки нажмите "
-        "«🔄 ПРОВЕРИТЬ ПОДПИСКУ».",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=keyboard
-        ),
+        "«🔄 ПРОВЕРИТЬ ПОДПИСКУ»."
     )
+
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+
+    # ================== MESSAGE FROM USER ==================
+
+    if message.from_user is not None:
+
+        await message.answer(
+            text,
+            reply_markup=markup,
+        )
+
+    # ================== MESSAGE FROM BOT ==================
+
+    else:
+
+        await message.edit_text(
+            text,
+            reply_markup=markup,
+        )
 
     return True
 
@@ -264,42 +283,6 @@ async def start_command(message):
         "сообщениями вашего Telegram Business.",
         reply_markup=main_menu_keyboard(),
     )
-
-    # ================== OWNER ==================
-
-    if message.from_user.id == OWNER_ID:
-
-        await message.answer(
-            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
-            "Умный помощник для управления "
-            "сообщениями вашего Telegram Business.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="👑 АДМИН",
-                            callback_data="admin_panel",
-                        ),
-                        InlineKeyboardButton(
-                            text="👤 ПОЛЬЗОВАТЕЛЬ",
-                            callback_data="user_mode",
-                        ),
-                    ]
-                ]
-            ),
-        )
-
-        return
-
-    # ================== USER ==================
-
-    await message.answer(
-        "👋 Добро пожаловать в Kusuo Saiki!\n\n"
-        "Умный помощник для управления "
-        "сообщениями вашего Telegram Business.",
-        reply_markup=main_menu_keyboard(),
-    )
-
 # ================== UI CALLBACKS ==================
 
 @dp.callback_query()
