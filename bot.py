@@ -85,11 +85,96 @@ async def start_command(message):
     )
 
 
+# ================== UI CALLBACKS ==================
+
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
     await callback.answer()
 
+    # ================== CHECK BUSINESS CONNECTION ==================
+
+    async def is_business_connected(user_id):
+        if db_pool is None:
+            return False
+
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT telegram_user_id
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                user_id,
+            )
+
+        return row is not None
+
+    # ================== START SCREEN ==================
+
+    async def show_start_screen():
+        await callback.message.edit_text(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.\n\n"
+            "Подключите бота к Telegram Business, "
+            "чтобы открыть все функции.",
+            reply_markup=main_menu_keyboard(),
+        )
+
+    # ================== SETTINGS ==================
+
+    async def show_settings():
+        connected = await is_business_connected(
+            callback.from_user.id
+        )
+
+        if connected:
+            status_text = "🟢 Бот подключён"
+        else:
+            status_text = "🔴 Бот не подключён"
+
+        await callback.message.edit_text(
+            "⚙️ НАСТРОЙКИ\n\n"
+            "Статус подключения:\n"
+            f"{status_text}\n\n"
+            "Здесь вы можете управлять "
+            "подключением Kusuo Saiki.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⚙️ НАСТРОЙКИ АККАУНТА",
+                            callback_data="account_settings",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🔄 ПРОВЕРИТЬ ПОДКЛЮЧЕНИЕ",
+                            callback_data="check_connection",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="back_start",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+    # ================== MAIN MENU ==================
+
     if callback.data == "open_menu":
+
+        connected = await is_business_connected(
+            callback.from_user.id
+        )
+
+        if not connected:
+            await show_settings()
+            return
+
         await callback.message.edit_text(
             "📋 МЕНЮ\n\n"
             "Добро пожаловать в Kusuo Saiki!\n\n"
@@ -128,7 +213,10 @@ async def handle_ui_callback(callback: CallbackQuery):
             ),
         )
 
+    # ================== SUPPORT ==================
+
     elif callback.data == "support":
+
         await callback.message.edit_text(
             "🛟 ПОДДЕРЖКА\n\n"
             "Если у вас возникли проблемы "
@@ -138,7 +226,7 @@ async def handle_ui_callback(callback: CallbackQuery):
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            text="⬅️ Назад",
+                            text="⬅️ НАЗАД",
                             callback_data="back_start",
                         )
                     ]
@@ -146,31 +234,103 @@ async def handle_ui_callback(callback: CallbackQuery):
             ),
         )
 
+    # ================== SETTINGS ==================
+
     elif callback.data == "settings":
+
+        await show_settings()
+
+    # ================== ACCOUNT SETTINGS ==================
+
+    elif callback.data == "account_settings":
+
         await callback.message.edit_text(
-            "⚙️ НАСТРОЙКИ\n\n"
-            "Раздел настроек Kusuo Saiki.",
+            "⚙️ НАСТРОЙКИ АККАУНТА\n\n"
+            "Здесь будет управление подключением "
+            "Kusuo Saiki к Telegram Business.\n\n"
+            "Этот раздел будет использоваться "
+            "для подключения и управления аккаунтом.",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
                         InlineKeyboardButton(
-                            text="⬅️ Назад",
-                            callback_data="back_start",
+                            text="⬅️ НАЗАД",
+                            callback_data="settings",
                         )
                     ]
                 ]
             ),
         )
 
-    elif callback.data == "back_start":
-        await callback.message.edit_text(
-            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
-            "Умный помощник для управления "
-            "сообщениями вашего Telegram Business.\n\n"
-            "Подключите бота к Telegram Business, "
-            "чтобы открыть все функции.",
-            reply_markup=main_menu_keyboard(),
+    # ================== CHECK CONNECTION ==================
+
+    elif callback.data == "check_connection":
+
+        connected = await is_business_connected(
+            callback.from_user.id
         )
+
+        if connected:
+
+            await callback.message.edit_text(
+                "🟢 ПОДКЛЮЧЕНИЕ НАЙДЕНО\n\n"
+                "Kusuo Saiki успешно подключён "
+                "к Telegram Business.",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="📋 ОТКРЫТЬ МЕНЮ",
+                                callback_data="open_menu",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="back_start",
+                            )
+                        ],
+                    ]
+                ),
+            )
+
+        else:
+
+            await callback.message.edit_text(
+                "🔴 БОТ НЕ ПОДКЛЮЧЁН\n\n"
+                "Kusuo Saiki пока не подключён "
+                "к Telegram Business.\n\n"
+                "Подключите бота в настройках аккаунта, "
+                "а затем нажмите «Проверить подключение».",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="⚙️ НАСТРОЙКИ АККАУНТА",
+                                callback_data="account_settings",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                text="🔄 ПРОВЕРИТЬ ПОДКЛЮЧЕНИЕ",
+                                callback_data="check_connection",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ НАЗАД",
+                                callback_data="back_start",
+                            )
+                        ],
+                    ]
+                ),
+            )
+
+    # ================== BACK TO START ==================
+
+    elif callback.data == "back_start":
+
+        await show_start_screen()
         
         
 # ================== MESSAGE STORAGE ==================
