@@ -1535,8 +1535,6 @@ async def handle_deleted_business_messages(message):
                 e,
             )
 
-После замены сделай Commit и дождись успешного Deploy. Затем протестируем именно D1: отправим фото → подождём 90+ секунд → удалим → проверим DELETED MESSAGE FOUND IN D1 → DELETED PHOTO RESTORED FROM D1.
-            
             
 # ================== WEBHOOK ==================
 
