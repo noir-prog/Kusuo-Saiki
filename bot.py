@@ -2080,6 +2080,83 @@ async def handle_ui_callback(callback: CallbackQuery):
             await show_start_screen()
             
             
+# ================== SEARCH USERS FROM DATABASE ==================
+
+async def get_all_business_users_for_search():
+
+    if db_pool is None:
+        logger.error("DATABASE POOL IS NOT INITIALIZED")
+        return []
+
+    async with db_pool.acquire() as conn:
+
+        rows = await conn.fetch(
+            """
+            SELECT
+                telegram_user_id,
+                business_connection_id,
+                first_name,
+                last_name,
+                username
+            FROM business_accounts
+            ORDER BY created_at ASC
+            """
+        )
+
+    users = []
+
+    for row in rows:
+
+        name_parts = []
+
+        if row["first_name"]:
+            name_parts.append(row["first_name"])
+
+        if row["last_name"]:
+            name_parts.append(row["last_name"])
+
+        name = " ".join(name_parts).strip()
+
+        if not name:
+            name = "Без имени"
+
+        is_connected = False
+
+        try:
+
+            connection = await bot.get_business_connection(
+                row["business_connection_id"]
+            )
+
+            is_connected = connection.is_enabled
+
+        except Exception as e:
+
+            logger.warning(
+                "SEARCH USER CONNECTION CHECK ERROR | "
+                "user=%s | connection=%s | error=%s",
+                row["telegram_user_id"],
+                row["business_connection_id"],
+                e,
+            )
+
+        users.append(
+            {
+                "telegram_user_id": row["telegram_user_id"],
+                "name": name,
+                "username": row["username"] or "",
+                "is_connected": is_connected,
+            }
+        )
+
+    logger.info(
+        "SEARCH USERS | total=%s",
+        len(users),
+    )
+
+    return users
+    
+    
  # ================== USERS SEARCH HANDLER ==================
 
 @dp.message(
@@ -2107,7 +2184,7 @@ async def handle_users_search(message):
         message.from_user.id
     )
 
-    users = await get_all_business_users()
+    users = await get_all_business_users_for_search()
 
     search_lower = search_text.lower()
 
