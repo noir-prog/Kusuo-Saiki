@@ -6,8 +6,13 @@ import asyncpg
 
 from fastapi import FastAPI, Request
 from aiogram import Bot, Dispatcher
-from aiogram.types import Update, InlineKeyboardMarkup, InlineKeyboardButton
-
+from aiogram.filters import CommandStart
+from aiogram.types import (
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery,
+)
 
 # ================== SETTINGS ==================
 
@@ -43,6 +48,131 @@ dp = Dispatcher()
 app = FastAPI()
 
 
+# ================== USER INTERFACE ==================
+
+def main_menu_keyboard():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="📋 МЕНЮ",
+                    callback_data="open_menu",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🛟 Поддержка",
+                    callback_data="support",
+                ),
+                InlineKeyboardButton(
+                    text="⚙️ Настройки",
+                    callback_data="settings",
+                ),
+            ],
+        ]
+    )
+
+
+@dp.message(CommandStart())
+async def start_command(message):
+    await message.answer(
+        "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+        "Умный помощник для управления "
+        "сообщениями вашего Telegram Business.\n\n"
+        "Подключите бота к Telegram Business, "
+        "чтобы открыть все функции.",
+        reply_markup=main_menu_keyboard(),
+    )
+
+
+@dp.callback_query()
+async def handle_ui_callback(callback: CallbackQuery):
+    await callback.answer()
+
+    if callback.data == "open_menu":
+        await callback.message.edit_text(
+            "📋 МЕНЮ\n\n"
+            "Добро пожаловать в Kusuo Saiki!\n\n"
+            "Выберите действие:",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📨 Сообщения",
+                            callback_data="menu_messages",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🗑 Удалённые",
+                            callback_data="menu_deleted",
+                        ),
+                        InlineKeyboardButton(
+                            text="✏️ Изменённые",
+                            callback_data="menu_edited",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="👤 Мой аккаунт",
+                            callback_data="menu_account",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⚙️ Настройки",
+                            callback_data="settings",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+    elif callback.data == "support":
+        await callback.message.edit_text(
+            "🛟 ПОДДЕРЖКА\n\n"
+            "Если у вас возникли проблемы "
+            "или есть вопросы по работе Kusuo Saiki,\n"
+            "обратитесь в поддержку.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ Назад",
+                            callback_data="back_start",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+    elif callback.data == "settings":
+        await callback.message.edit_text(
+            "⚙️ НАСТРОЙКИ\n\n"
+            "Раздел настроек Kusuo Saiki.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ Назад",
+                            callback_data="back_start",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+    elif callback.data == "back_start":
+        await callback.message.edit_text(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.\n\n"
+            "Подключите бота к Telegram Business, "
+            "чтобы открыть все функции.",
+            reply_markup=main_menu_keyboard(),
+        )
+        
+        
 # ================== MESSAGE STORAGE ==================
 
 message_history = {}
