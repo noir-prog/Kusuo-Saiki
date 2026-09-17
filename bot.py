@@ -742,6 +742,53 @@ async def handle_business_connection(connection):
                 business_connection_id,
             )
 
+    # ================== CONNECTION MESSAGE ==================
+
+    try:
+
+        if connection.is_enabled:
+
+            await bot.send_message(
+                chat_id=user.id,
+                text=(
+                    "🎉 УРА! У ВАС ВСЁ ПОЛУЧИЛОСЬ!\n\n"
+                    "Kusuo Saiki успешно подключён "
+                    "к вашему Telegram Business.\n\n"
+                    "Теперь вы можете пользоваться "
+                    "всеми возможностями бота."
+                ),
+            )
+
+            logger.info(
+                "CONNECTION SUCCESS MESSAGE SENT | user=%s",
+                user.id,
+            )
+
+        else:
+
+            await bot.send_message(
+                chat_id=user.id,
+                text=(
+                    "😢 КАК ЖАЛЬ, ЧТО ВЫ УШЛИ...\n\n"
+                    "Kusuo Saiki больше не подключён "
+                    "к вашему Telegram Business.\n\n"
+                    "Если захотите вернуться — мы будем ждать вас ❤️"
+                ),
+            )
+
+            logger.info(
+                "DISCONNECTION MESSAGE SENT | user=%s",
+                user.id,
+            )
+
+    except Exception as e:
+
+        logger.exception(
+            "CONNECTION MESSAGE ERROR | user=%s | error=%s",
+            user.id,
+            e,
+        )
+
     # ================== CHECK DATABASE ==================
 
     if db_pool is None:
