@@ -2174,32 +2174,87 @@ async def handle_users_search(message):
 
     search_text = (message.text or "").strip()
 
+    logger.info(
+        "USER SEARCH REQUEST | user=%s | text=%r",
+        message.from_user.id,
+        search_text,
+    )
+
     if not search_text:
+
         await message.answer(
             "🔎 Введите имя, фамилию или username пользователя."
         )
+
         return
+
+    # ================== NORMALIZE SEARCH ==================
+
+    search_lower = search_text.lower().strip()
+
+    # Убираем @ перед username
+    search_username = search_lower.lstrip("@")
 
     users_search_waiting.discard(
         message.from_user.id
     )
 
-    users = await get_all_business_users_for_search()
+    # ================== GET USERS ==================
 
-    search_lower = search_text.lower()
+    try:
+
+        users = await get_all_business_users_for_search()
+
+        logger.info(
+            "USER SEARCH DATA | total=%s",
+            len(users),
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "USER SEARCH DATABASE ERROR | error=%s",
+            e,
+        )
+
+        await message.answer(
+            "❌ Не удалось выполнить поиск.\n\n"
+            "Попробуйте ещё раз."
+        )
+
+        return
+
+    # ================== SEARCH ==================
 
     found_users = []
 
     for user in users:
 
-        name = user["name"] or ""
-        username = user["username"] or ""
+        name = (user["name"] or "").strip()
+        username = (user["username"] or "").strip()
+
+        name_lower = name.lower()
+        username_lower = username.lower().lstrip("@")
+
+        logger.info(
+            "USER SEARCH CHECK | name=%r | username=%r",
+            name,
+            username,
+        )
 
         if (
-            search_lower in name.lower()
-            or search_lower in username.lower()
+            search_lower in name_lower
+            or search_username in username_lower
         ):
             found_users.append(user)
+
+    logger.info(
+        "USER SEARCH RESULT | query=%r | found=%s",
+        search_text,
+        len(found_users),
+    )
+
+    # ================== KEYBOARD ==================
 
     keyboard = []
 
@@ -2240,6 +2295,8 @@ async def handle_users_search(message):
         ]
     )
 
+    # ================== SHOW RESULT ==================
+
     if found_users:
 
         await message.answer(
@@ -2255,7 +2312,9 @@ async def handle_users_search(message):
 
         await message.answer(
             "🔎 РЕЗУЛЬТАТЫ ПОИСКА\n\n"
-            "❌ Пользователи не найдены.",
+            f"По запросу «{search_text}» "
+            "пользователи не найдены.\n\n"
+            "Проверьте имя, фамилию или username.",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=keyboard
             ),
