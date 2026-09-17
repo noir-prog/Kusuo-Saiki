@@ -151,7 +151,122 @@ async def test_d1():
             "D1 CONNECTION ERROR | %s",
             e,
         )
-    
+    # ================== D1 MESSAGE BATCHING ==================
+
+import asyncio
+import json
+import time
+
+MESSAGE_BATCH_SIZE = 100
+MESSAGE_BATCH_TIMEOUT = 90
+
+d1_message_batches = {}
+d1_batch_tasks = {}
+
+
+async def flush_d1_batch(batch_key):
+    batch = d1_message_batches.get(batch_key)
+
+    if not batch:
+        return
+
+    business_connection_id, chat_id = batch_key
+
+    messages = batch["messages"]
+
+    batch_id = f"{business_connection_id}_{chat_id}_{int(time.time())}"
+
+    messages_json = json.dumps(
+        messages,
+        ensure_ascii=False,
+    )
+
+    await d1_query(
+        """
+        INSERT INTO message_batches (
+            business_connection_id,
+            chat_id,
+            batch_id,
+            messages_json
+        )
+        VALUES (?, ?, ?, ?)
+        """,
+        [
+            business_connection_id,
+            chat_id,
+            batch_id,
+            messages_json,
+        ],
+    )
+
+    logger.info(
+        "D1 BATCH SAVED | connection=%s | chat=%s | messages=%s",
+        business_connection_id,
+        chat_id,
+        len(messages),
+    )
+
+    d1_message_batches.pop(batch_key, None)
+
+    task = d1_batch_tasks.pop(batch_key, None)
+
+    if task and not task.done():
+        task.cancel()
+
+
+async def d1_batch_timeout(batch_key):
+    await asyncio.sleep(MESSAGE_BATCH_TIMEOUT)
+
+    if batch_key in d1_message_batches:
+        try:
+            await flush_d1_batch(batch_key)
+
+        except Exception:
+            logger.exception(
+                "D1 BATCH TIMEOUT FLUSH ERROR | key=%s",
+                batch_key,
+            )
+
+
+async def add_message_to_d1_batch(
+    business_connection_id,
+    chat_id,
+    message_data,
+):
+    batch_key = (
+        business_connection_id,
+        chat_id,
+    )
+
+    if batch_key not in d1_message_batches:
+        d1_message_batches[batch_key] = {
+            "messages": [],
+            "created_at": time.time(),
+        }
+
+        d1_batch_tasks[batch_key] = asyncio.create_task(
+            d1_batch_timeout(batch_key)
+        )
+
+    d1_message_batches[batch_key]["messages"].append(
+        message_data
+    )
+
+    batch_size = len(
+        d1_message_batches[batch_key]["messages"]
+    )
+
+    logger.info(
+        "D1 BATCH ADD | connection=%s | chat=%s | size=%s",
+        business_connection_id,
+        chat_id,
+        batch_size,
+    )
+
+    if batch_size >= MESSAGE_BATCH_SIZE:
+        await flush_d1_batch(batch_key)
+        
+        
 # ================== LOG CHAT ID ==================
 
 @dp.message()
@@ -795,6 +910,18 @@ async def handle_business_message(message):
                 "log_message_id": sent_message.message_id,
                 "topic_id": topic_id,
             }
+
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "text",
+                    "file_id": None,
+                    "text_content": message.text,
+                },
+            )
 
                 # ================== PHOTO ==================
 
