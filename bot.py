@@ -1393,7 +1393,7 @@ async def handle_deleted_business_messages(message):
                     ram_data = item
                     break
 
-        if ram_data:
+                if ram_data:
             logger.info(
                 "DELETED MESSAGE FOUND IN RAM | "
                 "connection=%s | chat=%s | message=%s | data=%s",
@@ -1402,6 +1402,36 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 ram_data,
             )
+
+            if ram_data.get("message_type") == "photo":
+                try:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=ram_data["file_id"],
+                        business_connection_id=message.business_connection_id,
+                        caption=(
+                            "♻️ УДАЛЁННОЕ ФОТО ВОССТАНОВЛЕНО\n"
+                            f"🆔 Message ID: {deleted_message_id}"
+                        ),
+                    )
+
+                    logger.info(
+                        "DELETED PHOTO RESTORED FROM RAM | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                except Exception as e:
+                    logger.exception(
+                        "DELETED PHOTO RESTORE ERROR FROM RAM | "
+                        "connection=%s | chat=%s | message=%s | error=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        e,
+                    )
 
             continue
 
