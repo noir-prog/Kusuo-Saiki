@@ -476,44 +476,15 @@ async def handle_ui_callback(callback: CallbackQuery):
             show_alert=True,
         )
 
-        # ================== OPEN MAIN MENU ==================
+           # ================== OPEN WELCOME SCREEN ==================
 
         await callback.message.edit_text(
-            "📋 МЕНЮ\n\n"
-            "Добро пожаловать в Kusuo Saiki!\n\n"
-            "Выберите действие:",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="📨 Сообщения",
-                            callback_data="menu_messages",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="🗑 Удалённые",
-                            callback_data="menu_deleted",
-                        ),
-                        InlineKeyboardButton(
-                            text="✏️ Изменённые",
-                            callback_data="menu_edited",
-                        ),
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="👤 Мой аккаунт",
-                            callback_data="menu_account",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="⚙️ Настройки",
-                            callback_data="settings",
-                        )
-                    ],
-                ]
-            ),
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.\n\n"
+            "Подключите бота к Telegram Business, "
+            "чтобы открыть все функции.",
+            reply_markup=main_menu_keyboard(),
         )
 
         return
