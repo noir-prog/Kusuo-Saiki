@@ -926,7 +926,7 @@ async def handle_business_message(message):
                 # ================== PHOTO ==================
 
         elif message.photo:
-            await bot.send_photo(
+            sent_message = await bot.send_photo(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 photo=message.photo[-1].file_id,
@@ -940,6 +940,18 @@ async def handle_business_message(message):
                     )
                 ),
                 reply_markup=profile_keyboard,
+            )
+
+            await add_message_to_d1_batch(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "message_type": "photo",
+                    "file_id": message.photo[-1].file_id,
+                    "text_content": message.caption,
+                },
             )
 
                 # ================== VIDEO ==================
