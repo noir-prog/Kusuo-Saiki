@@ -263,31 +263,38 @@ async def handle_ui_callback(callback: CallbackQuery):
             ),
         )
 
-    # ================== SUPPORT ==================
-
+        # ================== SUPPORT ==================
+        
     elif callback.data == "support":
-
+        
         await callback.message.edit_text(
             "🛟 ПОДДЕРЖКА\n\n"
-            "Если у вас возникли проблемы "
-            "или есть вопросы по работе Kusuo Saiki,\n"
-            "обратитесь в поддержку.",
+            "Если у вас возникли вопросы или проблемы "
+            "с Kusuo Saiki — наша поддержка всегда готова помочь.\n\n"
+            "Нажмите кнопку ниже, чтобы обратиться в поддержку.",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="💬 ОБРАТИТЬСЯ В ПОДДЕРЖКУ",
+                            url="https://t.me/kusuosaiki290?direct",
+                        )
+                    ],
                     [
                         InlineKeyboardButton(
                             text="⬅️ НАЗАД",
                             callback_data="back_start",
                         )
-                    ]
+                    ],
                 ]
             ),
         )
-
+        
+        
     # ================== SETTINGS ==================
-
+    
     elif callback.data == "settings":
-
+        
         await show_settings()
 
         # ================== CHECK CONNECTION ==================
