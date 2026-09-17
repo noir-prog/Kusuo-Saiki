@@ -1010,7 +1010,7 @@ async def handle_ui_callback(callback: CallbackQuery):
             else "🔴 Отключён"
         )
 
-        # ================== USER MENU ==================
+                # ================== USER MENU ==================
 
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -1024,37 +1024,29 @@ async def handle_ui_callback(callback: CallbackQuery):
                 ],
                 [
                     InlineKeyboardButton(
-                        text="🔌 ПОДКЛЮЧЕНИЕ",
+                        text="🔌 BUSINESS",
                         callback_data=(
-                            f"user_connection:{target_user_id}"
+                            f"user_business:{target_user_id}"
                         ),
-                    )
-                ],
-                [
+                    ),
                     InlineKeyboardButton(
-                        text="📢 ПОДПИСКА",
+                        text="📢 ОБЯЗАТЕЛЬНЫЕ ПОДПИСКИ",
                         callback_data=(
                             f"user_subscription:{target_user_id}"
                         ),
-                    )
+                    ),
                 ],
                 [
                     InlineKeyboardButton(
-                        text="🏪 МАГАЗИН",
+                        text="🛠 ДЕЙСТВИЯ",
                         callback_data=(
-                            f"user_shop:{target_user_id}"
+                            f"user_actions:{target_user_id}"
                         ),
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        text="⬅️ К РЕЗУЛЬТАТАМ ПОИСКА",
-                        callback_data="users_search",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="⬅️ К ПОЛЬЗОВАТЕЛЯМ",
+                        text="⬅️ НАЗАД",
                         callback_data="admin_users",
                     )
                 ],
