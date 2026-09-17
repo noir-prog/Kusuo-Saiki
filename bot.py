@@ -2,6 +2,7 @@
 
 import os
 import logging
+from datetime import datetime, timezone
 import asyncpg
 
 from fastapi import FastAPI, Request
@@ -3058,6 +3059,87 @@ async def init_db():
         """)
 
     logger.info("DATABASE INITIALIZED")
+    
+    
+# ================== ACCESS CONTROL ==================
+
+async def get_user_access_status(user_id):
+
+    if db_pool is None:
+
+        logger.error(
+            "ACCESS CHECK | DATABASE POOL IS NOT INITIALIZED"
+        )
+
+        return {
+            "blocked": False,
+            "free_access": False,
+            "trial_active": False,
+            "subscription_active": False,
+            "has_access": False,
+        }
+
+    async with db_pool.acquire() as conn:
+
+        user = await conn.fetchrow(
+            """
+            SELECT
+                blocked,
+                free_access,
+                trial_until,
+                subscription_until
+            FROM business_accounts
+            WHERE telegram_user_id = $1
+            """,
+            user_id,
+        )
+
+    if not user:
+
+        return {
+            "blocked": False,
+            "free_access": False,
+            "trial_active": False,
+            "subscription_active": False,
+            "has_access": False,
+        }
+
+    now = datetime.now(timezone.utc)
+
+    blocked = bool(
+        user["blocked"]
+    )
+
+    free_access = bool(
+        user["free_access"]
+    )
+
+    trial_active = (
+        user["trial_until"] is not None
+        and user["trial_until"] > now
+    )
+
+    subscription_active = (
+        user["subscription_until"] is not None
+        and user["subscription_until"] > now
+    )
+
+    has_access = (
+        not blocked
+        and (
+            free_access
+            or subscription_active
+            or trial_active
+        )
+    )
+
+    return {
+        "blocked": blocked,
+        "free_access": free_access,
+        "trial_active": trial_active,
+        "subscription_active": subscription_active,
+        "has_access": has_access,
+    }
     
 
 # ================== CLOUDFLARE D1 ==================
