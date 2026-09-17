@@ -3883,7 +3883,7 @@ async def handle_business_message(message):
 
             business_topics[message.business_connection_id] = topic_id
 
-            async with db_pool.acquire() as conn:
+                        async with db_pool.acquire() as conn:
                 await conn.execute(
                     """
                     INSERT INTO business_accounts (
@@ -3892,9 +3892,18 @@ async def handle_business_message(message):
                         topic_id,
                         first_name,
                         last_name,
-                        username
+                        username,
+                        trial_until
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        NOW() + INTERVAL '7 days'
+                    )
                     ON CONFLICT (telegram_user_id)
                     DO UPDATE SET
                         business_connection_id = EXCLUDED.business_connection_id,
