@@ -1256,6 +1256,16 @@ async def handle_business_message(message):
                     "text_content": None,
                 },
             )
+
+        logger.info(
+            "LOG SAVED | connection=%s | topic=%s | original_message=%s",
+            message.business_connection_id,
+            topic_id,
+            message.message_id,
+        )
+
+    except Exception as e:
+        logger.exception("LOG SAVE ERROR: %s")
 # ================== EDITED BUSINESS MESSAGES ==================
 
 @dp.edited_business_message()
