@@ -1363,7 +1363,7 @@ async def handle_edited_business_message(message):
         "log_message_id": log_message_id,
         "topic_id": topic_id,
     }
-    # ================== DELETED BUSINESS MESSAGES ==================
+ # ================== DELETED BUSINESS MESSAGES ==================
 
 @dp.deleted_business_messages()
 async def handle_deleted_business_messages(message):
@@ -1373,7 +1373,85 @@ async def handle_deleted_business_messages(message):
         message.chat.id,
         message.message_ids,
     )
-    
+
+    for deleted_message_id in message.message_ids:
+        try:
+            result = await d1_query(
+                """
+                SELECT
+                    business_connection_id,
+                    chat_id,
+                    batch_id,
+                    messages_json
+                FROM message_batches
+                WHERE business_connection_id = ?
+                  AND chat_id = ?
+                  AND EXISTS (
+                      SELECT 1
+                      FROM json_each(messages_json)
+                      WHERE json_extract(value, '$.message_id') = ?
+                  )
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                [
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                ],
+            )
+
+            results = result["result"][0]["results"]
+
+            if not results:
+                logger.warning(
+                    "DELETED MESSAGE NOT FOUND IN D1 | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+                continue
+
+            row = results[0]
+
+            messages = json.loads(row["messages_json"])
+
+            deleted_data = None
+
+            for item in messages:
+                if item.get("message_id") == deleted_message_id:
+                    deleted_data = item
+                    break
+
+            if deleted_data is None:
+                logger.warning(
+                    "DELETED MESSAGE DATA NOT FOUND | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+                continue
+
+            logger.info(
+                "DELETED MESSAGE FOUND IN D1 | "
+                "connection=%s | chat=%s | message=%s | data=%s",
+                message.business_connection_id,
+                message.chat.id,
+                deleted_message_id,
+                deleted_data,
+            )
+
+        except Exception as e:
+            logger.exception(
+                "DELETED MESSAGE D1 SEARCH ERROR | "
+                "connection=%s | chat=%s | message=%s | error=%s",
+                message.business_connection_id,
+                message.chat.id,
+                deleted_message_id,
+                e,
+            )
 # ================== WEBHOOK ==================
 
 @app.get("/")
