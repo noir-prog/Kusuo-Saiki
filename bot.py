@@ -91,7 +91,7 @@ async def start_command(message):
 async def handle_ui_callback(callback: CallbackQuery):
     await callback.answer()
 
-        # ================== CHECK BUSINESS CONNECTION ==================
+    # ================== CHECK BUSINESS CONNECTION ==================
 
     async def is_business_connected(user_id):
         if db_pool is None:
@@ -150,47 +150,47 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     # ================== SETTINGS ==================
 
-async def show_settings():
-    connected = await is_business_connected(
-        callback.from_user.id
-    )
+    async def show_settings():
+        connected = await is_business_connected(
+            callback.from_user.id
+        )
 
-    if connected:
-        status_text = "🟢 Бот подключён"
-    else:
-        status_text = "🔴 Бот не подключён"
+        if connected:
+            status_text = "🟢 Бот подключён"
+        else:
+            status_text = "🔴 Бот не подключён"
 
-    await callback.message.edit_text(
-        "⚙️ НАСТРОЙКИ\n\n"
-        "Статус подключения:\n"
-        f"{status_text}",
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="📖 ИНСТРУКЦИЯ",
-                        callback_data="instruction",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="⚙️ НАСТРОЙКИ АККАУНТА",
-                        url="tg://settings/edit",
-                    ),
-                    InlineKeyboardButton(
-                        text="🔄 ПРОВЕРИТЬ",
-                        callback_data="check_connection",
-                    ),
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="⬅️ НАЗАД",
-                        callback_data="back_start",
-                    )
-                ],
-            ]
-        ),
-    )
+        await callback.message.edit_text(
+            "⚙️ НАСТРОЙКИ\n\n"
+            "Статус подключения:\n"
+            f"{status_text}",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📖 ИНСТРУКЦИЯ",
+                            callback_data="instruction",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⚙️ НАСТРОЙКИ АККАУНТА",
+                            url="tg://settings/edit",
+                        ),
+                        InlineKeyboardButton(
+                            text="🔄 ПРОВЕРИТЬ",
+                            callback_data="check_connection",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="back_start",
+                        )
+                    ],
+                ]
+            ),
+        )
 
     # ================== MAIN MENU ==================
 
@@ -269,28 +269,6 @@ async def show_settings():
 
         await show_settings()
 
-    # ================== ACCOUNT SETTINGS ==================
-
-    elif callback.data == "account_settings":
-
-        await callback.message.edit_text(
-            "⚙️ НАСТРОЙКИ АККАУНТА\n\n"
-            "Здесь будет управление подключением "
-            "Kusuo Saiki к Telegram Business.\n\n"
-            "Этот раздел будет использоваться "
-            "для подключения и управления аккаунтом.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="⬅️ НАЗАД",
-                            callback_data="settings",
-                        )
-                    ]
-                ]
-            ),
-        )
-
     # ================== CHECK CONNECTION ==================
 
     elif callback.data == "check_connection":
@@ -341,7 +319,7 @@ async def show_settings():
                         ],
                         [
                             InlineKeyboardButton(
-                                text="🔄 ПРОВЕРИТЬ ПОДКЛЮЧЕНИЕ",
+                                text="🔄 ПРОВЕРИТЬ",
                                 callback_data="check_connection",
                             )
                         ],
@@ -355,12 +333,31 @@ async def show_settings():
                 ),
             )
 
+    # ================== INSTRUCTION ==================
+
+    elif callback.data == "instruction":
+
+        await callback.message.edit_text(
+            "📖 ИНСТРУКЦИЯ\n\n"
+            "Здесь будет инструкция по работе "
+            "с Kusuo Saiki.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="settings",
+                        )
+                    ]
+                ]
+            ),
+        )
+
     # ================== BACK TO START ==================
 
     elif callback.data == "back_start":
 
         await show_start_screen()
-        
         
 # ================== MESSAGE STORAGE ==================
 
