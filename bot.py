@@ -664,6 +664,10 @@ async def handle_ui_callback(callback: CallbackQuery):
         if callback.from_user.id != OWNER_ID:
             return
 
+        users_search_waiting.discard(
+            callback.from_user.id
+        )
+
         users = await get_all_business_users()
 
         # ================== EMPTY LIST ==================
@@ -2074,7 +2078,113 @@ async def handle_ui_callback(callback: CallbackQuery):
         else:
 
             await show_start_screen()
-        
+            
+            
+ # ================== USERS SEARCH HANDLER ==================
+
+@dp.message(
+    lambda message:
+        message.from_user
+        and message.from_user.id in users_search_waiting
+)
+async def handle_users_search(message):
+
+    if message.from_user.id != OWNER_ID:
+        users_search_waiting.discard(
+            message.from_user.id
+        )
+        return
+
+    search_text = (message.text or "").strip()
+
+    if not search_text:
+        await message.answer(
+            "🔎 Введите имя, фамилию или username пользователя."
+        )
+        return
+
+    users_search_waiting.discard(
+        message.from_user.id
+    )
+
+    users = await get_all_business_users()
+
+    search_lower = search_text.lower()
+
+    found_users = []
+
+    for user in users:
+
+        name = user["name"] or ""
+        username = user["username"] or ""
+
+        if (
+            search_lower in name.lower()
+            or search_lower in username.lower()
+        ):
+            found_users.append(user)
+
+    keyboard = []
+
+    for user in found_users:
+
+        status = (
+            "✅"
+            if user["is_connected"]
+            else "❌"
+        )
+
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text=f"{status} {user['name']}",
+                    callback_data=(
+                        f"user_manage:{user['telegram_user_id']}"
+                    ),
+                )
+            ]
+        )
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text="🔎 НОВЫЙ ПОИСК",
+                callback_data="users_search",
+            )
+        ]
+    )
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text="⬅️ К ПОЛЬЗОВАТЕЛЯМ",
+                callback_data="admin_users",
+            )
+        ]
+    )
+
+    if found_users:
+
+        await message.answer(
+            "🔎 РЕЗУЛЬТАТЫ ПОИСКА\n\n"
+            f"Найдено пользователей: {len(found_users)}\n\n"
+            "Выберите пользователя:",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=keyboard
+            ),
+        )
+
+    else:
+
+        await message.answer(
+            "🔎 РЕЗУЛЬТАТЫ ПОИСКА\n\n"
+            "❌ Пользователи не найдены.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=keyboard
+            ),
+        )
+
+
 # ================== MESSAGE STORAGE ==================
 
 message_history = {}
