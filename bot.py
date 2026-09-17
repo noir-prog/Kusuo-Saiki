@@ -128,7 +128,7 @@ async def handle_ui_callback(callback: CallbackQuery):
             e,
         )
 
-        if callback.data == "instruction":
+    if callback.data == "instruction":
 
         await callback.answer(
             "📖 ИНСТРУКЦИЯ\n\n"
