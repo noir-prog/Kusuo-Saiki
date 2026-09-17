@@ -335,6 +335,40 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
         return
+        
+        
+            # ================== SUBSCRIPTION ADD ==================
+
+    elif callback.data == "subscription_add":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        subscription_add_waiting.add(
+            callback.from_user.id
+        )
+
+        await callback.message.edit_text(
+            "➕ ДОБАВЛЕНИЕ ПОДПИСКИ\n\n"
+            "Пришлите ссылку на группу или канал, "
+            "который пользователь должен будет "
+            "обязательно посетить.\n\n"
+            "Например:\n"
+            "https://t.me/example",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_subscription",
+                        )
+                    ]
+                ]
+            ),
+        )
+
+        return
+        
 
     # ================== OWNER USER MODE ==================
     
