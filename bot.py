@@ -1436,7 +1436,6 @@ async def handle_deleted_business_messages(message):
             continue
 
         # ================== SEARCH IN D1 ==================
-
         try:
             result = await d1_query(
                 """
@@ -1462,9 +1461,7 @@ async def handle_deleted_business_messages(message):
                     deleted_message_id,
                 ],
             )
-
             results = result["result"][0]["results"]
-
             if not results:
                 logger.warning(
                     "DELETED MESSAGE NOT FOUND | "
@@ -1474,20 +1471,15 @@ async def handle_deleted_business_messages(message):
                     deleted_message_id,
                 )
                 continue
-
             row = results[0]
-
             messages = json.loads(
                 row["messages_json"]
             )
-
             deleted_data = None
-
             for item in messages:
                 if item.get("message_id") == deleted_message_id:
                     deleted_data = item
                     break
-
             if deleted_data is None:
                 logger.warning(
                     "DELETED MESSAGE DATA NOT FOUND IN D1 | "
@@ -1497,7 +1489,6 @@ async def handle_deleted_business_messages(message):
                     deleted_message_id,
                 )
                 continue
-
             logger.info(
                 "DELETED MESSAGE FOUND IN D1 | "
                 "connection=%s | chat=%s | message=%s | data=%s",
@@ -1506,7 +1497,34 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 deleted_data,
             )
-
+            # ================== RESTORE PHOTO FROM D1 ==================
+            if deleted_data.get("message_type") == "photo":
+                try:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=deleted_data["file_id"],
+                        business_connection_id=message.business_connection_id,
+                        caption=(
+                            "♻️ УДАЛЁННОЕ ФОТО ВОССТАНОВЛЕНО\n"
+                            f"🆔 Message ID: {deleted_message_id}"
+                        ),
+                    )
+                    logger.info(
+                        "DELETED PHOTO RESTORED FROM D1 | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+                except Exception as e:
+                    logger.exception(
+                        "DELETED PHOTO RESTORE ERROR FROM D1 | "
+                        "connection=%s | chat=%s | message=%s | error=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        e,
+                    )
         except Exception as e:
             logger.exception(
                 "DELETED MESSAGE SEARCH ERROR | "
@@ -1516,6 +1534,8 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 e,
             )
+
+После замены сделай Commit и дождись успешного Deploy. Затем протестируем именно D1: отправим фото → подождём 90+ секунд → удалим → проверим DELETED MESSAGE FOUND IN D1 → DELETED PHOTO RESTORED FROM D1.
             
             
 # ================== WEBHOOK ==================
