@@ -455,6 +455,33 @@ async def handle_ui_callback(callback: CallbackQuery):
                 )
 
 
+        # ================== ADMIN START ==================
+
+    elif callback.data == "admin_start":
+
+        await callback.message.edit_text(
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="👑 АДМИН",
+                            callback_data="admin_panel",
+                        ),
+                        InlineKeyboardButton(
+                            text="👤 ПОЛЬЗОВАТЕЛЬ",
+                            callback_data="user_mode",
+                        ),
+                    ]
+                ]
+            ),
+        )
+
+        return
+        
+        
         # ================== BACK TO START ==================
 
     elif callback.data == "back_start":
