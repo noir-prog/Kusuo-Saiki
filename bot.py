@@ -1070,6 +1070,213 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
 
 
+    # ================== USER SUBSCRIPTION ==================
+
+    elif callback.data.startswith("user_subscription:"):
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        try:
+
+            target_user_id = int(
+                callback.data.split(":", 1)[1]
+            )
+
+        except (ValueError, IndexError):
+
+            await callback.answer(
+                "❌ Некорректный пользователь.",
+                show_alert=True,
+            )
+
+            return
+
+        if db_pool is None:
+
+            await callback.answer(
+                "❌ База данных недоступна.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== USER ==================
+
+        async with db_pool.acquire() as conn:
+
+            user = await conn.fetchrow(
+                """
+                SELECT
+                    telegram_user_id,
+                    first_name,
+                    last_name
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                target_user_id,
+            )
+
+        if not user:
+
+            await callback.answer(
+                "❌ Пользователь не найден.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== REQUIRED SUBSCRIPTIONS ==================
+
+        subscriptions = await get_required_subscriptions()
+
+        # ================== USER NAME ==================
+
+        name_parts = []
+
+        if user["first_name"]:
+            name_parts.append(
+                user["first_name"]
+            )
+
+        if user["last_name"]:
+            name_parts.append(
+                user["last_name"]
+            )
+
+        user_name = " ".join(
+            name_parts
+        ).strip()
+
+        if not user_name:
+            user_name = "Без имени"
+
+        # ================== NO SUBSCRIPTIONS ==================
+
+        if not subscriptions:
+
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data=(
+                                f"user_manage:"
+                                f"{target_user_id}"
+                            ),
+                        )
+                    ]
+                ]
+            )
+
+            await callback.message.edit_text(
+                "📢 ОБЯЗАТЕЛЬНЫЕ ПОДПИСКИ\n\n"
+                f"Пользователь: {user_name}\n\n"
+                "Обязательных подписок пока нет.",
+                reply_markup=keyboard,
+            )
+
+            await callback.answer()
+
+            return
+
+        # ================== CHECK USER ==================
+
+        subscribed_count = 0
+        not_subscribed_count = 0
+
+        subscription_lines = []
+
+        for subscription in subscriptions:
+
+            chat_id = subscription["chat_id"]
+            title = subscription["title"]
+
+            try:
+
+                member = await bot.get_chat_member(
+                    chat_id=chat_id,
+                    user_id=target_user_id,
+                )
+
+                status = member.status
+
+                is_subscribed = status in (
+                    "creator",
+                    "administrator",
+                    "member",
+                )
+
+            except Exception as e:
+
+                logger.warning(
+                    "USER SUBSCRIPTION CHECK ERROR | "
+                    "user=%s | chat=%s | error=%s",
+                    target_user_id,
+                    chat_id,
+                    e,
+                )
+
+                is_subscribed = False
+
+            if is_subscribed:
+
+                subscribed_count += 1
+
+                subscription_lines.append(
+                    f"✅ {title}"
+                )
+
+            else:
+
+                not_subscribed_count += 1
+
+                subscription_lines.append(
+                    f"❌ {title}"
+                )
+
+        # ================== KEYBOARD ==================
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="🔄 ПРОВЕРИТЬ",
+                        callback_data=(
+                            f"user_subscription:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⬅️ НАЗАД",
+                        callback_data=(
+                            f"user_manage:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+            ]
+        )
+
+        # ================== SHOW SUBSCRIPTIONS ==================
+
+        await callback.message.edit_text(
+            "📢 ОБЯЗАТЕЛЬНЫЕ ПОДПИСКИ\n\n"
+            f"Пользователь: {user_name}\n\n"
+            + "\n".join(subscription_lines)
+            + "\n\n"
+            f"✅ Подписан: {subscribed_count}\n"
+            f"❌ Не подписан: {not_subscribed_count}",
+            reply_markup=keyboard,
+        )
+
+        await callback.answer()
+
+        return
+        
+        
     # ================== USER BUSINESS ==================
 
     elif callback.data.startswith("user_business:"):
