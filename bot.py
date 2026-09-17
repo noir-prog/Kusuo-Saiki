@@ -1364,6 +1364,7 @@ async def handle_edited_business_message(message):
         "topic_id": topic_id,
     }
 # ================== DELETED BUSINESS MESSAGES ==================
+
 @dp.deleted_business_messages()
 async def handle_deleted_business_messages(message):
     logger.info(
@@ -1372,15 +1373,21 @@ async def handle_deleted_business_messages(message):
         message.chat.id,
         message.message_ids,
     )
+
     # ================== GET BUSINESS OWNER ==================
+
     business_connection = await bot.get_business_connection(
         business_connection_id=message.business_connection_id
     )
+
     user = business_connection.user
+
     # ================== GET USER LOG TOPIC ==================
+
     topic_id = business_topics.get(
         message.business_connection_id
     )
+
     if topic_id is None and db_pool is not None:
         async with db_pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -1391,17 +1398,21 @@ async def handle_deleted_business_messages(message):
                 """,
                 user.id,
             )
+
         if row:
             topic_id = row["topic_id"]
+
             business_topics[
                 message.business_connection_id
             ] = topic_id
+
             logger.info(
                 "DELETED MESSAGE TOPIC LOADED FROM DATABASE | "
                 "user=%s | topic_id=%s",
                 user.id,
                 topic_id,
             )
+
     if topic_id is None:
         logger.error(
             "DELETED MESSAGE TOPIC NOT FOUND | "
@@ -1410,147 +1421,144 @@ async def handle_deleted_business_messages(message):
             user.id,
         )
         return
+
     # ================== PROCESS DELETED MESSAGES ==================
+
     for deleted_message_id in message.message_ids:
+
+        deleted_data = None
+
         # ================== SEARCH IN RAM ==================
-        ram_data = None
+
         batch_key = (
             message.business_connection_id,
             message.chat.id,
         )
+
         batch = d1_message_batches.get(batch_key)
+
         if batch:
             for item in batch["messages"]:
                 if item.get("message_id") == deleted_message_id:
-                    ram_data = item
+                    deleted_data = item
                     break
-        # ================== MESSAGE FOUND IN RAM ==================
-        if ram_data:
+
+        if deleted_data:
             logger.info(
                 "DELETED MESSAGE FOUND IN RAM | "
                 "connection=%s | chat=%s | message=%s | data=%s",
                 message.business_connection_id,
                 message.chat.id,
                 deleted_message_id,
-                ram_data,
+                deleted_data,
             )
-            # ================== LOG DELETION ==================
-            await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
-                text=(
-                    "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
-                    f"👤 {user.first_name} {user.last_name or ''}\n"
-                    f"🆔 User ID: {user.id}\n"
-                    f"💬 Chat ID: {message.chat.id}\n"
-                    f"🆔 Message ID: {deleted_message_id}\n"
-                    f"📦 Тип: {ram_data.get('message_type')}"
-                ),
-            )
-            # ================== RESTORE PHOTO TO LOG ==================
-            if ram_data.get("message_type") == "photo":
-                try:
-                    await bot.send_photo(
-                        chat_id=int(LOG_CHAT_ID),
-                        message_thread_id=topic_id,
-                        photo=ram_data["file_id"],
-                        caption=(
-                            "♻️ УДАЛЁННОЕ ФОТО\n"
-                            f"🆔 Message ID: {deleted_message_id}"
-                        ),
-                    )
-                    logger.info(
-                        "DELETED PHOTO RESTORED TO LOG FROM RAM | "
-                        "connection=%s | chat=%s | message=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                    )
-                except Exception as e:
-                    logger.exception(
-                        "DELETED PHOTO RESTORE TO LOG ERROR FROM RAM | "
-                        "connection=%s | chat=%s | message=%s | error=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                        e,
-                    )
-            continue
+
         # ================== SEARCH IN D1 ==================
-        try:
-            result = await d1_query(
-                """
-                SELECT
-                    business_connection_id,
-                    chat_id,
-                    batch_id,
-                    messages_json
-                FROM message_batches
-                WHERE business_connection_id = ?
-                  AND chat_id = ?
-                  AND EXISTS (
-                      SELECT 1
-                      FROM json_each(messages_json)
-                      WHERE json_extract(value, '$.message_id') = ?
-                  )
-                ORDER BY id DESC
-                LIMIT 1
-                """,
-                [
+
+        if deleted_data is None:
+            try:
+                result = await d1_query(
+                    """
+                    SELECT
+                        business_connection_id,
+                        chat_id,
+                        batch_id,
+                        messages_json
+                    FROM message_batches
+                    WHERE business_connection_id = ?
+                      AND chat_id = ?
+                      AND EXISTS (
+                          SELECT 1
+                          FROM json_each(messages_json)
+                          WHERE json_extract(value, '$.message_id') = ?
+                      )
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    [
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    ],
+                )
+
+                results = result["result"][0]["results"]
+
+                if results:
+                    row = results[0]
+
+                    messages = json.loads(
+                        row["messages_json"]
+                    )
+
+                    for item in messages:
+                        if item.get("message_id") == deleted_message_id:
+                            deleted_data = item
+                            break
+
+                if deleted_data:
+                    logger.info(
+                        "DELETED MESSAGE FOUND IN D1 | "
+                        "connection=%s | chat=%s | message=%s | data=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        deleted_data,
+                    )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED MESSAGE SEARCH ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
                     message.business_connection_id,
                     message.chat.id,
                     deleted_message_id,
-                ],
-            )
-            results = result["result"][0]["results"]
-            if not results:
-                logger.warning(
-                    "DELETED MESSAGE NOT FOUND | "
-                    "RAM + D1 | connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
+                    e,
                 )
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
-                        f"👤 {user.first_name} {user.last_name or ''}\n"
-                        f"🆔 User ID: {user.id}\n"
-                        f"💬 Chat ID: {message.chat.id}\n"
-                        f"🆔 Message ID: {deleted_message_id}\n\n"
-                        "⚠️ Данные сообщения не найдены."
-                    ),
-                )
-                continue
-            row = results[0]
-            messages = json.loads(
-                row["messages_json"]
-            )
-            deleted_data = None
-            for item in messages:
-                if item.get("message_id") == deleted_message_id:
-                    deleted_data = item
-                    break
-            if deleted_data is None:
-                logger.warning(
-                    "DELETED MESSAGE DATA NOT FOUND IN D1 | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
-                continue
-            logger.info(
-                "DELETED MESSAGE FOUND IN D1 | "
-                "connection=%s | chat=%s | message=%s | data=%s",
+
+        # ================== MESSAGE NOT FOUND ==================
+
+        if deleted_data is None:
+            logger.warning(
+                "DELETED MESSAGE NOT FOUND | "
+                "RAM + D1 | connection=%s | chat=%s | message=%s",
                 message.business_connection_id,
                 message.chat.id,
                 deleted_message_id,
-                deleted_data,
             )
-            # ================== LOG DELETION ==================
+
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    "🗑 СООБЩЕНИЕ УДАЛЕНО\n\n"
+                    f"👤 {user.first_name} {user.last_name or ''}\n"
+                    f"🆔 User ID: {user.id}\n"
+                    f"💬 Chat ID: {message.chat.id}\n"
+                    f"🆔 Message ID: {deleted_message_id}\n\n"
+                    "⚠️ Данные сообщения не найдены."
+                ),
+            )
+
+            continue
+
+        # ================== MESSAGE TYPE ==================
+
+        message_type = deleted_data.get(
+            "message_type"
+        )
+
+        text_content = deleted_data.get(
+            "text_content"
+        )
+
+        file_id = deleted_data.get(
+            "file_id"
+        )
+
+        # ================== LOG DELETION INFO ==================
+
+        try:
             await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
@@ -1560,45 +1568,413 @@ async def handle_deleted_business_messages(message):
                     f"🆔 User ID: {user.id}\n"
                     f"💬 Chat ID: {message.chat.id}\n"
                     f"🆔 Message ID: {deleted_message_id}\n"
-                    f"📦 Тип: {deleted_data.get('message_type')}"
+                    f"📦 Тип: {message_type}"
                 ),
             )
-            # ================== RESTORE PHOTO TO LOG FROM D1 ==================
-            if deleted_data.get("message_type") == "photo":
-                try:
-                    await bot.send_photo(
-                        chat_id=int(LOG_CHAT_ID),
-                        message_thread_id=topic_id,
-                        photo=deleted_data["file_id"],
-                        caption=(
-                            "♻️ УДАЛЁННОЕ ФОТО\n"
-                            f"🆔 Message ID: {deleted_message_id}"
-                        ),
-                    )
-                    logger.info(
-                        "DELETED PHOTO RESTORED TO LOG FROM D1 | "
-                        "connection=%s | chat=%s | message=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                    )
-                except Exception as e:
-                    logger.exception(
-                        "DELETED PHOTO RESTORE TO LOG ERROR FROM D1 | "
-                        "connection=%s | chat=%s | message=%s | error=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                        e,
-                    )
+
         except Exception as e:
             logger.exception(
-                "DELETED MESSAGE SEARCH ERROR | "
+                "DELETED MESSAGE LOG INFO ERROR | "
                 "connection=%s | chat=%s | message=%s | error=%s",
                 message.business_connection_id,
                 message.chat.id,
                 deleted_message_id,
                 e,
+            )
+
+        # ================== TEXT ==================
+
+        if message_type == "text":
+            try:
+                await bot.send_message(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    text=(
+                        "♻️ УДАЛЁННЫЙ ТЕКСТ\n\n"
+                        f"{text_content or '[пусто]'}"
+                    ),
+                )
+
+                logger.info(
+                    "DELETED TEXT RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED TEXT RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== PHOTO ==================
+
+        elif message_type == "photo":
+            try:
+                await bot.send_photo(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    photo=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ ФОТО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "DELETED PHOTO RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED PHOTO RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== VIDEO ==================
+
+        elif message_type == "video":
+            try:
+                await bot.send_video(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    video=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ ВИДЕО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "DELETED VIDEO RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED VIDEO RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== AUDIO ==================
+
+        elif message_type == "audio":
+            try:
+                await bot.send_audio(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    audio=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ АУДИО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "DELETED AUDIO RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED AUDIO RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== VOICE ==================
+
+        elif message_type == "voice":
+            try:
+                await bot.send_voice(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    voice=file_id,
+                )
+
+                logger.info(
+                    "DELETED VOICE RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED VOICE RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== DOCUMENT ==================
+
+        elif message_type == "document":
+            try:
+                await bot.send_document(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    document=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННЫЙ ДОКУМЕНТ"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "DELETED DOCUMENT RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED DOCUMENT RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== STICKER ==================
+
+        elif message_type == "sticker":
+            try:
+                await bot.send_sticker(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    sticker=file_id,
+                )
+
+                logger.info(
+                    "DELETED STICKER RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED STICKER RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== ANIMATION / GIF ==================
+
+        elif message_type == "animation":
+            try:
+                await bot.send_animation(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    animation=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННАЯ АНИМАЦИЯ"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+                logger.info(
+                    "DELETED ANIMATION RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED ANIMATION RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== VIDEO NOTE / CIRCLE ==================
+
+        elif message_type == "video_note":
+            try:
+                await bot.send_video_note(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    video_note=file_id,
+                )
+
+                logger.info(
+                    "DELETED VIDEO NOTE RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED VIDEO NOTE RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== LOCATION ==================
+
+        elif message_type == "location":
+            latitude = deleted_data.get(
+                "latitude"
+            )
+
+            longitude = deleted_data.get(
+                "longitude"
+            )
+
+            if latitude is not None and longitude is not None:
+                try:
+                    await bot.send_location(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        latitude=latitude,
+                        longitude=longitude,
+                    )
+
+                    logger.info(
+                        "DELETED LOCATION RESTORED TO LOG | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                except Exception as e:
+                    logger.exception(
+                        "DELETED LOCATION RESTORE ERROR | "
+                        "connection=%s | chat=%s | message=%s | error=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        e,
+                    )
+
+        # ================== CONTACT ==================
+
+        elif message_type == "contact":
+            try:
+                await bot.send_contact(
+                    chat_id=int(LOG_CHAT_ID),
+                    message_thread_id=topic_id,
+                    phone_number=deleted_data.get(
+                        "phone_number"
+                    ),
+                    first_name=deleted_data.get(
+                        "first_name"
+                    ),
+                    last_name=deleted_data.get(
+                        "last_name"
+                    ),
+                    vcard=deleted_data.get(
+                        "vcard"
+                    ),
+                )
+
+                logger.info(
+                    "DELETED CONTACT RESTORED TO LOG | "
+                    "connection=%s | chat=%s | message=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED CONTACT RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
+
+        # ================== UNKNOWN ==================
+
+        else:
+            logger.warning(
+                "DELETED MESSAGE TYPE NOT RESTORED | "
+                "connection=%s | chat=%s | message=%s | type=%s",
+                message.business_connection_id,
+                message.chat.id,
+                deleted_message_id,
+                message_type,
+            )
+
+            await bot.send_message(
+                chat_id=int(LOG_CHAT_ID),
+                message_thread_id=topic_id,
+                text=(
+                    "⚠️ УДАЛЁННОЕ СООБЩЕНИЕ\n\n"
+                    f"Тип: {message_type}\n"
+                    f"Message ID: {deleted_message_id}\n\n"
+                    "Восстановление этого типа пока не поддерживается."
+                ),
             )
 
             
