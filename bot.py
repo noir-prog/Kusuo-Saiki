@@ -3101,6 +3101,15 @@ async def get_user_access_status(user_id):
             "has_access": False,
         }
 
+    if user_id == OWNER_ID:
+        return {
+            "blocked": False,
+            "free_access": True,
+            "trial_active": False,
+            "subscription_active": False,
+            "has_access": True,
+        }
+        
     async with db_pool.acquire() as conn:
 
         user = await conn.fetchrow(
