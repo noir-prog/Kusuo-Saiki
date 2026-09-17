@@ -91,7 +91,7 @@ async def start_command(message):
 async def handle_ui_callback(callback: CallbackQuery):
     await callback.answer()
 
-    # ================== CHECK BUSINESS CONNECTION ==================
+        # ================== CHECK BUSINESS CONNECTION ==================
 
     async def is_business_connected(user_id):
         if db_pool is None:
@@ -100,14 +100,41 @@ async def handle_ui_callback(callback: CallbackQuery):
         async with db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT telegram_user_id
+                SELECT business_connection_id
                 FROM business_accounts
                 WHERE telegram_user_id = $1
                 """,
                 user_id,
             )
 
-        return row is not None
+        if not row:
+            return False
+
+        business_connection_id = row["business_connection_id"]
+
+        try:
+            connection = await bot.get_business_connection(
+                business_connection_id=business_connection_id
+            )
+
+            logger.info(
+                "BUSINESS CONNECTION CHECK | user=%s | connection=%s | enabled=%s",
+                user_id,
+                business_connection_id,
+                connection.is_enabled,
+            )
+
+            return connection.is_enabled
+
+        except Exception as e:
+            logger.exception(
+                "BUSINESS CONNECTION CHECK ERROR | user=%s | connection=%s | error=%s",
+                user_id,
+                business_connection_id,
+                e,
+            )
+
+            return False
 
     # ================== START SCREEN ==================
 
