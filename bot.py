@@ -297,6 +297,48 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
         
+    # ================== ADMIN SUBSCRIPTION ==================
+
+    elif callback.data == "admin_subscription":
+
+        await callback.message.edit_text(
+            "📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА\n\n"
+            "Здесь будут находиться группы и каналы, "
+            "на которые пользователь должен подписаться "
+            "для доступа к Kusuo Saiki.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="➕ ДОБАВИТЬ",
+                            callback_data="subscription_add",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="📋 СПИСОК",
+                            callback_data="subscription_list",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🗑 УДАЛИТЬ",
+                            callback_data="subscription_delete",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_panel",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+        return
+        
+        
         # ================== OWNER USER MODE ==================
 
     if callback.data == "user_mode":
