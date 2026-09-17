@@ -651,81 +651,200 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     # ================== ADMIN USERS ==================
 
-    elif callback.data == "admin_users":
+elif callback.data == "admin_users":
 
-        if callback.from_user.id != OWNER_ID:
-            return
+    if callback.from_user.id != OWNER_ID:
+        return
 
-        users = await get_all_business_users()
+    users = await get_all_business_users()
 
-        # ================== EMPTY LIST ==================
+    # ================== EMPTY LIST ==================
 
-        if not users:
-
-            await callback.message.edit_text(
-                "👥 ПОЛЬЗОВАТЕЛИ\n\n"
-                "Пока нет пользователей, "
-                "подключавших Telegram Business.",
-                reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [
-                            InlineKeyboardButton(
-                                text="⬅️ НАЗАД",
-                                callback_data="admin_panel",
-                            )
-                        ]
-                    ]
-                ),
-            )
-
-            return
-
-        # ================== USER BUTTONS ==================
-
-        keyboard = []
-
-        for user in users:
-
-            status = (
-                "✅"
-                if user["is_connected"]
-                else "❌"
-            )
-
-            keyboard.append(
-                [
-                    InlineKeyboardButton(
-                        text=f"{status} {user['name']}",
-                        callback_data=(
-                            f"user_manage:"
-                            f"{user['telegram_user_id']}"
-                        ),
-                    )
-                ]
-            )
-
-        # ================== SHOW USERS ==================
+    if not users:
 
         await callback.message.edit_text(
             "👥 ПОЛЬЗОВАТЕЛИ\n\n"
-            f"Всего пользователей: {len(users)}\n\n"
-            "Выберите пользователя:",
+            "Пока нет пользователей, "
+            "подключавших Telegram Business.",
             reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=(
-                    keyboard
-                    + [
-                        [
-                            InlineKeyboardButton(
-                                text="⬅️ НАЗАД",
-                                callback_data="admin_panel",
-                            )
-                        ]
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_panel",
+                        )
                     ]
-                ),
+                ]
             ),
         )
 
         return
+
+    # ================== PAGINATION ==================
+
+    page = 1
+    users_per_page = 20
+
+    total_pages = (
+        len(users) + users_per_page - 1
+    ) // users_per_page
+
+    start_index = (
+        page - 1
+    ) * users_per_page
+
+    end_index = (
+        start_index + users_per_page
+    )
+
+    page_users = users[
+        start_index:end_index
+    ]
+
+    # ================== USER BUTTONS ==================
+
+    keyboard = []
+
+    for index in range(
+        0,
+        len(page_users),
+        2,
+    ):
+
+        row = []
+
+        first_user = page_users[index]
+
+        first_status = (
+            "✅"
+            if first_user["is_connected"]
+            else "❌"
+        )
+
+        row.append(
+            InlineKeyboardButton(
+                text=(
+                    f"{first_status} "
+                    f"{first_user['name']}"
+                ),
+                callback_data=(
+                    f"user_manage:"
+                    f"{first_user['telegram_user_id']}"
+                ),
+            )
+        )
+
+        if index + 1 < len(page_users):
+
+            second_user = page_users[
+                index + 1
+            ]
+
+            second_status = (
+                "✅"
+                if second_user["is_connected"]
+                else "❌"
+            )
+
+            row.append(
+                InlineKeyboardButton(
+                    text=(
+                        f"{second_status} "
+                        f"{second_user['name']}"
+                    ),
+                    callback_data=(
+                        f"user_manage:"
+                        f"{second_user['telegram_user_id']}"
+                    ),
+                )
+            )
+
+        keyboard.append(row)
+
+    # ================== SEARCH ==================
+
+    keyboard.insert(
+        0,
+        [
+            InlineKeyboardButton(
+                text="🔎 ПОИСК",
+                callback_data="users_search",
+            )
+        ],
+    )
+
+    # ================== PAGE NAVIGATION ==================
+
+    navigation = []
+
+    if page > 1:
+
+        navigation.append(
+            InlineKeyboardButton(
+                text="◀️",
+                callback_data=f"users_page:{page - 1}",
+            )
+        )
+
+    else:
+
+        navigation.append(
+            InlineKeyboardButton(
+                text="◀️",
+                callback_data="users_page_disabled",
+            )
+        )
+
+    navigation.append(
+        InlineKeyboardButton(
+            text=f"{page} / {total_pages}",
+            callback_data="users_page_current",
+        )
+    )
+
+    if page < total_pages:
+
+        navigation.append(
+            InlineKeyboardButton(
+                text="▶️",
+                callback_data=f"users_page:{page + 1}",
+            )
+        )
+
+    else:
+
+        navigation.append(
+            InlineKeyboardButton(
+                text="▶️",
+                callback_data="users_page_disabled",
+            )
+        )
+
+    keyboard.append(navigation)
+
+    # ================== BACK ==================
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text="⬅️ НАЗАД",
+                callback_data="admin_panel",
+            )
+        ]
+    )
+
+    # ================== SHOW USERS ==================
+
+    await callback.message.edit_text(
+        "👥 ПОЛЬЗОВАТЕЛИ\n\n"
+        f"Всего пользователей: {len(users)}\n\n"
+        "Выберите пользователя:",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=keyboard
+        ),
+    )
+
+    return
         
         
     # ================== ADMIN SUBSCRIPTION ==================
