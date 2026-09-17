@@ -15,6 +15,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "lastmod-secret")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
+D1_DATABASE_ID = os.getenv("D1_DATABASE_ID")
+
 # ================== LOGGING ==================
 
 logging.basicConfig(
@@ -77,6 +81,60 @@ async def init_db():
     logger.info("DATABASE INITIALIZED")
     
 
+# ================== CLOUDFLARE D1 ==================
+
+import httpx
+
+
+async def d1_query(sql: str, params=None):
+    if not CLOUDFLARE_API_TOKEN:
+        raise RuntimeError("CLOUDFLARE_API_TOKEN is not configured")
+
+    if not CLOUDFLARE_ACCOUNT_ID:
+        raise RuntimeError("CLOUDFLARE_ACCOUNT_ID is not configured")
+
+    if not D1_DATABASE_ID:
+        raise RuntimeError("D1_DATABASE_ID is not configured")
+
+    url = (
+        f"https://api.cloudflare.com/client/v4/accounts/"
+        f"{CLOUDFLARE_ACCOUNT_ID}/d1/database/"
+        f"{D1_DATABASE_ID}/query"
+    )
+
+    headers = {
+        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "sql": sql,
+        "params": params or [],
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"D1 API ERROR {response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+
+    if not data.get("success"):
+        raise RuntimeError(
+            f"D1 QUERY ERROR: {data}"
+        )
+
+    return data
+    
+    
 # ================== LOG CHAT ID ==================
 
 @dp.message()
