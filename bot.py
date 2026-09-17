@@ -893,7 +893,7 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
         
-            # ================== USER MANAGEMENT ==================
+               # ================== USER MANAGEMENT ==================
 
     elif callback.data.startswith("user_manage:"):
 
@@ -904,6 +904,7 @@ async def handle_ui_callback(callback: CallbackQuery):
             target_user_id = int(
                 callback.data.split(":", 1)[1]
             )
+
         except (ValueError, IndexError):
 
             await callback.answer(
@@ -1010,7 +1011,7 @@ async def handle_ui_callback(callback: CallbackQuery):
             else "🔴 Отключён"
         )
 
-                # ================== USER MENU ==================
+        # ================== USER MENU ==================
 
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -1067,249 +1068,164 @@ async def handle_ui_callback(callback: CallbackQuery):
         await callback.answer()
 
         return
-    
-    
-            # ================== USERS PAGE ==================
 
-    elif callback.data.startswith("users_page:"):
+
+    # ================== USER INFO ==================
+
+    elif callback.data.startswith("user_info:"):
 
         if callback.from_user.id != OWNER_ID:
             return
 
         try:
 
-            page = int(
+            target_user_id = int(
                 callback.data.split(":", 1)[1]
             )
 
         except (ValueError, IndexError):
 
-            return
-
-        users = await get_all_business_users()
-
-        if not users:
-            return
-
-        # ================== PAGINATION ==================
-
-        users_per_page = 20
-
-        total_pages = (
-            len(users) + users_per_page - 1
-        ) // users_per_page
-
-        if page < 1:
-            page = 1
-
-        if page > total_pages:
-            page = total_pages
-
-        start_index = (
-            page - 1
-        ) * users_per_page
-
-        end_index = (
-            start_index + users_per_page
-        )
-
-        page_users = users[
-            start_index:end_index
-        ]
-
-        # ================== USER BUTTONS ==================
-
-        keyboard = []
-
-        for index in range(
-            0,
-            len(page_users),
-            2,
-        ):
-
-            row = []
-
-            first_user = page_users[index]
-
-            first_status = (
-                "✅"
-                if first_user["is_connected"]
-                else "❌"
+            await callback.answer(
+                "❌ Некорректный пользователь.",
+                show_alert=True,
             )
 
-            row.append(
-                InlineKeyboardButton(
-                    text=(
-                        f"{first_status} "
-                        f"{first_user['name']}"
-                    ),
-                    callback_data=(
-                        f"user_manage:"
-                        f"{first_user['telegram_user_id']}"
-                    ),
-                )
+            return
+
+        if db_pool is None:
+
+            await callback.answer(
+                "❌ База данных недоступна.",
+                show_alert=True,
             )
 
-            if index + 1 < len(page_users):
+            return
 
-                second_user = page_users[
-                    index + 1
-                ]
+        async with db_pool.acquire() as conn:
 
-                second_status = (
-                    "✅"
-                    if second_user["is_connected"]
-                    else "❌"
-                )
+            user = await conn.fetchrow(
+                """
+                SELECT
+                    telegram_user_id,
+                    business_connection_id,
+                    first_name,
+                    last_name,
+                    username,
+                    topic_id,
+                    created_at,
+                    updated_at
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                target_user_id,
+            )
 
-                row.append(
+        if not user:
+
+            await callback.answer(
+                "❌ Пользователь не найден.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== USER NAME ==================
+
+        name_parts = []
+
+        if user["first_name"]:
+            name_parts.append(
+                user["first_name"]
+            )
+
+        if user["last_name"]:
+            name_parts.append(
+                user["last_name"]
+            )
+
+        user_name = " ".join(
+            name_parts
+        ).strip()
+
+        if not user_name:
+            user_name = "Без имени"
+
+        # ================== USERNAME ==================
+
+        username = user["username"]
+
+        if username:
+
+            username_text = (
+                f"@{username.lstrip('@')}"
+            )
+
+        else:
+
+            username_text = "Не указан"
+
+        # ================== DATES ==================
+
+        created_at = user["created_at"]
+
+        if created_at:
+
+            created_text = created_at.strftime(
+                "%d.%m.%Y %H:%M"
+            )
+
+        else:
+
+            created_text = "Неизвестно"
+
+        updated_at = user["updated_at"]
+
+        if updated_at:
+
+            updated_text = updated_at.strftime(
+                "%d.%m.%Y %H:%M"
+            )
+
+        else:
+
+            updated_text = "Неизвестно"
+
+        # ================== USER INFO KEYBOARD ==================
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
                     InlineKeyboardButton(
-                        text=(
-                            f"{second_status} "
-                            f"{second_user['name']}"
-                        ),
+                        text="⬅️ НАЗАД",
                         callback_data=(
-                            f"user_manage:"
-                            f"{second_user['telegram_user_id']}"
+                            f"user_manage:{target_user_id}"
                         ),
                     )
-                )
-
-            keyboard.append(row)
-
-        # ================== SEARCH ==================
-
-        keyboard.insert(
-            0,
-            [
-                InlineKeyboardButton(
-                    text="🔎 ПОИСК",
-                    callback_data="users_search",
-                )
-            ],
-        )
-
-        # ================== PAGE NAVIGATION ==================
-
-        navigation = []
-
-        if page > 1:
-
-            navigation.append(
-                InlineKeyboardButton(
-                    text="◀️",
-                    callback_data=(
-                        f"users_page:{page - 1}"
-                    ),
-                )
-            )
-
-        else:
-
-            navigation.append(
-                InlineKeyboardButton(
-                    text="◀️",
-                    callback_data="users_page_disabled",
-                )
-            )
-
-        navigation.append(
-            InlineKeyboardButton(
-                text=f"{page} / {total_pages}",
-                callback_data="users_page_current",
-            )
-        )
-
-        if page < total_pages:
-
-            navigation.append(
-                InlineKeyboardButton(
-                    text="▶️",
-                    callback_data=(
-                        f"users_page:{page + 1}"
-                    ),
-                )
-            )
-
-        else:
-
-            navigation.append(
-                InlineKeyboardButton(
-                    text="▶️",
-                    callback_data="users_page_disabled",
-                )
-            )
-
-        keyboard.append(navigation)
-
-        # ================== BACK ==================
-
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    text="⬅️ НАЗАД",
-                    callback_data="admin_panel",
-                )
+                ]
             ]
         )
 
-        # ================== SHOW PAGE ==================
+        # ================== SHOW USER INFO ==================
 
         await callback.message.edit_text(
-            "👥 ПОЛЬЗОВАТЕЛИ\n\n"
-            f"Всего пользователей: {len(users)}\n\n"
-            "Выберите пользователя:",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=keyboard
-            ),
+            "👤 ИНФОРМАЦИЯ\n\n"
+            f"Имя: {user_name}\n"
+            f"Username: {username_text}\n"
+            f"Telegram ID: {user['telegram_user_id']}\n\n"
+            f"📅 Добавлен: {created_text}\n"
+            f"🔄 Обновлён: {updated_text}\n\n"
+            "🔌 Business connection:\n"
+            f"{user['business_connection_id']}\n\n"
+            f"🗂 Топик LOG: {user['topic_id']}",
+            reply_markup=keyboard,
         )
 
-        return
-    
-    
-    # ================== ADMIN SUBSCRIPTION ==================
-
-    elif callback.data == "admin_subscription":
-
-        await callback.message.edit_text(
-            "📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА\n\n"
-            "Здесь будут находиться группы и каналы, "
-            "на которые пользователь должен подписаться "
-            "для доступа к Kusuo Saiki.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="➕ ДОБАВИТЬ",
-                            callback_data="subscription_add",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="📋 СПИСОК",
-                            callback_data="subscription_list",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="🗑 УДАЛИТЬ",
-                            callback_data="subscription_delete",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="⬅️ НАЗАД",
-                            callback_data="admin_panel",
-                        )
-                    ],
-                ]
-            ),
-        )
+        await callback.answer()
 
         return
-        
-        
-            # ================== USERS PAGE ==================
+
+
+    # ================== USERS PAGE ==================
 
     elif callback.data.startswith("users_page:"):
 
@@ -1356,8 +1272,6 @@ async def handle_ui_callback(callback: CallbackQuery):
             len(users) + users_per_page - 1
         ) // users_per_page
 
-        # ================== PAGE LIMITS ==================
-
         if page < 1:
             page = 1
 
@@ -1524,8 +1438,51 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
         return
-        
-        
+
+
+    # ================== ADMIN SUBSCRIPTION ==================
+
+    elif callback.data == "admin_subscription":
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        await callback.message.edit_text(
+            "📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА\n\n"
+            "Здесь будут находиться группы и каналы, "
+            "на которые пользователь должен подписаться "
+            "для доступа к Kusuo Saiki.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="➕ ДОБАВИТЬ",
+                            callback_data="subscription_add",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="📋 СПИСОК",
+                            callback_data="subscription_list",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🗑 УДАЛИТЬ",
+                            callback_data="subscription_delete",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data="admin_panel",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+        return
                 # ================== SUBSCRIPTION ADD ==================
 
     elif callback.data == "subscription_add":
