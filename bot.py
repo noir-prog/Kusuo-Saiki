@@ -1070,6 +1070,158 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
 
 
+    # ================== USER BUSINESS ==================
+
+    elif callback.data.startswith("user_business:"):
+
+        if callback.from_user.id != OWNER_ID:
+            return
+
+        try:
+
+            target_user_id = int(
+                callback.data.split(":", 1)[1]
+            )
+
+        except (ValueError, IndexError):
+
+            await callback.answer(
+                "❌ Некорректный пользователь.",
+                show_alert=True,
+            )
+
+            return
+
+        if db_pool is None:
+
+            await callback.answer(
+                "❌ База данных недоступна.",
+                show_alert=True,
+            )
+
+            return
+
+        async with db_pool.acquire() as conn:
+
+            user = await conn.fetchrow(
+                """
+                SELECT
+                    telegram_user_id,
+                    business_connection_id,
+                    trial_until,
+                    subscription_until
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                target_user_id,
+            )
+
+        if not user:
+
+            await callback.answer(
+                "❌ Пользователь не найден.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== BUSINESS STATUS ==================
+
+        is_connected = False
+
+        try:
+
+            connection = await bot.get_business_connection(
+                user["business_connection_id"]
+            )
+
+            is_connected = connection.is_enabled
+
+        except Exception as e:
+
+            logger.warning(
+                "BUSINESS STATUS ERROR | "
+                "user=%s | error=%s",
+                target_user_id,
+                e,
+            )
+
+        connection_status = (
+            "🟢 Подключён"
+            if is_connected
+            else "🔴 Отключён"
+        )
+
+        # ================== TRIAL ==================
+
+        trial_until = user["trial_until"]
+
+        if trial_until:
+
+            trial_text = trial_until.strftime(
+                "%d.%m.%Y %H:%M"
+            )
+
+        else:
+
+            trial_text = "Не выдан"
+
+        # ================== SUBSCRIPTION ==================
+
+        subscription_until = user["subscription_until"]
+
+        if subscription_until:
+
+            subscription_text = subscription_until.strftime(
+                "%d.%m.%Y %H:%M"
+            )
+
+        else:
+
+            subscription_text = "Не активна"
+
+        # ================== BUSINESS KEYBOARD ==================
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="🔄 ОБНОВИТЬ СТАТУС",
+                        callback_data=(
+                            f"user_business:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⬅️ НАЗАД",
+                        callback_data=(
+                            f"user_manage:"
+                            f"{target_user_id}"
+                        ),
+                    )
+                ],
+            ]
+        )
+
+        # ================== SHOW BUSINESS ==================
+
+        await callback.message.edit_text(
+            "🔌 BUSINESS\n\n"
+            f"Статус подключения: {connection_status}\n\n"
+            "🎁 Пробный период:\n"
+            f"{trial_text}\n\n"
+            "💳 Подписка:\n"
+            f"{subscription_text}",
+            reply_markup=keyboard,
+        )
+
+        await callback.answer()
+
+        return
+        
+        
     # ================== USER INFO ==================
 
     elif callback.data.startswith("user_info:"):
