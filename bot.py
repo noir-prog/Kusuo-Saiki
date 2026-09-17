@@ -76,23 +76,41 @@ def main_menu_keyboard():
 
 @dp.message(CommandStart())
 async def start_command(message):
+
     # ================== OWNER ==================
+
     if message.from_user.id == OWNER_ID:
+
         await message.answer(
-            "👑 ДОБРО ПОЖАЛОВАТЬ, ВЛАДЕЛЕЦ!\n\n"
-            "Вы вошли в панель управления Kusuo Saiki."
+            "👋 Добро пожаловать в Kusuo Saiki!\n\n"
+            "Умный помощник для управления "
+            "сообщениями вашего Telegram Business.",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="👑 АДМИН",
+                            callback_data="admin_panel",
+                        ),
+                        InlineKeyboardButton(
+                            text="👤 ПОЛЬЗОВАТЕЛЬ",
+                            callback_data="user_mode",
+                        ),
+                    ]
+                ]
+            ),
         )
+
         return
+
     # ================== USER ==================
+
     await message.answer(
         "👋 Добро пожаловать в Kusuo Saiki!\n\n"
         "Умный помощник для управления "
-        "сообщениями вашего Telegram Business.\n\n"
-        "Подключите бота к Telegram Business, "
-        "чтобы открыть все функции.",
+        "сообщениями вашего Telegram Business.",
         reply_markup=main_menu_keyboard(),
     )
-
 
 # ================== UI CALLBACKS ==================
 
