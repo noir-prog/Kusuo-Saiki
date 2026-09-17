@@ -1260,19 +1260,42 @@ async def handle_ui_callback(callback: CallbackQuery):
             ]
         )
 
-        # ================== SHOW SUBSCRIPTIONS ==================
+                # ================== SHOW SUBSCRIPTIONS ==================
 
-        await callback.message.edit_text(
+        text = (
             "📢 ОБЯЗАТЕЛЬНЫЕ ПОДПИСКИ\n\n"
             f"Пользователь: {user_name}\n\n"
             + "\n".join(subscription_lines)
             + "\n\n"
             f"✅ Подписан: {subscribed_count}\n"
-            f"❌ Не подписан: {not_subscribed_count}",
-            reply_markup=keyboard,
+            f"❌ Не подписан: {not_subscribed_count}"
         )
 
-        await callback.answer()
+        try:
+
+            await callback.message.edit_text(
+                text,
+                reply_markup=keyboard,
+            )
+
+        except Exception as e:
+
+            if "message is not modified" not in str(e):
+
+                logger.exception(
+                    "USER SUBSCRIPTION EDIT ERROR"
+                )
+
+                await callback.answer(
+                    "❌ Не удалось обновить информацию.",
+                    show_alert=True,
+                )
+
+                return
+
+        await callback.answer(
+            "🔄 Проверка выполнена."
+        )
 
         return
         
@@ -1412,19 +1435,42 @@ async def handle_ui_callback(callback: CallbackQuery):
             ]
         )
 
-        # ================== SHOW BUSINESS ==================
+                # ================== SHOW BUSINESS ==================
 
-        await callback.message.edit_text(
+        text = (
             "🔌 BUSINESS\n\n"
             f"Статус подключения: {connection_status}\n\n"
             "🎁 Пробный период:\n"
             f"{trial_text}\n\n"
             "💳 Подписка:\n"
-            f"{subscription_text}",
-            reply_markup=keyboard,
+            f"{subscription_text}"
         )
 
-        await callback.answer()
+        try:
+
+            await callback.message.edit_text(
+                text,
+                reply_markup=keyboard,
+            )
+
+        except Exception as e:
+
+            if "message is not modified" not in str(e):
+
+                logger.exception(
+                    "USER BUSINESS EDIT ERROR"
+                )
+
+                await callback.answer(
+                    "❌ Не удалось обновить информацию.",
+                    show_alert=True,
+                )
+
+                return
+
+        await callback.answer(
+            "🔄 Статус обновлён."
+        )
 
         return
         
