@@ -249,7 +249,7 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
 
-    # ================== ADMIN PANEL ==================
+        # ================== ADMIN PANEL ==================
 
     if callback.data == "admin_panel":
 
@@ -258,10 +258,31 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         await callback.message.edit_text(
             "👑 АДМИН-ПАНЕЛЬ\n\n"
-            "Добро пожаловать в панель управления Kusuo Saiki.\n\n"
-            "Здесь будут находиться все административные функции.",
+            "Выберите раздел:",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📢 ОБЯЗАТЕЛЬНАЯ ПОДПИСКА",
+                            callback_data="admin_subscription",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="👥 ПОЛЬЗОВАТЕЛИ",
+                            callback_data="admin_users",
+                        ),
+                        InlineKeyboardButton(
+                            text="💰 ЦЕНЫ",
+                            callback_data="admin_prices",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🆓 БЕСПЛАТНЫЙ ДОСТУП",
+                            callback_data="admin_free_access",
+                        )
+                    ],
                     [
                         InlineKeyboardButton(
                             text="⬅️ НАЗАД",
