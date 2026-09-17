@@ -429,6 +429,93 @@ async def handle_ui_callback(callback: CallbackQuery):
         )
 
 
+    # ================== CHECK REQUIRED SUBSCRIPTION ==================
+
+    if callback.data == "check_required_subscription":
+
+        # ================== OWNER ==================
+
+        if callback.from_user.id == OWNER_ID:
+
+            await callback.answer(
+                "👑 Для владельца обязательная подписка не требуется.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== CHECK SUBSCRIPTION ==================
+
+        unsubscribed = await get_unsubscribed_required_chats(
+            callback.from_user.id
+        )
+
+        # ================== NOT SUBSCRIBED ==================
+
+        if unsubscribed:
+
+            await callback.answer(
+                "😏 Ты ещё не подписался...\n\n"
+                "Не выйдет зайти и пользоваться мной 😉💔\n\n"
+                "Подпишись на все группы и каналы выше "
+                "и попробуй ещё раз.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== SUCCESS ==================
+
+        await callback.answer(
+            "🎉 Всё отлично!\n\n"
+            "Ты подписался на все обязательные каналы. "
+            "Добро пожаловать ❤️",
+            show_alert=True,
+        )
+
+        # ================== OPEN MAIN MENU ==================
+
+        await callback.message.edit_text(
+            "📋 МЕНЮ\n\n"
+            "Добро пожаловать в Kusuo Saiki!\n\n"
+            "Выберите действие:",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="📨 Сообщения",
+                            callback_data="menu_messages",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="🗑 Удалённые",
+                            callback_data="menu_deleted",
+                        ),
+                        InlineKeyboardButton(
+                            text="✏️ Изменённые",
+                            callback_data="menu_edited",
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="👤 Мой аккаунт",
+                            callback_data="menu_account",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="⚙️ Настройки",
+                            callback_data="settings",
+                        )
+                    ],
+                ]
+            ),
+        )
+
+        return
+        
+        
             # ================== ADMIN PANEL ==================
 
     if callback.data == "admin_panel":
