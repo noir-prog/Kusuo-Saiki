@@ -893,6 +893,180 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
         
         
+        # ================== USER MANAGEMENT ==================
+
+elif callback.data.startswith("user_manage:"):
+
+    if callback.from_user.id != OWNER_ID:
+        return
+
+    try:
+        target_user_id = int(
+            callback.data.split(":", 1)[1]
+        )
+    except (ValueError, IndexError):
+        await callback.answer(
+            "❌ Некорректный пользователь.",
+            show_alert=True,
+        )
+        return
+
+    if db_pool is None:
+        await callback.answer(
+            "❌ База данных недоступна.",
+            show_alert=True,
+        )
+        return
+
+    async with db_pool.acquire() as conn:
+
+        user = await conn.fetchrow(
+            """
+            SELECT
+                telegram_user_id,
+                business_connection_id,
+                first_name,
+                last_name,
+                username,
+                topic_id
+            FROM business_accounts
+            WHERE telegram_user_id = $1
+            """,
+            target_user_id,
+        )
+
+    if not user:
+        await callback.answer(
+            "❌ Пользователь не найден.",
+            show_alert=True,
+        )
+        return
+
+    # ================== USER NAME ==================
+
+    name_parts = []
+
+    if user["first_name"]:
+        name_parts.append(
+            user["first_name"]
+        )
+
+    if user["last_name"]:
+        name_parts.append(
+            user["last_name"]
+        )
+
+    user_name = " ".join(
+        name_parts
+    ).strip()
+
+    if not user_name:
+        user_name = "Без имени"
+
+    # ================== USERNAME ==================
+
+    username = user["username"]
+
+    if username:
+        username_text = f"@{username.lstrip('@')}"
+    else:
+        username_text = "Не указан"
+
+    # ================== CONNECTION STATUS ==================
+
+    is_connected = False
+
+    try:
+
+        connection = await bot.get_business_connection(
+            user["business_connection_id"]
+        )
+
+        is_connected = connection.is_enabled
+
+    except Exception as e:
+
+        logger.warning(
+            "USER MANAGEMENT CONNECTION ERROR | "
+            "user=%s | error=%s",
+            target_user_id,
+            e,
+        )
+
+    connection_status = (
+        "🟢 Подключён"
+        if is_connected
+        else "🔴 Отключён"
+    )
+
+
+    # ================== USER MENU ==================
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="👤 ИНФОРМАЦИЯ",
+                    callback_data=(
+                        f"user_info:{target_user_id}"
+                    ),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🔌 ПОДКЛЮЧЕНИЕ",
+                    callback_data=(
+                        f"user_connection:{target_user_id}"
+                    ),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📢 ПОДПИСКА",
+                    callback_data=(
+                        f"user_subscription:{target_user_id}"
+                    ),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🏪 МАГАЗИН",
+                    callback_data=(
+                        f"user_shop:{target_user_id}"
+                    ),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="⬅️ К РЕЗУЛЬТАТАМ ПОИСКА",
+                    callback_data="users_search",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="⬅️ К ПОЛЬЗОВАТЕЛЯМ",
+                    callback_data="admin_users",
+                )
+            ],
+        ]
+    )
+
+    await callback.message.edit_text(
+        "👤 УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЕМ\n\n"
+        f"Имя: {user_name}\n"
+        f"Username: {username_text}\n"
+        f"ID: {user['telegram_user_id']}\n\n"
+        f"Статус: {connection_status}\n"
+        f"Топик: {user['topic_id']}\n\n"
+        "Выберите действие:",
+        reply_markup=keyboard,
+    )
+
+    await callback.answer()
+
+    return
+    
+    
             # ================== USERS PAGE ==================
 
     elif callback.data.startswith("users_page:"):
