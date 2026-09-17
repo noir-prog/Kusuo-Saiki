@@ -90,7 +90,7 @@ async def start_command(message):
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
 
-    # ================== INSTRUCTION ==================
+    # ================== CALLBACK CONFIRM ==================
 
     if callback.data == "instruction":
         await callback.answer(
@@ -108,30 +108,38 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     async def is_business_connected(user_id):
         if db_pool is None:
-            return False
-
-        async with db_pool.acquire() as conn:
-            row = await conn.fetchrow(
-                """
-                SELECT business_connection_id
-                FROM business_accounts
-                WHERE telegram_user_id = $1
-                """,
-                user_id,
+            logger.error(
+                "BUSINESS CONNECTION CHECK | DATABASE POOL IS NONE"
             )
-
-        if not row:
             return False
-
-        business_connection_id = row["business_connection_id"]
 
         try:
+            async with db_pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    """
+                    SELECT business_connection_id
+                    FROM business_accounts
+                    WHERE telegram_user_id = $1
+                    """,
+                    user_id,
+                )
+
+            if not row:
+                logger.info(
+                    "BUSINESS CONNECTION CHECK | user=%s | no database record",
+                    user_id,
+                )
+                return False
+
+            business_connection_id = row["business_connection_id"]
+
             connection = await bot.get_business_connection(
                 business_connection_id=business_connection_id
             )
 
             logger.info(
-                "BUSINESS CONNECTION CHECK | user=%s | connection=%s | enabled=%s",
+                "BUSINESS CONNECTION CHECK | "
+                "user=%s | connection=%s | enabled=%s",
                 user_id,
                 business_connection_id,
                 connection.is_enabled,
@@ -141,9 +149,9 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         except Exception as e:
             logger.exception(
-                "BUSINESS CONNECTION CHECK ERROR | user=%s | connection=%s | error=%s",
+                "BUSINESS CONNECTION CHECK ERROR | "
+                "user=%s | error=%s",
                 user_id,
-                business_connection_id,
                 e,
             )
 
