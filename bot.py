@@ -333,24 +333,16 @@ async def handle_ui_callback(callback: CallbackQuery):
                 ),
             )
 
-    # ================== INSTRUCTION ==================
+        # ================== INSTRUCTION ==================
 
     elif callback.data == "instruction":
 
-        await callback.message.edit_text(
+        await callback.answer(
             "📖 ИНСТРУКЦИЯ\n\n"
-            "Здесь будет инструкция по работе "
-            "с Kusuo Saiki.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="⬅️ НАЗАД",
-                            callback_data="settings",
-                        )
-                    ]
-                ]
-            ),
+            "1. Нажмите на кнопку «НАСТРОЙКИ АККАУНТА» в боте.\n\n"
+            "2. Нажмите «АВТОМАТИЗАЦИЯ ЧАТОВ».\n\n"
+            "3. Добавьте бота @KusuoSaikibot.",
+            show_alert=True,
         )
 
     # ================== BACK TO START ==================
