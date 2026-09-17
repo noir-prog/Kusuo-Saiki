@@ -898,8 +898,198 @@ async def handle_subscription_add(message):
         "Проверяю группу или канал..."
     )
 
+    # ================== PARSE TELEGRAM LINK ==================
+
+    chat_identifier = link
+
+    if link.startswith("https://t.me/"):
+        chat_identifier = link.replace(
+            "https://t.me/",
+            "",
+            1,
+        )
+
+    elif link.startswith("http://t.me/"):
+        chat_identifier = link.replace(
+            "http://t.me/",
+            "",
+            1,
+        )
+
+    elif link.startswith("t.me/"):
+        chat_identifier = link.replace(
+            "t.me/",
+            "",
+            1,
+        )
+
+    # Убираем возможные параметры ссылки
+    chat_identifier = chat_identifier.split("?")[0]
+    chat_identifier = chat_identifier.split("/")[0]
+
+    # Публичный username Telegram должен начинаться с @
+    if not chat_identifier.startswith("@"):
+        chat_identifier = f"@{chat_identifier}"
+
+    # ================== CHECK CHAT ==================
+
+    try:
+        chat = await bot.get_chat(
+            chat_identifier
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "SUBSCRIPTION CHAT CHECK ERROR | "
+            "link=%s | error=%s",
+            link,
+            e,
+        )
+
+        await message.answer(
+            "❌ Не удалось найти эту группу или канал.\n\n"
+            "Проверьте ссылку и убедитесь, "
+            "что бот уже добавлен туда."
+        )
+
+        return
+
+    # ================== CHECK BOT RIGHTS ==================
+
+    try:
+        me = await bot.get_me()
+
+        member = await bot.get_chat_member(
+            chat_id=chat.id,
+            user_id=me.id,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "SUBSCRIPTION BOT RIGHTS ERROR | "
+            "chat_id=%s | error=%s",
+            chat.id,
+            e,
+        )
+
+        await message.answer(
+            "❌ Не удалось проверить права бота.\n\n"
+            "Убедитесь, что бот добавлен в эту группу "
+            "или канал."
+        )
+
+        return
+
+    # ================== REQUIRE ADMIN ==================
+
+    if member.status not in (
+        "administrator",
+        "creator",
+    ):
+
+        await message.answer(
+            "❌ Бот добавлен, но он не является "
+            "администратором.\n\n"
+            "Сделайте бота администратором "
+            "и попробуйте ещё раз."
+        )
+
+        return
+
+    # ================== SAVE TO NEON ==================
+
+    if db_pool is None:
+
+        await message.answer(
+            "❌ Ошибка подключения к базе данных."
+        )
+
+        logger.error(
+            "SUBSCRIPTION SAVE ERROR | DATABASE POOL IS NONE"
+        )
+
+        return
+
+    try:
+
+        username = getattr(
+            chat,
+            "username",
+            None,
+        )
+
+        await db_pool.execute(
+            """
+            INSERT INTO required_subscriptions (
+                chat_id,
+                title,
+                username,
+                invite_link,
+                is_active,
+                updated_at
+            )
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                TRUE,
+                NOW()
+            )
+            ON CONFLICT (chat_id)
+            DO UPDATE SET
+                title = EXCLUDED.title,
+                username = EXCLUDED.username,
+                invite_link = EXCLUDED.invite_link,
+                is_active = TRUE,
+                updated_at = NOW()
+            """,
+            chat.id,
+            chat.title or "Без названия",
+            username,
+            link,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "SUBSCRIPTION NEON SAVE ERROR | "
+            "chat_id=%s | error=%s",
+            chat.id,
+            e,
+        )
+
+        await message.answer(
+            "❌ Не удалось сохранить подписку в базе данных."
+        )
+
+        return
+
+    # ================== CLEAR WAITING STATE ==================
+
     subscription_add_waiting.discard(
         message.from_user.id
+    )
+
+    # ================== SUCCESS ==================
+
+    logger.info(
+        "SUBSCRIPTION ADDED | "
+        "chat_id=%s | title=%s | username=%s | link=%s",
+        chat.id,
+        chat.title,
+        getattr(chat, "username", None),
+        link,
+    )
+
+    await message.answer(
+        "✅ ПОДПИСКА ДОБАВЛЕНА!\n\n"
+        f"📢 {chat.title}\n"
+        f"🆔 ID: {chat.id}\n\n"
+        "Бот является администратором.\n"
+        "Группа/канал сохранён в Neon."
     )
     
 # ================== LOG CHAT ID ==================
