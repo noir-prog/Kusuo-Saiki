@@ -290,6 +290,11 @@ async def start_command(message):
 users_search_waiting = set()
 
 
+# ================== USER ACTIONS STATE ==================
+
+trial_days_waiting = {}
+
+
 # ================== UI CALLBACKS ==================
 
 @dp.callback_query()
