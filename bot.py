@@ -2555,39 +2555,35 @@ async def handle_ui_callback(callback: CallbackQuery):
         
     # ================== MAIN MENU ==================
 
-        if callback.data == "open_menu":
-            
-            logger.info(
-                "OPEN MENU | user=%s | owner=%s",
-                callback.from_user.id,
-                OWNER_ID,
-            )
+    if callback.data == "open_menu":
 
-            access = await get_user_access_status(
-                callback.from_user.id
-            )
-            
-            logger.info(
-                "OPEN MENU ACCESS | user=%s | access=%s",
-                callback.from_user.id,
-                access,
-            )
-            
-            access = await get_user_access_status(
-                callback.from_user.id
+        logger.info(
+            "OPEN MENU | user=%s | owner=%s",
+            callback.from_user.id,
+            OWNER_ID,
+        )
+
+        access = await get_user_access_status(
+            callback.from_user.id
+        )
+
+        logger.info(
+            "OPEN MENU ACCESS | user=%s | access=%s",
+            callback.from_user.id,
+            access,
         )
 
         if not access["has_access"]:
 
-                await callback.answer(
-                    "⏳ Твой пробный период закончился.\n\n"
-                    "Очень жаль… 🥺\n\n"
-                    "Но ты можешь продолжить пользоваться "
-                    "Kusuo Saiki и приобрести подписку. ❤️",
-                    show_alert=True,
-                )
+            await callback.answer(
+                "⏳ Твой пробный период закончился.\n\n"
+                "Очень жаль… 🥺\n\n"
+                "Но ты можешь продолжить пользоваться "
+                "Kusuo Saiki и приобрести подписку. ❤️",
+                show_alert=True,
+            )
 
-                return
+            return
 
         connected = await is_business_connected(
             callback.from_user.id
