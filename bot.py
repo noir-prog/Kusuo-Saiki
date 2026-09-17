@@ -150,45 +150,47 @@ async def handle_ui_callback(callback: CallbackQuery):
 
     # ================== SETTINGS ==================
 
-    async def show_settings():
-        connected = await is_business_connected(
-            callback.from_user.id
-        )
+async def show_settings():
+    connected = await is_business_connected(
+        callback.from_user.id
+    )
 
-        if connected:
-            status_text = "🟢 Бот подключён"
-        else:
-            status_text = "🔴 Бот не подключён"
+    if connected:
+        status_text = "🟢 Бот подключён"
+    else:
+        status_text = "🔴 Бот не подключён"
 
-        await callback.message.edit_text(
-            "⚙️ НАСТРОЙКИ\n\n"
-            "Статус подключения:\n"
-            f"{status_text}\n\n"
-            "Здесь вы можете управлять "
-            "подключением Kusuo Saiki.",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="⚙️ НАСТРОЙКИ АККАУНТА",
-                            url="tg://settings/edit",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="🔄 ПРОВЕРИТЬ ПОДКЛЮЧЕНИЕ",
-                            callback_data="check_connection",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="⬅️ НАЗАД",
-                            callback_data="back_start",
-                        )
-                    ],
-                ]
-            ),
-        )
+    await callback.message.edit_text(
+        "⚙️ НАСТРОЙКИ\n\n"
+        "Статус подключения:\n"
+        f"{status_text}",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="📖 ИНСТРУКЦИЯ",
+                        callback_data="instruction",
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⚙️ НАСТРОЙКИ АККАУНТА",
+                        url="tg://settings/edit",
+                    ),
+                    InlineKeyboardButton(
+                        text="🔄 ПРОВЕРИТЬ",
+                        callback_data="check_connection",
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="⬅️ НАЗАД",
+                        callback_data="back_start",
+                    )
+                ],
+            ]
+        ),
+    )
 
     # ================== MAIN MENU ==================
 
