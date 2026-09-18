@@ -4304,6 +4304,26 @@ async def ensure_log_chat_header(
         )
         return ""
         
+# ================== LOG PROFILE KEYBOARD ==================
+
+def create_profile_keyboard(
+    sender_id,
+    recipient_id,
+):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="👤 Отправитель",
+                    url=f"tg://user?id={sender_id}",
+                ),
+                InlineKeyboardButton(
+                    text="📨 Получатель",
+                    url=f"tg://user?id={recipient_id}",
+                ),
+            ]
+        ]
+    )
         
 # ================== BUSINESS MESSAGES ==================
 
