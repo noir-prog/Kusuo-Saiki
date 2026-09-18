@@ -5034,7 +5034,10 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=info_text + "\n😀 Стикер",
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="😀 Стикер",
+                ),
                 reply_markup=profile_keyboard,
             )
 
@@ -5064,14 +5067,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 animation=message.animation.file_id,
-                caption=(
-                    info_text
-                    + "\n🎞 GIF / Анимация"
-                    + (
-                        f"\n📝 Подпись:\n{message.caption}"
-                        if message.caption
-                        else ""
-                    )
+                caption=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="🎞 GIF / Анимация",
+                    caption=message.caption,
                 ),
                 reply_markup=profile_keyboard,
             )
@@ -5095,10 +5094,13 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=info_text + "\n📹 Видеосообщение",
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="📹 Видеосообщение",
+                ),
                 reply_markup=profile_keyboard,
             )
-
+            
             await bot.send_video_note(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
