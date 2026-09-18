@@ -4255,27 +4255,6 @@ async def ensure_log_chat_header(
 
     try:
 
-        # ================== CHECK CHAT IN D1 ==================
-
-        result = await d1_query(
-            """
-            SELECT 1
-            FROM message_batches
-            WHERE business_connection_id = ?
-              AND chat_id = ?
-            LIMIT 1
-            """,
-            [
-                business_connection_id,
-                chat_id,
-            ],
-        )
-
-        results = result["result"][0]["results"]
-
-        if results:
-            return
-
         # ================== GET CHAT USER ==================
 
         chat = await bot.get_chat(
