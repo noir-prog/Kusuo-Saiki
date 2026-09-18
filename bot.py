@@ -5812,6 +5812,241 @@ async def handle_deleted_business_messages(message):
                 ),
             )
 
+                    # ================== SEND DELETED MESSAGE TO USER ==================
+
+        try:
+
+            notification_text = (
+                "🗑 ТВОЁ СООБЩЕНИЕ БЫЛО УДАЛЕНО\n\n"
+                f"📦 Тип: {message_type}\n\n"
+            )
+
+            # ================== TEXT ==================
+
+            if message_type == "text":
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else "Текст сообщения отсутствует."
+                        )
+                    ),
+                )
+
+            # ================== PHOTO ==================
+
+            elif message_type == "photo" and file_id:
+
+                await bot.send_photo(
+                    chat_id=user.id,
+                    photo=file_id,
+                    caption=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VIDEO ==================
+
+            elif message_type == "video" and file_id:
+
+                await bot.send_video(
+                    chat_id=user.id,
+                    video=file_id,
+                    caption=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== AUDIO ==================
+
+            elif message_type == "audio" and file_id:
+
+                await bot.send_audio(
+                    chat_id=user.id,
+                    audio=file_id,
+                    caption=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VOICE ==================
+
+            elif message_type == "voice" and file_id:
+
+                await bot.send_voice(
+                    chat_id=user.id,
+                    voice=file_id,
+                )
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=notification_text,
+                )
+
+            # ================== DOCUMENT ==================
+
+            elif message_type == "document" and file_id:
+
+                await bot.send_document(
+                    chat_id=user.id,
+                    document=file_id,
+                    caption=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== STICKER ==================
+
+            elif message_type == "sticker" and file_id:
+
+                await bot.send_sticker(
+                    chat_id=user.id,
+                    sticker=file_id,
+                )
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=notification_text,
+                )
+
+            # ================== ANIMATION / GIF ==================
+
+            elif message_type == "animation" and file_id:
+
+                await bot.send_animation(
+                    chat_id=user.id,
+                    animation=file_id,
+                    caption=(
+                        notification_text
+                        + (
+                            text_content
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VIDEO NOTE / CIRCLE ==================
+
+            elif message_type == "video_note" and file_id:
+
+                await bot.send_video_note(
+                    chat_id=user.id,
+                    video_note=file_id,
+                )
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=notification_text,
+                )
+
+            # ================== LOCATION ==================
+
+            elif message_type == "location":
+
+                latitude = deleted_data.get(
+                    "latitude"
+                )
+
+                longitude = deleted_data.get(
+                    "longitude"
+                )
+
+                if latitude is not None and longitude is not None:
+
+                    await bot.send_location(
+                        chat_id=user.id,
+                        latitude=latitude,
+                        longitude=longitude,
+                    )
+
+                    await bot.send_message(
+                        chat_id=user.id,
+                        text=notification_text,
+                    )
+
+            # ================== CONTACT ==================
+
+            elif message_type == "contact":
+
+                await bot.send_contact(
+                    chat_id=user.id,
+                    phone_number=deleted_data.get(
+                        "phone_number"
+                    ),
+                    first_name=deleted_data.get(
+                        "first_name"
+                    ),
+                    last_name=deleted_data.get(
+                        "last_name"
+                    ),
+                    vcard=deleted_data.get(
+                        "vcard"
+                    ),
+                )
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=notification_text,
+                )
+
+            # ================== UNKNOWN TYPE ==================
+
+            else:
+
+                await bot.send_message(
+                    chat_id=user.id,
+                    text=(
+                        notification_text
+                        + "Не удалось определить содержимое сообщения."
+                    ),
+                )
+
+            logger.info(
+                "DELETED MESSAGE SENT TO USER | "
+                "user=%s | chat=%s | message=%s | type=%s",
+                user.id,
+                message.chat.id,
+                deleted_message_id,
+                message_type,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "DELETED MESSAGE USER SEND ERROR | "
+                "user=%s | chat=%s | message=%s | type=%s | error=%s",
+                user.id,
+                message.chat.id,
+                deleted_message_id,
+                message_type,
+                e,
+            )
+            
             
 # ================== WEBHOOK ==================
 
