@@ -5203,6 +5203,8 @@ async def handle_business_message(message):
 
     except Exception as e:
         logger.exception("LOG SAVE ERROR: %s")
+        
+        
 # ================== EDITED BUSINESS MESSAGES ==================
 
 @dp.edited_business_message()
@@ -5233,16 +5235,21 @@ async def handle_edited_business_message(message):
         new_text,
     )
 
+    # ================== GET BUSINESS OWNER ==================
+
+    business_connection = await bot.get_business_connection(
+        business_connection_id=message.business_connection_id
+    )
+
+    user = business_connection.user
+
     # ================== GET EDITED MESSAGE TOPIC ==================
 
-    topic_id = business_topics.get(message.business_connection_id)
+    topic_id = business_topics.get(
+        message.business_connection_id
+    )
 
     if topic_id is None and db_pool is not None:
-        business_connection = await bot.get_business_connection(
-            business_connection_id=message.business_connection_id
-        )
-
-        user = business_connection.user
 
         async with db_pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -5256,16 +5263,68 @@ async def handle_edited_business_message(message):
 
         if row:
             topic_id = row["topic_id"]
-            business_topics[message.business_connection_id] = topic_id
+
+            business_topics[
+                message.business_connection_id
+            ] = topic_id
 
     if topic_id is None:
         logger.error(
-            "EDITED MESSAGE TOPIC NOT FOUND | connection=%s | chat=%s | message=%s",
+            "EDITED MESSAGE TOPIC NOT FOUND | "
+            "connection=%s | chat=%s | message=%s",
             message.business_connection_id,
             message.chat.id,
             message.message_id,
         )
         return
+
+    # ================== GET CHAT USER ==================
+
+    try:
+
+        chat = await bot.get_chat(
+            chat_id=message.chat.id
+        )
+
+        peer_name = (
+            chat.full_name
+            if getattr(chat, "full_name", None)
+            else getattr(chat, "first_name", None)
+            or getattr(chat, "title", None)
+            or "Неизвестный пользователь"
+        )
+
+    except Exception:
+
+        peer_name = "Неизвестный пользователь"
+
+    # ================== ESCAPE HTML ==================
+
+    business_name = (
+        user.first_name
+        or "Пользователь"
+    )
+
+    if user.last_name:
+        business_name += (
+            f" {user.last_name}"
+        )
+
+    business_name = html.escape(
+        business_name
+    )
+
+    peer_name = html.escape(
+        peer_name
+    )
+
+    old_text_escaped = html.escape(
+        old_text
+    )
+
+    new_text_escaped = html.escape(
+        new_text
+    )
 
     # ================== SAVE EDIT TO LOG ==================
 
@@ -5275,17 +5334,22 @@ async def handle_edited_business_message(message):
         else None
     )
 
+    edited_text = (
+        "✏️ <b>СООБЩЕНИЕ ИЗМЕНЕНО</b>\n\n"
+        f"👤 {business_name}\n"
+        f"💬 {peer_name}\n"
+        f"🆔 Chat ID: <code>{message.chat.id}</code>\n\n"
+        "⬅️ <b>БЫЛО:</b>\n"
+        f"<code>{old_text_escaped}</code>\n\n"
+        "➡️ <b>СТАЛО:</b>\n"
+        f"<code>{new_text_escaped}</code>"
+    )
+
     await bot.send_message(
         chat_id=int(LOG_CHAT_ID),
         message_thread_id=topic_id,
-        text=(
-            "✏️ СООБЩЕНИЕ ИЗМЕНЕНО\n\n"
-            f"🆔 Message ID: {message.message_id}\n\n"
-            "⬅️ БЫЛО:\n"
-            f"{old_text}\n\n"
-            "➡️ СТАЛО:\n"
-            f"{new_text}"
-        ),
+        text=edited_text,
+        parse_mode="HTML",
         reply_parameters=(
             {
                 "message_id": log_message_id
@@ -5295,11 +5359,15 @@ async def handle_edited_business_message(message):
         ),
     )
 
+    # ================== UPDATE MESSAGE HISTORY ==================
+
     message_history[key] = {
         "text": new_text,
         "log_message_id": log_message_id,
         "topic_id": topic_id,
     }
+
+
 # ================== DELETED BUSINESS MESSAGES ==================
 
 @dp.deleted_business_messages()
