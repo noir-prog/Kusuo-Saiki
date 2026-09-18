@@ -13,6 +13,9 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
+    MenuButtonWebApp,
+    WebAppInfo,
+
 )
 
 # ================== SETTINGS ==================
@@ -6122,6 +6125,21 @@ async def startup():
     await bot.set_webhook(
         url=webhook_url,
         secret_token=WEBHOOK_SECRET,
+    )
+
+    # ================== MINI APP MENU BUTTON ==================
+
+    await bot.set_chat_menu_button(
+        menu_button=MenuButtonWebApp(
+            text="🧠 Kusuo Saiki",
+            web_app=WebAppInfo(
+                url="https://kusuo-miniapp.onrender.com"
+            ),
+        )
+    )
+
+    logger.info(
+        "MINI APP MENU BUTTON SET"
     )
 
     logger.info("LastMod Business Bot started")
