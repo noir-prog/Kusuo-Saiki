@@ -4504,7 +4504,15 @@ async def handle_business_message(message):
             return
 
     # ================== SAVE MESSAGE TO USER TOPIC ==================
+    # ================== ENSURE CHAT HEADER ==================
 
+    await ensure_log_chat_header(
+        business_connection_id=message.business_connection_id,
+        topic_id=topic_id,
+        chat_id=message.chat.id,
+        business_user=user,
+    )
+    
     try:
         info_text = (
             "📥 НОВОЕ СООБЩЕНИЕ\n\n"
