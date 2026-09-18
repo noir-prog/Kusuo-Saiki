@@ -50,7 +50,10 @@
     <h1>🧠 Kusuo Saiki</h1>
 
     <div class="card">
-        <p>Добро пожаловать в панель управления.</p>
+        <p>
+            Добро пожаловать,
+            <span id="user-name">пользователь</span> 👋
+        </p>
 
         <p>
             Статус:
@@ -65,8 +68,17 @@
 
     tg.ready();
 
-    console.log("Telegram WebApp:", tg);
-    console.log("Telegram User:", tg.initDataUnsafe?.user);
+    const user = tg.initDataUnsafe?.user;
+
+    if (user) {
+        const userName = user.first_name || user.username || "пользователь";
+
+        document.getElementById("user-name").textContent = userName;
+
+        console.log("Telegram User:", user);
+    } else {
+        console.log("Telegram User: не найден");
+    }
 </script>
 
 </body>
