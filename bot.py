@@ -307,8 +307,41 @@ trial_days_waiting = {}
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
 
+    # ================== TRIAL OK ==================
 
-        # ================== CALLBACK CONFIRM ==================
+    if callback.data == "trial_ok":
+
+        try:
+
+            await callback.answer()
+
+        except Exception as e:
+
+            logger.warning(
+                "TRIAL OK ANSWER ERROR | error=%s",
+                e,
+            )
+
+        try:
+
+            await callback.message.delete()
+
+            logger.info(
+                "TRIAL OK MESSAGE DELETED | user=%s",
+                callback.from_user.id,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "TRIAL OK DELETE ERROR | user=%s | error=%s",
+                callback.from_user.id,
+                e,
+            )
+
+        return
+
+    # ================== CALLBACK CONFIRM ==================
 
     if callback.data == "instruction":
 
@@ -1284,27 +1317,6 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         return
 
-
-    # ================== TRIAL OK ==================
-
-    elif callback.data == "trial_ok":
-
-        await callback.answer()
-
-        try:
-
-            await callback.message.delete()
-
-        except Exception as e:
-
-            logger.warning(
-                "TRIAL OK DELETE ERROR | user=%s | error=%s",
-                callback.from_user.id,
-                e,
-            )
-
-        return
-        
 
     # ================== USER SUBSCRIPTION ==================
 
