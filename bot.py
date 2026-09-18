@@ -4,8 +4,12 @@ import os
 import logging
 from datetime import datetime, timezone
 import asyncpg
+import hashlib
+import hmac
 
 from fastapi import FastAPI, Request
+from urllib.parse import parse_qsl
+
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import (
@@ -6083,7 +6087,117 @@ async def telegram_webhook(request: Request):
 
     await dp.feed_update(bot, update)
 
-    return {"ok": True}
+        return {"ok": True}
+
+
+# ================== MINI APP AUTH ==================
+
+@app.post("/miniapp/auth")
+async def miniapp_auth(request: Request):
+
+    data = await request.json()
+
+    init_data = data.get("initData")
+
+    if not init_data:
+        return {
+            "ok": False,
+            "error": "initData is missing",
+        }
+
+
+    # ================== PARSE INIT DATA ==================
+
+    parsed_data = dict(
+        parse_qsl(
+            init_data,
+            keep_blank_values=True,
+        )
+    )
+
+    received_hash = parsed_data.pop(
+        "hash",
+        None,
+    )
+
+    if not received_hash:
+        return {
+            "ok": False,
+            "error": "hash is missing",
+        }
+
+
+    # ================== CREATE DATA CHECK STRING ==================
+
+    data_check_string = "\n".join(
+        f"{key}={value}"
+        for key, value in sorted(
+            parsed_data.items()
+        )
+    )
+
+
+    # ================== CREATE SECRET KEY ==================
+
+    secret_key = hmac.new(
+        b"WebAppData",
+        BOT_TOKEN.encode(),
+        hashlib.sha256,
+    ).digest()
+
+
+    # ================== CALCULATE HASH ==================
+
+    calculated_hash = hmac.new(
+        secret_key,
+        data_check_string.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+    # ================== VERIFY TELEGRAM ==================
+
+    if not hmac.compare_digest(
+        calculated_hash,
+        received_hash,
+    ):
+        return {
+            "ok": False,
+            "error": "Invalid initData",
+        }
+
+
+    # ================== GET USER ==================
+
+    user_data = parsed_data.get(
+        "user"
+    )
+
+    if not user_data:
+        return {
+            "ok": False,
+            "error": "User data is missing",
+        }
+
+
+    import json
+
+    user = json.loads(
+        user_data
+    )
+
+
+    # ================== SUCCESS ==================
+
+    return {
+        "ok": True,
+        "user": {
+            "id": user.get("id"),
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "username": user.get("username"),
+        },
+    }
 
 
 # ================== TRIAL EXPIRATION BACKGROUND TASK ==================
