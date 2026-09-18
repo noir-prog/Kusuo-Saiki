@@ -3684,7 +3684,7 @@ async def handle_subscription_add(message):
 
         async def delete_trial_message():
 
-            await asyncio.sleep(20)
+            await asyncio.sleep(10)
 
             try:
 
