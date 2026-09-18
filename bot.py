@@ -5126,7 +5126,10 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=info_text + "\n📍 Геолокация",
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="📍 Геолокация",
+                ),
                 reply_markup=profile_keyboard,
             )
 
@@ -5158,7 +5161,10 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=info_text + "\n👤 Контакт",
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="👤 Контакт",
+                ),
                 reply_markup=profile_keyboard,
             )
 
@@ -5194,9 +5200,9 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=(
-                    info_text
-                    + "\n❓ Неподдерживаемый тип сообщения"
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="❓ Неподдерживаемый тип сообщения",
                 ),
                 reply_markup=profile_keyboard,
             )
