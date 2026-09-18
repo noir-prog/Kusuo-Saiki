@@ -310,20 +310,6 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         # ================== CALLBACK CONFIRM ==================
 
-    if callback.data not in (
-        "instruction",
-        "check_required_subscription",
-    ):
-
-        try:
-            await callback.answer()
-        except Exception as e:
-            logger.warning(
-                "CALLBACK ANSWER ERROR | data=%s | error=%s",
-                callback.data,
-                e,
-            )
-
     if callback.data == "instruction":
 
         try:
@@ -2573,6 +2559,24 @@ async def handle_ui_callback(callback: CallbackQuery):
             access,
         )
 
+        # ================== BLOCKED ==================
+
+        if access["blocked"]:
+
+            logger.info(
+                "OPEN MENU | USER BLOCKED | user=%s",
+                callback.from_user.id,
+            )
+
+            await callback.answer(
+                "🚫 Доступ к Kusuo Saiki заблокирован.",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== NO ACCESS ==================
+
         if not access["has_access"]:
 
             logger.info(
@@ -2580,25 +2584,54 @@ async def handle_ui_callback(callback: CallbackQuery):
                 callback.from_user.id,
             )
 
+            # ================== TRIAL EXPIRED ==================
+
+            if access["trial_expired"]:
+
+                await callback.answer(
+                    "🥺 Твой пробный период закончился.\n\n"
+                    "Чтобы продолжить пользоваться Kusuo Saiki, "
+                    "оформи подписку.",
+                    show_alert=True,
+                )
+
+                logger.info(
+                    "OPEN MENU | TRIAL EXPIRED POPUP SENT | user=%s",
+                    callback.from_user.id,
+                )
+
+                return
+
+            # ================== OTHER ACCESS ERROR ==================
+
             await callback.answer(
-                "ТЕСТ",
-                show_alert=False,
+                "🚫 У тебя сейчас нет доступа к Kusuo Saiki.",
+                show_alert=True,
             )
 
             logger.info(
-                "OPEN MENU | ALERT SENT | user=%s",
+                "OPEN MENU | NO ACCESS POPUP SENT | user=%s",
                 callback.from_user.id,
             )
 
             return
+
+        # ================== CALLBACK CONFIRM ==================
+
+        await callback.answer()
+
+        # ================== BUSINESS CONNECTION ==================
 
         connected = await is_business_connected(
             callback.from_user.id
         )
 
         if not connected:
+
             await show_settings()
             return
+
+        # ================== MENU ==================
 
         await callback.message.edit_text(
             "📋 МЕНЮ\n\n"
@@ -2637,7 +2670,6 @@ async def handle_ui_callback(callback: CallbackQuery):
                 ]
             ),
         )
-
         # ================== SUPPORT ==================
         
     elif callback.data == "support":
@@ -3098,7 +3130,17 @@ async def init_db():
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
+        # ================== ACCESS CONTROL COLUMNS ==================
 
+        await conn.execute("""
+            ALTER TABLE business_accounts
+            ADD COLUMN IF NOT EXISTS blocked BOOLEAN NOT NULL DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS free_access BOOLEAN NOT NULL DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS trial_until TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS subscription_until TIMESTAMPTZ,
+            ADD COLUMN IF NOT EXISTS trial_expired_notified BOOLEAN NOT NULL DEFAULT FALSE
+        """)
+        
     logger.info("DATABASE INITIALIZED")
     
     
@@ -3116,19 +3158,22 @@ async def get_user_access_status(user_id):
             "blocked": False,
             "free_access": False,
             "trial_active": False,
+            "trial_expired": False,
             "subscription_active": False,
             "has_access": False,
         }
 
     if user_id == OWNER_ID:
+
         return {
             "blocked": False,
             "free_access": True,
             "trial_active": False,
+            "trial_expired": False,
             "subscription_active": False,
             "has_access": True,
         }
-        
+
     async with db_pool.acquire() as conn:
 
         user = await conn.fetchrow(
@@ -3144,17 +3189,22 @@ async def get_user_access_status(user_id):
             user_id,
         )
 
+    # ================== USER NOT FOUND ==================
+
     if not user:
 
         return {
             "blocked": False,
             "free_access": False,
             "trial_active": False,
+            "trial_expired": False,
             "subscription_active": False,
             "has_access": False,
         }
 
     now = datetime.now(timezone.utc)
+
+    # ================== USER STATUS ==================
 
     blocked = bool(
         user["blocked"]
@@ -3167,6 +3217,11 @@ async def get_user_access_status(user_id):
     trial_active = (
         user["trial_until"] is not None
         and user["trial_until"] > now
+    )
+
+    trial_expired = (
+        user["trial_until"] is not None
+        and user["trial_until"] <= now
     )
 
     subscription_active = (
@@ -3187,6 +3242,7 @@ async def get_user_access_status(user_id):
         "blocked": blocked,
         "free_access": free_access,
         "trial_active": trial_active,
+        "trial_expired": trial_expired,
         "subscription_active": subscription_active,
         "has_access": has_access,
     }
