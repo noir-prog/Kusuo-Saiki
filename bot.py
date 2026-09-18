@@ -4236,6 +4236,119 @@ async def handle_business_connection(connection):
         business_connection_id,
     )
         
+        
+        # ================== LOG CHAT HEADER ==================
+
+import html
+
+
+async def ensure_log_chat_header(
+    business_connection_id,
+    topic_id,
+    chat_id,
+    business_user,
+):
+    """
+    Создаёт визуальный заголовок чата в LOG-topic,
+    если этот чат ещё не архивировался.
+    """
+
+    try:
+
+        # ================== CHECK CHAT IN D1 ==================
+
+        result = await d1_query(
+            """
+            SELECT 1
+            FROM message_batches
+            WHERE business_connection_id = ?
+              AND chat_id = ?
+            LIMIT 1
+            """,
+            [
+                business_connection_id,
+                chat_id,
+            ],
+        )
+
+        results = result["result"][0]["results"]
+
+        if results:
+            return
+
+        # ================== GET CHAT USER ==================
+
+        chat = await bot.get_chat(
+            chat_id=chat_id
+        )
+
+        peer_name = (
+            chat.full_name
+            if getattr(chat, "full_name", None)
+            else getattr(chat, "first_name", None)
+            or getattr(chat, "title", None)
+            or "Неизвестный пользователь"
+        )
+
+        peer_name = html.escape(
+            peer_name
+        )
+
+        # ================== BUSINESS USER NAME ==================
+
+        if business_user.username:
+            business_name = (
+                f"@{business_user.username}"
+            )
+        else:
+            business_name = (
+                business_user.first_name
+                or "Пользователь"
+            )
+
+        business_name = html.escape(
+            business_name
+        )
+
+        # ================== HEADER ==================
+
+        header_text = (
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"💬 <a href=\"tg://user?id={chat_id}\">"
+            f"{peer_name}"
+            "</a>\n"
+            f"🆔 Chat ID: <code>{chat_id}</code>\n"
+            "━━━━━━━━━━━━━━━━━━━━"
+        )
+
+        await bot.send_message(
+            chat_id=int(LOG_CHAT_ID),
+            message_thread_id=topic_id,
+            text=header_text,
+            parse_mode="HTML",
+        )
+
+        logger.info(
+            "LOG CHAT HEADER CREATED | "
+            "connection=%s | topic=%s | chat=%s | peer=%s",
+            business_connection_id,
+            topic_id,
+            chat_id,
+            peer_name,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "LOG CHAT HEADER ERROR | "
+            "connection=%s | topic=%s | chat=%s | error=%s",
+            business_connection_id,
+            topic_id,
+            chat_id,
+            e,
+        )
+        
+        
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
