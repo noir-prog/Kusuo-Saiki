@@ -6087,7 +6087,7 @@ async def telegram_webhook(request: Request):
 
     await dp.feed_update(bot, update)
 
-        return {"ok": True}
+    return {"ok": True}
 
 
 # ================== MINI APP AUTH ==================
