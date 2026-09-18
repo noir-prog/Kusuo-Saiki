@@ -4314,6 +4314,9 @@ async def ensure_log_chat_header(
 
         header_text = (
             "━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 <a href=\"tg://user?id={business_user.id}\">"
+            f"{business_name}"
+            "</a>\n"
             f"💬 <a href=\"tg://user?id={chat_id}\">"
             f"{peer_name}"
             "</a>\n"
