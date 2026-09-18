@@ -4872,10 +4872,7 @@ async def handle_business_message(message):
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=(
-                    info_text
-                    + f"\n📝 Текст:\n{message.text}"
-                ),
+                text=f"📝 {message.text}",
                 reply_markup=profile_keyboard,
             )
 
