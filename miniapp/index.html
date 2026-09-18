@@ -8,6 +8,8 @@
     >
 
     <title>Kusuo Saiki</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
         body {
@@ -57,6 +59,15 @@
     </div>
 
 </div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+
+    tg.ready();
+
+    console.log("Telegram WebApp:", tg);
+    console.log("Telegram User:", tg.initDataUnsafe?.user);
+</script>
 
 </body>
 </html>
