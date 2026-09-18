@@ -5405,6 +5405,16 @@ async def handle_deleted_business_messages(message):
                     f"🆔 Message ID: {deleted_message_id}\n"
                     f"📦 Тип: {message_type}"
                 ),
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="👤 Открыть отправителя",
+                                url=f"tg://user?id={user.id}",
+                            )
+                        ]
+                    ]
+                ),
             )
 
         except Exception as e:
@@ -5416,7 +5426,6 @@ async def handle_deleted_business_messages(message):
                 deleted_message_id,
                 e,
             )
-
         # ================== TEXT ==================
 
         if message_type == "text":
