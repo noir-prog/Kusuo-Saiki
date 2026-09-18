@@ -3675,11 +3675,30 @@ async def handle_subscription_add(message):
             None,
         )
 
-        await message.answer(
+        sent_message = await message.answer(
             "🎁 ПРОБНЫЙ ПЕРИОД ВЫДАН\n\n"
             f"Пользователь: {target_user_id}\n"
             f"Срок: {days} дн.\n\n"
             "Доступ пользователя обновлён."
+        )
+
+        async def delete_trial_message():
+
+            await asyncio.sleep(20)
+
+            try:
+
+                await sent_message.delete()
+
+            except Exception as e:
+
+                logger.warning(
+                    "GIVE TRIAL MESSAGE DELETE ERROR | error=%s",
+                    e,
+                )
+
+        asyncio.create_task(
+            delete_trial_message()
         )
 
         logger.info(
