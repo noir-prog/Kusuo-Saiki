@@ -4952,14 +4952,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 audio=message.audio.file_id,
-                caption=(
-                    info_text
-                    + "\n🎵 Аудио"
-                    + (
-                        f"\n📝 Подпись:\n{message.caption}"
-                        if message.caption
-                        else ""
-                    )
+                caption=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="🎵 Аудио",
+                    caption=message.caption,
                 ),
                 reply_markup=profile_keyboard,
             )
@@ -4984,7 +4980,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 voice=message.voice.file_id,
-                caption=info_text + "\n🎤 Голосовое сообщение",
+                caption=create_log_media_caption(
+                     header_text=header_text,
+                     message_type="🎤 Голосовое сообщение",
+                ),
                 reply_markup=profile_keyboard,
             )
 
@@ -5008,14 +5007,10 @@ async def handle_business_message(message):
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
                 document=message.document.file_id,
-                caption=(
-                    info_text
-                    + "\n📎 Документ"
-                    + (
-                        f"\n📝 Подпись:\n{message.caption}"
-                        if message.caption
-                        else ""
-                    )
+                caption=create_log_media_caption(
+                     header_text=header_text,
+                     message_type="📎 Документ",
+                     caption=message.caption,
                 ),
                 reply_markup=profile_keyboard,
             )
