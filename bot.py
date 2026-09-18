@@ -3674,7 +3674,29 @@ async def handle_subscription_add(message):
             message.from_user.id,
             None,
         )
+        
+        # ================== NOTIFY USER ==================
 
+        try:
+
+            await bot.send_message(
+                target_user_id,
+                "🎁 ТЕБЕ ВЫДАН ПРОБНЫЙ ПЕРИОД!\n\n"
+                f"Администратор предоставил тебе доступ "
+                f"на {days} дн.\n\n"
+                "Теперь ты снова можешь пользоваться "
+                "Kusuo Saiki. ❤️"
+            )
+
+        except Exception as e:
+
+            logger.warning(
+                "TRIAL USER NOTIFICATION ERROR | "
+                "user=%s | error=%s",
+                target_user_id,
+                e,
+            )
+            
         sent_message = await message.answer(
             "🎁 ПРОБНЫЙ ПЕРИОД ВЫДАН\n\n"
             f"Пользователь: {target_user_id}\n"
