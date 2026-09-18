@@ -9,6 +9,7 @@ import hmac
 
 from fastapi import FastAPI, Request
 from urllib.parse import parse_qsl
+from fastapi.middleware.cors import CORSMiddleware
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
@@ -61,6 +62,19 @@ dp = Dispatcher()
 # ================== FASTAPI ==================
 
 app = FastAPI()
+
+
+# ================== CORS ==================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://kusuo-miniapp.onrender.com",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ================== USER INTERFACE ==================
