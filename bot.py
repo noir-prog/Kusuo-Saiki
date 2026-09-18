@@ -1224,8 +1224,67 @@ async def handle_ui_callback(callback: CallbackQuery):
         await callback.answer()
 
         return
-        
-        
+
+
+    # ================== GIVE TRIAL ==================
+
+    elif callback.data.startswith("action_trial:"):
+
+        if callback.from_user.id != OWNER_ID:
+            await callback.answer(
+                "🚫 Недостаточно прав.",
+                show_alert=True,
+            )
+            return
+
+        try:
+            target_user_id = int(
+                callback.data.split(":")[1]
+            )
+
+        except (IndexError, ValueError):
+
+            await callback.answer(
+                "❌ Не удалось определить пользователя.",
+                show_alert=True,
+            )
+
+            return
+
+        trial_days_waiting[
+            callback.from_user.id
+        ] = target_user_id
+
+        await callback.message.edit_text(
+            "🎁 ВЫДАЧА ПРОБНОГО ПЕРИОДА\n\n"
+            f"Пользователь: {target_user_id}\n\n"
+            "Введите количество дней, на которое "
+            "выдать пробный период.\n\n"
+            "Например:\n"
+            "1 — 1 день\n"
+            "7 — 7 дней\n"
+            "30 — 30 дней\n"
+            "100 — 100 дней",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="⬅️ НАЗАД",
+                            callback_data=(
+                                f"user_manage:"
+                                f"{target_user_id}"
+                            ),
+                        )
+                    ]
+                ]
+            ),
+        )
+
+        await callback.answer()
+
+        return
+
+
     # ================== USER SUBSCRIPTION ==================
 
     elif callback.data.startswith("user_subscription:"):
@@ -3514,6 +3573,125 @@ async def handle_subscription_add(message):
 
     if message.from_user.id != OWNER_ID:
         return
+
+    # ================== GIVE TRIAL ==================
+
+    if message.from_user.id in trial_days_waiting:
+
+        if not message.text:
+            await message.answer(
+                "❌ Введите количество дней числом.\n\n"
+                "Например: 1, 7, 30 или 100."
+            )
+            return
+
+        try:
+            days = int(
+                message.text.strip()
+            )
+
+        except ValueError:
+
+            await message.answer(
+                "❌ Количество дней должно быть числом.\n\n"
+                "Например: 1, 7, 30 или 100."
+            )
+            return
+
+        if days <= 0:
+
+            await message.answer(
+                "❌ Количество дней должно быть больше нуля."
+            )
+            return
+
+        target_user_id = trial_days_waiting.get(
+            message.from_user.id
+        )
+
+        if target_user_id is None:
+
+            await message.answer(
+                "❌ Пользователь для выдачи "
+                "пробного периода не найден."
+            )
+            return
+
+        if db_pool is None:
+
+            await message.answer(
+                "❌ Ошибка подключения к базе данных."
+            )
+
+            logger.error(
+                "GIVE TRIAL ERROR | DATABASE POOL IS NONE"
+            )
+
+            return
+
+        try:
+
+            async with db_pool.acquire() as conn:
+
+                updated_user = await conn.fetchval(
+                    """
+                    UPDATE business_accounts
+                    SET
+                        trial_until = NOW() + ($1::INTEGER * INTERVAL '1 day'),
+                        trial_expired_notified = FALSE,
+                        updated_at = NOW()
+                    WHERE telegram_user_id = $2
+                    RETURNING telegram_user_id
+                    """,
+                    days,
+                    target_user_id,
+                )
+
+            if updated_user is None:
+
+                await message.answer(
+                    "❌ Пользователь не найден в базе данных."
+                )
+                return
+
+        except Exception as e:
+
+            logger.exception(
+                "GIVE TRIAL ERROR | "
+                "user=%s | days=%s | error=%s",
+                target_user_id,
+                days,
+                e,
+            )
+
+            await message.answer(
+                "❌ Не удалось выдать пробный период."
+            )
+
+            return
+
+        trial_days_waiting.pop(
+            message.from_user.id,
+            None,
+        )
+
+        await message.answer(
+            "🎁 ПРОБНЫЙ ПЕРИОД ВЫДАН\n\n"
+            f"Пользователь: {target_user_id}\n"
+            f"Срок: {days} дн.\n\n"
+            "Доступ пользователя обновлён."
+        )
+
+        logger.info(
+            "TRIAL GIVEN | user=%s | days=%s | admin=%s",
+            target_user_id,
+            days,
+            message.from_user.id,
+        )
+
+        return
+
+    # ================== SUBSCRIPTION ADD ==================
 
     if message.from_user.id not in subscription_add_waiting:
         return
