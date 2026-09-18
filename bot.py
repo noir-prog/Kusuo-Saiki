@@ -4237,11 +4237,8 @@ async def handle_business_connection(connection):
     )
         
         
-        # ================== LOG CHAT HEADER ==================
-
+# ================== LOG CHAT HEADER ==================
 import html
-
-
 async def ensure_log_chat_header(
     business_connection_id,
     topic_id,
@@ -4249,18 +4246,14 @@ async def ensure_log_chat_header(
     business_user,
 ):
     """
-    Создаёт визуальный заголовок чата в LOG-topic,
-    если этот чат ещё не архивировался.
+    Формирует визуальный заголовок чата
+    для добавления перед каждым архивным сообщением.
     """
-
     try:
-
         # ================== GET CHAT USER ==================
-
         chat = await bot.get_chat(
             chat_id=chat_id
         )
-
         peer_name = (
             chat.full_name
             if getattr(chat, "full_name", None)
@@ -4268,48 +4261,29 @@ async def ensure_log_chat_header(
             or getattr(chat, "title", None)
             or "Неизвестный пользователь"
         )
-
         peer_name = html.escape(
             peer_name
         )
-
         # ================== BUSINESS USER NAME ==================
-
-        if business_user.username:
-            business_name = (
-                f"@{business_user.username}"
+        business_name = (
+            business_user.first_name
+            or "Пользователь"
+        )
+        if business_user.last_name:
+            business_name += (
+                f" {business_user.last_name}"
             )
-        else:
-            business_name = (
-                business_user.first_name
-                or "Пользователь"
-            )
-
         business_name = html.escape(
             business_name
         )
-
         # ================== HEADER ==================
-
         header_text = (
             "━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 <a href=\"tg://user?id={business_user.id}\">"
-            f"{business_name}"
-            "</a>\n"
-            f"💬 <a href=\"tg://user?id={chat_id}\">"
-            f"{peer_name}"
-            "</a>\n"
+            f"👤 {business_name}\n"
+            f"💬 {peer_name}\n"
             f"🆔 Chat ID: <code>{chat_id}</code>\n"
-            "━━━━━━━━━━━━━━━━━━━━"
+            "━━━━━━━━━━━━━━━━━━━━\n"
         )
-
-        await bot.send_message(
-            chat_id=int(LOG_CHAT_ID),
-            message_thread_id=topic_id,
-            text=header_text,
-            parse_mode="HTML",
-        )
-
         logger.info(
             "LOG CHAT HEADER CREATED | "
             "connection=%s | topic=%s | chat=%s | peer=%s",
@@ -4318,9 +4292,8 @@ async def ensure_log_chat_header(
             chat_id,
             peer_name,
         )
-
+        return header_text
     except Exception as e:
-
         logger.exception(
             "LOG CHAT HEADER ERROR | "
             "connection=%s | topic=%s | chat=%s | error=%s",
@@ -4329,6 +4302,7 @@ async def ensure_log_chat_header(
             chat_id,
             e,
         )
+        return ""
         
         
 # ================== BUSINESS MESSAGES ==================
@@ -4487,8 +4461,7 @@ async def handle_business_message(message):
 
     # ================== SAVE MESSAGE TO USER TOPIC ==================
     # ================== ENSURE CHAT HEADER ==================
-
-    await ensure_log_chat_header(
+    header_text = await ensure_log_chat_header(
         business_connection_id=message.business_connection_id,
         topic_id=topic_id,
         chat_id=message.chat.id,
@@ -4845,14 +4818,21 @@ async def handle_business_message(message):
                     ),
                 )
                 
-                # ================== TEXT ==================
+        # ================== TEXT ==================
 
         elif message.text:
+            full_text = (
+                header_text
+                + "\n"
+                + f"📝 {message.text}"
+            )
+
             sent_message = await bot.send_message(
                 chat_id=int(LOG_CHAT_ID),
                 message_thread_id=topic_id,
-                text=f"📝 {message.text}",
+                text=full_text,
                 reply_markup=profile_keyboard,
+                parse_mode="HTML",
             )
 
             message_history[
@@ -4878,8 +4858,9 @@ async def handle_business_message(message):
                     "text_content": message.text,
                 },
             )
-
-                # ================== PHOTO ==================
+            
+            
+        # ================== PHOTO ==================
 
         elif message.photo:
             sent_message = await bot.send_photo(
