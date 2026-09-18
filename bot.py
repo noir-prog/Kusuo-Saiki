@@ -5326,6 +5326,30 @@ async def handle_edited_business_message(message):
         new_text
     )
 
+    # ================== PROFILE BUTTONS ==================
+
+    sender_id = message.from_user.id
+
+    if sender_id == user.id:
+        recipient_id = message.chat.id
+    else:
+        recipient_id = user.id
+
+    profile_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="👤 Отправитель",
+                    url=f"tg://user?id={sender_id}",
+                ),
+                InlineKeyboardButton(
+                    text="📨 Получатель",
+                    url=f"tg://user?id={recipient_id}",
+                ),
+            ]
+        ]
+    )
+
     # ================== SAVE EDIT TO LOG ==================
 
     log_message_id = (
@@ -5350,6 +5374,7 @@ async def handle_edited_business_message(message):
         message_thread_id=topic_id,
         text=edited_text,
         parse_mode="HTML",
+        reply_markup=profile_keyboard,
         reply_parameters=(
             {
                 "message_id": log_message_id
