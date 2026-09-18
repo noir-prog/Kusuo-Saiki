@@ -1285,6 +1285,27 @@ async def handle_ui_callback(callback: CallbackQuery):
         return
 
 
+    # ================== TRIAL OK ==================
+
+    elif callback.data == "trial_ok":
+
+        await callback.answer()
+
+        try:
+
+            await callback.message.delete()
+
+        except Exception as e:
+
+            logger.warning(
+                "TRIAL OK DELETE ERROR | user=%s | error=%s",
+                callback.from_user.id,
+                e,
+            )
+
+        return
+        
+
     # ================== USER SUBSCRIPTION ==================
 
     elif callback.data.startswith("user_subscription:"):
@@ -3675,7 +3696,7 @@ async def handle_subscription_add(message):
             None,
         )
         
-        # ================== NOTIFY USER ==================
+                # ================== NOTIFY USER ==================
 
         try:
 
@@ -3685,7 +3706,17 @@ async def handle_subscription_add(message):
                 f"Администратор предоставил тебе доступ "
                 f"на {days} дн.\n\n"
                 "Теперь ты снова можешь пользоваться "
-                "Kusuo Saiki. ❤️"
+                "Kusuo Saiki. ❤️",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="✅ ОК",
+                                callback_data="trial_ok",
+                            )
+                        ]
+                    ]
+                ),
             )
 
         except Exception as e:
