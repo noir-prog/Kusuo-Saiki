@@ -4507,21 +4507,10 @@ async def handle_business_message(message):
         else:
             recipient_id = user.id
 
-        profile_keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="👤 Отправитель",
-                        url=f"tg://user?id={sender_id}",
-                    ),
-                    InlineKeyboardButton(
-                        text="📨 Получатель",
-                        url=f"tg://user?id={recipient_id}",
-                    ),
-                ]
-            ]
+        profile_keyboard = create_profile_keyboard(
+            sender_id=sender_id,
+            recipient_id=recipient_id,
         )
-        
         
         # ================== REPLY TO PHOTO ==================
 
