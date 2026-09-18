@@ -64,20 +64,60 @@
 </div>
 
 <script>
+    // ================== TELEGRAM WEB APP ==================
+
     const tg = window.Telegram.WebApp;
 
     tg.ready();
 
     const user = tg.initDataUnsafe?.user;
 
+
+    // ================== USER DATA ==================
+
     if (user) {
-        const userName = user.first_name || user.username || "пользователь";
 
-        document.getElementById("user-name").textContent = userName;
+        const userName =
+            user.first_name ||
+            user.username ||
+            "пользователь";
 
-        console.log("Telegram User:", user);
+        document.getElementById(
+            "user-name"
+        ).textContent = userName;
+
+
+        console.log(
+            "Telegram User ID:",
+            user.id
+        );
+
+        console.log(
+            "Telegram Username:",
+            user.username
+        );
+
+        console.log(
+            "Telegram First Name:",
+            user.first_name
+        );
+
+        console.log(
+            "Telegram Last Name:",
+            user.last_name
+        );
+
+        console.log(
+            "Telegram Language:",
+            user.language_code
+        );
+
     } else {
-        console.log("Telegram User: не найден");
+
+        console.log(
+            "Telegram User: не найден"
+        );
+
     }
 </script>
 
