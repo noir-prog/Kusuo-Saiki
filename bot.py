@@ -4559,6 +4559,29 @@ async def save_message_to_d1(
         chat_id=chat_id,
         message_data=message_data,
     )
+    
+# ================== SAVE MESSAGE DATA ==================
+
+async def save_log_message(
+    message,
+    sent_message,
+    message_type,
+    file_id=None,
+    text_content=None,
+    **extra_data,
+):
+    await save_message_to_d1(
+        business_connection_id=message.business_connection_id,
+        chat_id=message.chat.id,
+        message_data={
+            "message_id": message.message_id,
+            "log_message_id": sent_message.message_id,
+            "message_type": message_type,
+            "file_id": file_id,
+            "text_content": text_content,
+            **extra_data,
+        },
+    )
      
 # ================== BUSINESS MESSAGES ==================
 
