@@ -5863,27 +5863,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "photo":
             try:
-                await bot.send_photo(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    photo=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННОЕ ФОТО"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED PHOTO RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED PHOTO COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED PHOTO LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого фото "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -5899,27 +5915,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "video":
             try:
-                await bot.send_video(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    video=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННОЕ ВИДЕО"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED VIDEO RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED VIDEO COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED VIDEO LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого видео "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -5935,27 +5967,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "audio":
             try:
-                await bot.send_audio(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    audio=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННОЕ АУДИО"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED AUDIO RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED AUDIO COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED AUDIO LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого аудио "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -5971,19 +6019,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "voice":
             try:
-                await bot.send_voice(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    voice=file_id,
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED VOICE RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED VOICE COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED VOICE LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого голосового "
+                            "сообщения не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -5999,27 +6071,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "document":
             try:
-                await bot.send_document(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    document=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННЫЙ ДОКУМЕНТ"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED DOCUMENT RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED DOCUMENT COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED DOCUMENT LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого документа "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -6035,19 +6123,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "sticker":
             try:
-                await bot.send_sticker(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    sticker=file_id,
-                )
+                if log_media_message_id is not None:
 
-                logger.info(
-                    "DELETED STICKER RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_media_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED STICKER COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_media_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_media_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED STICKER LOG MEDIA MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого стикера "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -6063,27 +6175,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "animation":
             try:
-                await bot.send_animation(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    animation=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННАЯ АНИМАЦИЯ"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED ANIMATION RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED ANIMATION COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED ANIMATION LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённой анимации "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -6099,19 +6227,43 @@ async def handle_deleted_business_messages(message):
 
         elif message_type == "video_note":
             try:
-                await bot.send_video_note(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    video_note=file_id,
-                )
+                if log_media_message_id is not None:
 
-                logger.info(
-                    "DELETED VIDEO NOTE RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_media_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED VIDEO NOTE COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_media_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_media_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED VIDEO NOTE LOG MEDIA MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого кружка "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -6126,69 +6278,96 @@ async def handle_deleted_business_messages(message):
         # ================== LOCATION ==================
 
         elif message_type == "location":
-            latitude = deleted_data.get(
-                "latitude"
-            )
+            try:
+                if log_media_message_id is not None:
 
-            longitude = deleted_data.get(
-                "longitude"
-            )
-
-            if latitude is not None and longitude is not None:
-                try:
-                    await bot.send_location(
+                    await bot.copy_message(
                         chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_media_message_id,
                         message_thread_id=topic_id,
-                        latitude=latitude,
-                        longitude=longitude,
                     )
 
                     logger.info(
-                        "DELETED LOCATION RESTORED TO LOG | "
+                        "DELETED LOCATION COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_media_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_media_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED LOCATION LOG MEDIA MESSAGE ID NOT FOUND | "
                         "connection=%s | chat=%s | message=%s",
                         message.business_connection_id,
                         message.chat.id,
                         deleted_message_id,
                     )
 
-                except Exception as e:
-                    logger.exception(
-                        "DELETED LOCATION RESTORE ERROR | "
-                        "connection=%s | chat=%s | message=%s | error=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                        e,
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённой геолокации "
+                            "не найдена."
+                        ),
                     )
+
+            except Exception as e:
+                logger.exception(
+                    "DELETED LOCATION RESTORE ERROR | "
+                    "connection=%s | chat=%s | message=%s | error=%s",
+                    message.business_connection_id,
+                    message.chat.id,
+                    deleted_message_id,
+                    e,
+                )
 
         # ================== CONTACT ==================
 
         elif message_type == "contact":
             try:
-                await bot.send_contact(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    phone_number=deleted_data.get(
-                        "phone_number"
-                    ),
-                    first_name=deleted_data.get(
-                        "first_name"
-                    ),
-                    last_name=deleted_data.get(
-                        "last_name"
-                    ),
-                    vcard=deleted_data.get(
-                        "vcard"
-                    ),
-                )
+                if log_media_message_id is not None:
 
-                logger.info(
-                    "DELETED CONTACT RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_media_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED CONTACT COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_media_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_media_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED CONTACT LOG MEDIA MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого контакта "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
