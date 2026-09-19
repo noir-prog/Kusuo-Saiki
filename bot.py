@@ -5753,14 +5753,25 @@ async def handle_deleted_business_messages(message):
             "message_type"
         )
 
-        text_content = deleted_data.get(
-            "text_content"
+        log_message_id = deleted_data.get(
+            "log_message_id"
         )
 
-        file_id = deleted_data.get(
-            "file_id"
+        log_media_message_id = deleted_data.get(
+            "log_media_message_id"
         )
 
+        logger.info(
+            "DELETED MESSAGE ARCHIVE REFERENCES | "
+            "connection=%s | chat=%s | message=%s | "
+            "type=%s | log_message_id=%s | log_media_message_id=%s",
+            message.business_connection_id,
+            message.chat.id,
+            deleted_message_id,
+            message_type,
+            log_message_id,
+            log_media_message_id,
+        )
         # ================== LOG DELETION INFO ==================
 
         try:
@@ -5800,22 +5811,43 @@ async def handle_deleted_business_messages(message):
 
         if message_type == "text":
             try:
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "♻️ УДАЛЁННЫЙ ТЕКСТ\n\n"
-                        f"{text_content or '[пусто]'}"
-                    ),
-                )
+                if log_message_id is not None:
 
-                logger.info(
-                    "DELETED TEXT RESTORED TO LOG | "
-                    "connection=%s | chat=%s | message=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                )
+                    await bot.copy_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        from_chat_id=int(LOG_CHAT_ID),
+                        message_id=log_message_id,
+                        message_thread_id=topic_id,
+                    )
+
+                    logger.info(
+                        "DELETED TEXT COPIED FROM LOG | "
+                        "connection=%s | chat=%s | message=%s | "
+                        "log_message_id=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                        log_message_id,
+                    )
+
+                else:
+
+                    logger.warning(
+                        "DELETED TEXT LOG MESSAGE ID NOT FOUND | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
+                    await bot.send_message(
+                        chat_id=int(LOG_CHAT_ID),
+                        message_thread_id=topic_id,
+                        text=(
+                            "⚠️ Архивная копия удалённого текста "
+                            "не найдена."
+                        ),
+                    )
 
             except Exception as e:
                 logger.exception(
@@ -6191,7 +6223,7 @@ async def handle_deleted_business_messages(message):
                 ),
             )
 
-                    # ================== SEND DELETED MESSAGE TO USER ==================
+        # ================== SEND DELETED MESSAGE TO USER ==================
 
         try:
 
