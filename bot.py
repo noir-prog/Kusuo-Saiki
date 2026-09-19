@@ -4817,9 +4817,8 @@ async def handle_business_message(message):
                     filename="self_destruct_video.mp4",
                 )
 
-                await bot.send_video(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
+                await send_log_video(
+                    topic_id=topic_id,
                     video=video_file,
                     caption=create_log_media_caption(
                         header_text=header_text,
@@ -4895,13 +4894,12 @@ async def handle_business_message(message):
                     filename="self_destruct_voice.ogg",
                 )
 
-                await bot.send_voice(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
+                await send_log_voice(
+                    topic_id=topic_id,
                     voice=voice_file,
                     caption=create_log_media_caption(
                         header_text=header_text,
-                         message_type="🎤 Самоудаляющееся голосовое сообщение",
+                        message_type="🎤 Самоудаляющееся голосовое сообщение",
                     ),
                     reply_markup=profile_keyboard,
                 )
@@ -4972,9 +4970,8 @@ async def handle_business_message(message):
                     filename="self_destruct_video_note.mp4",
                 )
 
-                await bot.send_video_note(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
+                await send_log_video_note(
+                    topic_id=topic_id,
                     video_note=video_note_file,
                 )
 
