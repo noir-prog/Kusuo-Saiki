@@ -5308,15 +5308,16 @@ async def handle_business_message(message):
 
 
         # ================== CONTACT ==================
-
-        sent_message = await send_log_text(
-            topic_id=topic_id,
-            text=create_log_media_caption(
-                header_text=header_text,
-                message_type="👤 Контакт",
-            ),
-            reply_markup=profile_keyboard,
-        )
+        
+        elif message.contact:
+            sent_message = await send_log_text(
+                topic_id=topic_id,
+                text=create_log_media_caption(
+                    header_text=header_text,
+                    message_type="👤 Контакт",
+                ),
+                reply_markup=profile_keyboard,
+            )
 
             await send_log_contact(
                 topic_id=topic_id,
