@@ -4361,6 +4361,141 @@ async def send_log_text(
         parse_mode="HTML",
     )
     
+# ================== LOG PHOTO ==================
+
+async def send_log_photo(
+    topic_id,
+    photo,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_photo(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        photo=photo,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+    
+# ================== LOG VIDEO ==================
+
+async def send_log_video(
+    topic_id,
+    video,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_video(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        video=video,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+    
+# ================== LOG AUDIO ==================
+
+async def send_log_audio(
+    topic_id,
+    audio,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_audio(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        audio=audio,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+
+
+# ================== LOG VOICE ==================
+
+async def send_log_voice(
+    topic_id,
+    voice,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_voice(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        voice=voice,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+    
+# ================== LOG DOCUMENT ==================
+
+async def send_log_document(
+    topic_id,
+    document,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_document(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        document=document,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+    
+# ================== LOG STICKER ==================
+
+async def send_log_sticker(
+    topic_id,
+    sticker,
+):
+    return await bot.send_sticker(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        sticker=sticker,
+    )
+    
+# ================== LOG ANIMATION ==================
+
+async def send_log_animation(
+    topic_id,
+    animation,
+    caption,
+    reply_markup=None,
+):
+    return await bot.send_animation(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        animation=animation,
+        caption=caption,
+        reply_markup=reply_markup,
+    )
+    
+# ================== LOG VIDEO NOTE ==================
+
+async def send_log_video_note(
+    topic_id,
+    video_note,
+):
+    return await bot.send_video_note(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        video_note=video_note,
+    )
+    
+# ================== LOG LOCATION ==================
+
+async def send_log_location(
+    topic_id,
+    latitude,
+    longitude,
+):
+    return await bot.send_location(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        latitude=latitude,
+        longitude=longitude,
+    )
+    
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
@@ -4413,7 +4548,7 @@ async def handle_business_message(message):
     user = business_connection.user
 
 
-        # ================== GET OR CREATE USER TOPIC ==================
+    # ================== GET OR CREATE USER TOPIC ==================
 
     topic_id = business_topics.get(message.business_connection_id)
 
@@ -4904,9 +5039,8 @@ async def handle_business_message(message):
         # ================== PHOTO ==================
 
         elif message.photo:
-            sent_message = await bot.send_photo(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_photo(
+                topic_id=topic_id,
                 photo=message.photo[-1].file_id,
                 caption=create_log_media_caption(
                     header_text=header_text,
@@ -4928,12 +5062,11 @@ async def handle_business_message(message):
                 },
             )
 
-               # ================== VIDEO ==================
+        # ================== VIDEO ==================
 
         elif message.video:
-            sent_message = await bot.send_video(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_video(
+                topic_id=topic_id,
                 video=message.video.file_id,
                 caption=create_log_media_caption(
                     header_text=header_text,
@@ -4956,12 +5089,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== AUDIO ==================
+        # ================== AUDIO ==================
 
         elif message.audio:
-            sent_message = await bot.send_audio(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_audio(
+                topic_id=topic_id,
                 audio=message.audio.file_id,
                 caption=create_log_media_caption(
                     header_text=header_text,
@@ -4984,16 +5116,15 @@ async def handle_business_message(message):
             )
 
 
-# ================== VOICE ==================
+        # ================== VOICE ==================
 
         elif message.voice:
-            sent_message = await bot.send_voice(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_voice(
+                topic_id=topic_id,
                 voice=message.voice.file_id,
                 caption=create_log_media_caption(
-                     header_text=header_text,
-                     message_type="🎤 Голосовое сообщение",
+                    header_text=header_text,
+                    message_type="🎤 Голосовое сообщение",
                 ),
                 reply_markup=profile_keyboard,
             )
@@ -5011,17 +5142,16 @@ async def handle_business_message(message):
             )
 
 
-# ================== DOCUMENT ==================
+        # ================== DOCUMENT ==================
 
         elif message.document:
-            sent_message = await bot.send_document(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_document(
+                topic_id=topic_id,
                 document=message.document.file_id,
                 caption=create_log_media_caption(
-                     header_text=header_text,
-                     message_type="📎 Документ",
-                     caption=message.caption,
+                    header_text=header_text,
+                    message_type="📎 Документ",
+                    caption=message.caption,
                 ),
                 reply_markup=profile_keyboard,
             )
@@ -5039,12 +5169,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== STICKER ==================
+        # ================== STICKER ==================
 
         elif message.sticker:
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_text(
+                topic_id=topic_id,
                 text=create_log_media_caption(
                     header_text=header_text,
                     message_type="😀 Стикер",
@@ -5071,12 +5200,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== ANIMATION / GIF ==================
+        # ================== ANIMATION / GIF ==================
 
         elif message.animation:
-            sent_message = await bot.send_animation(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_animation(
+                topic_id=topic_id,
                 animation=message.animation.file_id,
                 caption=create_log_media_caption(
                     header_text=header_text,
@@ -5099,12 +5227,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== VIDEO NOTE / CIRCLE ==================
+        # ================== VIDEO NOTE / CIRCLE ==================
 
         elif message.video_note:
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_text(
+                topic_id=topic_id,
                 text=create_log_media_caption(
                     header_text=header_text,
                     message_type="📹 Видеосообщение",
@@ -5112,9 +5239,8 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
             
-            await bot.send_video_note(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            await send_log_video_note(
+                topic_id=topic_id,
                 video_note=message.video_note.file_id,
             )
 
@@ -5131,12 +5257,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== LOCATION ==================
+        # ================== LOCATION ==================
 
         elif message.location:
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_text(
+                topic_id=topic_id,
                 text=create_log_media_caption(
                     header_text=header_text,
                     message_type="📍 Геолокация",
@@ -5144,12 +5269,11 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await bot.send_location(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            await send_log_location(
+                topic_id=topic_id,
                 latitude=message.location.latitude,
                 longitude=message.location.longitude,
-            )
+            ) 
 
             await add_message_to_d1_batch(
                 business_connection_id=message.business_connection_id,
