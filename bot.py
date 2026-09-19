@@ -4724,14 +4724,6 @@ async def handle_business_message(message):
     )
     
     try:
-        info_text = (
-            "📥 НОВОЕ СООБЩЕНИЕ\n\n"
-            f"👤 {user.first_name} {user.last_name or ''}\n"
-            f"🆔 User ID: {user.id}\n"
-            f"🔑 Business connection: {message.business_connection_id}\n"
-            f"💬 Chat ID: {message.chat.id}\n"
-            f"🆔 Message ID: {message.message_id}\n"
-        )
 
         # ================== PROFILE BUTTONS ==================
 
