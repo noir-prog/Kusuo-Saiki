@@ -5085,7 +5085,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "photo",
                     "file_id": message.photo[-1].file_id,
-                    "text_content": message.caption,
                 },
             )
 
@@ -5111,7 +5110,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "video",
                     "file_id": message.video.file_id,
-                    "text_content": message.caption,
                 },
             )
 
@@ -5138,7 +5136,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "audio",
                     "file_id": message.audio.file_id,
-                    "text_content": message.caption,
                 },
             )
 
@@ -5164,7 +5161,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "voice",
                     "file_id": message.voice.file_id,
-                    "text_content": None,
                 },
             )
 
@@ -5191,7 +5187,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "document",
                     "file_id": message.document.file_id,
-                    "text_content": message.caption,
                 },
             )
 
@@ -5221,7 +5216,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "sticker",
                     "file_id": message.sticker.file_id,
-                    "text_content": None,
                 },
             )
 
@@ -5248,7 +5242,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "animation",
                     "file_id": message.animation.file_id,
-                    "text_content": message.caption,
                 },
             )
 
@@ -5278,7 +5271,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "video_note",
                     "file_id": message.video_note.file_id,
-                    "text_content": None,
                 },
             )
 
@@ -5309,7 +5301,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "location",
                     "file_id": None,
-                    "text_content": None,
                     "latitude": message.location.latitude,
                     "longitude": message.location.longitude,
                 },
@@ -5344,7 +5335,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "contact",
                     "file_id": None,
-                    "text_content": None,
                     "phone_number": message.contact.phone_number,
                     "first_name": message.contact.first_name,
                     "last_name": message.contact.last_name,
@@ -5373,7 +5363,6 @@ async def handle_business_message(message):
                     "log_message_id": sent_message.message_id,
                     "message_type": "unknown",
                     "file_id": None,
-                    "text_content": None,
                 },
             )
 
