@@ -4496,6 +4496,24 @@ async def send_log_location(
         longitude=longitude,
     )
     
+# ================== LOG CONTACT ==================
+
+async def send_log_contact(
+    topic_id,
+    phone_number,
+    first_name,
+    last_name=None,
+    vcard=None,
+):
+    return await bot.send_contact(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        phone_number=phone_number,
+        first_name=first_name,
+        last_name=last_name,
+        vcard=vcard,
+    )
+     
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
@@ -4723,9 +4741,8 @@ async def handle_business_message(message):
                     filename="self_destruct_photo.jpg",
                 )
 
-                await bot.send_photo(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
+                await send_log_photo(
+                    topic_id=topic_id,
                     photo=photo_file,
                     caption=create_log_media_caption(
                         header_text=header_text,
@@ -5290,22 +5307,19 @@ async def handle_business_message(message):
             )
 
 
-# ================== CONTACT ==================
+        # ================== CONTACT ==================
 
-        elif message.contact:
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
-                text=create_log_media_caption(
-                    header_text=header_text,
-                    message_type="👤 Контакт",
-                ),
-                reply_markup=profile_keyboard,
-            )
+        sent_message = await send_log_text(
+            topic_id=topic_id,
+            text=create_log_media_caption(
+                header_text=header_text,
+                message_type="👤 Контакт",
+            ),
+            reply_markup=profile_keyboard,
+        )
 
-            await bot.send_contact(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            await send_log_contact(
+                topic_id=topic_id,
                 phone_number=message.contact.phone_number,
                 first_name=message.contact.first_name,
                 last_name=message.contact.last_name,
