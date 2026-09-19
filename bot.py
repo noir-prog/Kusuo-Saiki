@@ -4654,14 +4654,10 @@ async def handle_business_message(message):
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
                     video=video_file,
-                    caption=(
-                        info_text
-                        + "\n🎥 Видео"
-                        + (
-                            f"\n📝 Подпись:\n{original.caption}"
-                            if original.caption
-                            else ""
-                        )
+                    caption=create_log_media_caption(
+                        header_text=header_text,
+                        message_type="🎥 Самоудаляющееся видео",
+                        caption=original.caption,
                     ),
                     reply_markup=profile_keyboard,
                 )
@@ -4736,7 +4732,10 @@ async def handle_business_message(message):
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
                     voice=voice_file,
-                    caption=info_text + "\n🎤 Одноразовое голосовое сообщение",
+                    caption=create_log_media_caption(
+                        header_text=header_text,
+                         message_type="🎤 Самоудаляющееся голосовое сообщение",
+                    ),
                     reply_markup=profile_keyboard,
                 )
 
@@ -4815,7 +4814,10 @@ async def handle_business_message(message):
                 await bot.send_message(
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
-                    text=info_text + "\n⭕ Одноразовый кружок",
+                    text=create_log_media_caption(
+                        header_text=header_text,
+                        message_type="⭕ Самоудаляющийся кружок",
+                    ),
                     reply_markup=profile_keyboard,
                 )
 
