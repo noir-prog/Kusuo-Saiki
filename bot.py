@@ -4346,6 +4346,21 @@ def create_log_media_caption(
 
     return text
     
+# ================== LOG TEXT MESSAGE ==================
+
+async def send_log_text(
+    topic_id,
+    text,
+    reply_markup=None,
+):
+    return await bot.send_message(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        text=text,
+        reply_markup=reply_markup,
+        parse_mode="HTML",
+    )
+    
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
@@ -4855,12 +4870,10 @@ async def handle_business_message(message):
                 + f"📝 {message.text}"
             )
 
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_text(
+                topic_id=topic_id,
                 text=full_text,
                 reply_markup=profile_keyboard,
-                parse_mode="HTML",
             )
 
             message_history[
