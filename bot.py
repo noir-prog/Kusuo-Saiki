@@ -4994,13 +4994,12 @@ async def handle_business_message(message):
                     video_note=video_note_file,
                 )
 
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
+                await send_log_text(
+                    topic_id=topic_id,
                     text=create_log_media_caption(
                         header_text=header_text,
                         message_type="⭕ Самоудаляющийся кружок",
-                    ),
+                        ),
                     reply_markup=profile_keyboard,
                 )
 
