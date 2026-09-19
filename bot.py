@@ -5201,24 +5201,24 @@ async def handle_business_message(message):
                     message_type="😀 Стикер",
                 ),
                 reply_markup=profile_keyboard,
-        )
+            )
 
-        media_message = await send_log_sticker(
-            topic_id=topic_id,
-            sticker=message.sticker.file_id,
-        )
+            media_message = await send_log_sticker(
+                topic_id=topic_id,
+                sticker=message.sticker.file_id,
+            )
 
-        await save_message_to_d1(
-            business_connection_id=message.business_connection_id,
-            chat_id=message.chat.id,
-            message_data={
-                "message_id": message.message_id,
-                "log_message_id": sent_message.message_id,
-                "log_media_message_id": media_message.message_id,
-                "message_type": "sticker",
-                "file_id": message.sticker.file_id,
-            },
-        )
+            await save_message_to_d1(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_data={
+                    "message_id": message.message_id,
+                    "log_message_id": sent_message.message_id,
+                    "log_media_message_id": media_message.message_id,
+                    "message_type": "sticker",
+                    "file_id": message.sticker.file_id,
+                },
+            )
 
 
         # ================== ANIMATION / GIF ==================
