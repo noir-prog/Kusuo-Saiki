@@ -4514,6 +4514,21 @@ async def send_log_contact(
         vcard=vcard,
     )
     
+# ================== LOG REPLY MESSAGE ==================
+
+async def send_log_reply(
+    topic_id,
+    text,
+):
+    return await bot.send_message(
+        chat_id=int(LOG_CHAT_ID),
+        message_thread_id=topic_id,
+        text=(
+            "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
+            f"📝 {text}"
+        ),
+    )
+    
 # ================== SAVE MESSAGE TO D1 ==================
 
 async def save_message_to_d1(
@@ -4781,13 +4796,9 @@ async def handle_business_message(message):
                 )
 
             if message.text:
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
-                        f"📝 {message.text}"
-                    ),
+                await send_log_reply(
+                    topic_id=topic_id,
+                    text=message.text,
                 )
 
         # ================== REPLY TO VIDEO ==================
@@ -4857,13 +4868,9 @@ async def handle_business_message(message):
                 )
 
             if message.text:
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
-                        f"📝 {message.text}"
-                    ),
+                await send_log_reply(
+                    topic_id=topic_id,
+                    text=message.text,
                 )
 
 
@@ -4933,13 +4940,9 @@ async def handle_business_message(message):
                 )
 
             if message.text:
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
-                        f"📝 {message.text}"
-                    ),
+                await send_log_reply(
+                    topic_id=topic_id,
+                    text=message.text,
                 )
 
 
@@ -5014,13 +5017,9 @@ async def handle_business_message(message):
                 )
 
             if message.text:
-                await bot.send_message(
-                    chat_id=int(LOG_CHAT_ID),
-                    message_thread_id=topic_id,
-                    text=(
-                        "💬 ОТВЕТ НА СООБЩЕНИЕ\n\n"
-                        f"📝 {message.text}"
-                    ),
+                await send_log_reply(
+                    topic_id=topic_id,
+                    text=message.text,
                 )
                 
         # ================== TEXT ==================
