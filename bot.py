@@ -4513,6 +4513,19 @@ async def send_log_contact(
         last_name=last_name,
         vcard=vcard,
     )
+    
+# ================== SAVE MESSAGE TO D1 ==================
+
+async def save_message_to_d1(
+    business_connection_id,
+    chat_id,
+    message_data,
+):
+    await add_message_to_d1_batch(
+        business_connection_id=business_connection_id,
+        chat_id=chat_id,
+        message_data=message_data,
+    )
      
 # ================== BUSINESS MESSAGES ==================
 
@@ -5037,10 +5050,10 @@ async def handle_business_message(message):
                 "topic_id": topic_id,
             }
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
-                message_data={
+                    message_data={
                     "message_id": message.message_id,
                     "log_message_id": sent_message.message_id,
                     "message_type": "text",
