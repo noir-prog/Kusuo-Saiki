@@ -5077,7 +5077,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5103,7 +5103,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5130,7 +5130,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5156,7 +5156,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5183,7 +5183,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5214,7 +5214,7 @@ async def handle_business_message(message):
                 sticker=message.sticker.file_id,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5241,7 +5241,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5271,7 +5271,7 @@ async def handle_business_message(message):
                 video_note=message.video_note.file_id,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5302,7 +5302,7 @@ async def handle_business_message(message):
                 longitude=message.location.longitude,
             ) 
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
@@ -5337,7 +5337,7 @@ async def handle_business_message(message):
                 vcard=message.contact.vcard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
