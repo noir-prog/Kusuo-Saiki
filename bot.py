@@ -5207,9 +5207,8 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await bot.send_sticker(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            await send_log_sticker(
+                topic_id=topic_id,
                 sticker=message.sticker.file_id,
             )
 
