@@ -4325,6 +4325,24 @@ def create_profile_keyboard(
         ]
     )
     
+# ================== LOG MESSAGE PROFILE KEYBOARD ==================
+
+def create_message_profile_keyboard(
+    message,
+    business_user,
+):
+    sender_id = message.from_user.id
+
+    if sender_id == business_user.id:
+        recipient_id = message.chat.id
+    else:
+        recipient_id = business_user.id
+
+    return create_profile_keyboard(
+        sender_id=sender_id,
+        recipient_id=recipient_id,
+    )
+    
 # ================== LOG MEDIA CAPTION ==================
 
 def create_log_media_caption(
@@ -5352,12 +5370,11 @@ async def handle_business_message(message):
             )
 
 
-# ================== UNKNOWN MESSAGE ==================
+        # ================== UNKNOWN MESSAGE ==================
 
         else:
-            sent_message = await bot.send_message(
-                chat_id=int(LOG_CHAT_ID),
-                message_thread_id=topic_id,
+            sent_message = await send_log_text(
+                topic_id=topic_id,
                 text=create_log_media_caption(
                     header_text=header_text,
                     message_type="❓ Неподдерживаемый тип сообщения",
@@ -5365,7 +5382,7 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            await add_message_to_d1_batch(
+            await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_data={
