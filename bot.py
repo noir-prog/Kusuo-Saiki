@@ -4577,14 +4577,10 @@ async def handle_business_message(message):
                     chat_id=int(LOG_CHAT_ID),
                     message_thread_id=topic_id,
                     photo=photo_file,
-                    caption=(
-                        info_text
-                        + "\n🖼 Фото"
-                        + (
-                            f"\n📝 Подпись:\n{original.caption}"
-                            if original.caption
-                            else ""
-                        )
+                    caption=create_log_media_caption(
+                        header_text=header_text,
+                        message_type="🖼 Самоудаляющееся фото",
+                        caption=original.caption,
                     ),
                     reply_markup=profile_keyboard,
                 )
