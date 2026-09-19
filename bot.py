@@ -4735,16 +4735,9 @@ async def handle_business_message(message):
 
         # ================== PROFILE BUTTONS ==================
 
-        sender_id = message.from_user.id
-
-        if sender_id == user.id:
-            recipient_id = message.chat.id
-        else:
-            recipient_id = user.id
-
-        profile_keyboard = create_profile_keyboard(
-            sender_id=sender_id,
-            recipient_id=recipient_id,
+        profile_keyboard = create_message_profile_keyboard(
+            message=message,
+            business_user=user,
         )
         
         # ================== REPLY TO PHOTO ==================
