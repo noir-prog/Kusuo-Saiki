@@ -4587,6 +4587,44 @@ async def handle_business_message(message):
         bool(message.external_reply),
         bool(message.quote),
     )
+    
+        # ================== PAID MEDIA DEBUG ==================
+
+    if message.paid_media:
+
+        logger.info(
+            "PAID MEDIA DETECTED | "
+            "message_id=%s | "
+            "stars=%s | "
+            "items=%s",
+            message.message_id,
+            message.paid_media.star_count,
+            len(message.paid_media.paid_media),
+        )
+
+        for index, paid_item in enumerate(
+            message.paid_media.paid_media,
+            start=1,
+        ):
+
+            logger.info(
+                "PAID MEDIA ITEM | "
+                "message_id=%s | "
+                "index=%s | "
+                "type=%s | "
+                "data=%s",
+                message.message_id,
+                index,
+                paid_item.type,
+                paid_item.model_dump(),
+            )
+
+    else:
+
+        logger.info(
+            "PAID MEDIA NOT DETECTED | message_id=%s",
+            message.message_id,
+        )
 
     key = (message.chat.id, message.message_id)
 
