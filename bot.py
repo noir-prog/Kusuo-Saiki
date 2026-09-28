@@ -3211,7 +3211,36 @@ async def handle_users_search(message):
 
 # ================== MESSAGE STORAGE ==================
 
+# Временная память сообщений.
+# D1 будет постоянным хранилищем.
 message_history = {}
+
+
+def save_message_to_memory(
+    business_connection_id,
+    chat_id,
+    message_id,
+    message_type,
+    text=None,
+    file_id=None,
+    **extra_data,
+):
+    key = (
+        business_connection_id,
+        chat_id,
+        message_id,
+    )
+
+    message_history[key] = {
+        "message_id": message_id,
+        "business_connection_id": business_connection_id,
+        "chat_id": chat_id,
+        "message_type": message_type,
+        "text": text or "",
+        "file_id": file_id,
+        **extra_data,
+    }
+
 
 # Связь Business-подключения с топиком в LOG-группе
 business_topics = {}
@@ -5077,17 +5106,16 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            message_history[
-                (
-                    message.business_connection_id,
-                    message.chat.id,
-                    message.message_id,
-                )
-            ] = {
-                "text": message.text,
-                "log_message_id": sent_message.message_id,
-                "topic_id": topic_id,
-            }
+            save_message_to_memory(
+                business_connection_id=message.business_connection_id,
+                chat_id=message.chat.id,
+                message_id=message.message_id,
+                message_type="text",
+                text=message.text,
+                file_id=None,
+                log_message_id=sent_message.message_id,
+                topic_id=topic_id,
+            )
 
             await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
