@@ -36,26 +36,111 @@ OWNER_ID = 6925580275
 
 # ================== D1 ROUTER ==================
 
-D1_DATABASE_IDS = {
-    1: D1_DATABASE_ID,
-    2: "7e101e0b-9426-458b-92b2-b08cde11378c",
-    3: "e7c828de-a078-4f47-98d1-7e308e0652b5",
-    4: "7a82b7fa-b0c4-4887-bfa5-a9b3cf961eb9",
-    5: "ae4f4daf-4b95-4b64-9a38-d4fde305141d",
-    6: "d0500f4c-7c55-433e-add7-c87b296dfcd8",
-    7: "a2d714ab-f7ca-451a-bfb6-098a1af1312c",
-    8: "05a42544-6886-4e72-9d37-731233c79820",
-    9: "28670110-b025-4bc1-af15-45b58e58565f",
-    10: "99d131db-69bc-418d-ba33-6c28a44d46f3",
-}
-
-
 D1_DATABASES = {
-    f"D1.1.{number}": {
-        "account_id": CLOUDFLARE_ACCOUNT_ID,
-        "database_id": database_id,
-    }
-    for number, database_id in D1_DATABASE_IDS.items()
+    # ================== D1.1 ==================
+
+    "D1.1.1": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": D1_DATABASE_ID,
+    },
+
+    "D1.1.2": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "7e101e0b-9426-458b-92b2-b08cde11378c",
+    },
+
+    "D1.1.3": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "e7c828de-a078-4f47-98d1-7e308e0652b5",
+    },
+
+    "D1.1.4": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "7a82b7fa-b0c4-4887-bfa5-a9b3cf961eb9",
+    },
+
+    "D1.1.5": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "ae4f4daf-4b95-4b64-9a38-d4fde305141d",
+    },
+
+    "D1.1.6": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "d0500f4c-7c55-433e-add7-c87b296dfcd8",
+    },
+
+    "D1.1.7": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "a2d714ab-f7ca-451a-bfb6-098a1af1312c",
+    },
+
+    "D1.1.8": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "05a42544-6886-4e72-9d37-731233c79820",
+    },
+
+    "D1.1.9": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "28670110-b025-4bc1-af15-45b58e58565f",
+    },
+
+    "D1.1.10": {
+        "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "database_id": "99d131db-69bc-418d-ba33-6c28a44d46f3",
+    },
+
+
+    # ================== D1.2 ==================
+
+    "D1.2.1": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "fab77f46-362e-4e63-9f42-cf6139968c6b",
+    },
+
+    "D1.2.2": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "3f91cacc-17e8-46b6-b891-fde9c5d9004e",
+    },
+
+    "D1.2.3": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "121ba3de-6215-40b1-bcdf-c27e364d753f",
+    },
+
+    "D1.2.4": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "04dd45ac-800d-45ed-8f13-7928ff6b0df8",
+    },
+
+    "D1.2.5": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "2f7f4592-d755-483f-884f-300fd6ab6200",
+    },
+
+    "D1.2.6": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "6157bec3-7298-40f9-ba63-b87dbb5b18cd",
+    },
+
+    "D1.2.7": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "36aac910-96f9-44a1-820d-60cf9dea72f5",
+    },
+
+    "D1.2.8": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "6024a1b1-e17c-45e5-b899-0f5ba4246087",
+    },
+
+    "D1.2.9": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "17c4f304-d733-413e-b858-f9b3033e79c1",
+    },
+
+    "D1.2.10": {
+        "account_id": "b7bd135a9fb318c159851e18b38610ce",
+        "database_id": "5c93444c-792b-4423-b0a9-437772e6e388",
+    },
 }
 
 
