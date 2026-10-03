@@ -5641,10 +5641,25 @@ async def handle_edited_business_message(message):
         result = await d1_query(
             """
             SELECT
-                COUNT(*) AS total_rows
-            FROM message_batches
+                json_extract(value, '$.text_content') AS text_content,
+                json_extract(value, '$.log_message_id') AS log_message_id
+            FROM message_batches,
+                 json_each(message_batches.messages_json)
+            WHERE
+                message_batches.business_connection_id = ?
+                AND message_batches.chat_id = ?
+                AND CAST(
+                    json_extract(value, '$.message_id')
+                    AS INTEGER
+                ) = ?
+            ORDER BY message_batches.rowid DESC
+            LIMIT 1
             """,
-            [],
+            [
+                business_connection_id,
+                chat_id,
+                message_id,
+            ],
         )
 
         if result:
@@ -5663,13 +5678,24 @@ async def handle_edited_business_message(message):
                 else []
             )
 
+        if rows:
+
+            row = rows[0]
+
+            old_text = row.get(
+                "text_content"
+            )
+
+            log_message_id = row.get(
+                "log_message_id"
+            )
+
             logger.info(
-                "EDIT D1 DEBUG COUNT | "
-                "connection=%s | chat=%s | message=%s | rows=%s",
+                "EDIT OLD MESSAGE LOADED FROM D1 | "
+                "connection=%s | chat=%s | message=%s",
                 business_connection_id,
                 chat_id,
                 message_id,
-                rows,
             )
                 
     except Exception as e:
