@@ -41,6 +41,11 @@ D1_DATABASES = {
         "account_id": CLOUDFLARE_ACCOUNT_ID,
         "database_id": D1_DATABASE_ID,
     },
+    
+    "D1.1.2": {
+        "account_id": CLOUDFLARE_ACCOUNT_ID,
+        "database_id": "7e101e0b-9426-458b-92b2-b08cde11378c",
+    },
 }
 
 ACTIVE_D1 = "D1.1.1"
