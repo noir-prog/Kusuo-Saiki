@@ -42,51 +42,61 @@ D1_DATABASES = {
     "D1.1.1": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": D1_DATABASE_ID,
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.2": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "7e101e0b-9426-458b-92b2-b08cde11378c",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.3": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "e7c828de-a078-4f47-98d1-7e308e0652b5",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.4": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "7a82b7fa-b0c4-4887-bfa5-a9b3cf961eb9",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.5": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "ae4f4daf-4b95-4b64-9a38-d4fde305141d",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.6": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "d0500f4c-7c55-433e-add7-c87b296dfcd8",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.7": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "a2d714ab-f7ca-451a-bfb6-098a1af1312c",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.8": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "05a42544-6886-4e72-9d37-731233c79820",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.9": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "28670110-b025-4bc1-af15-45b58e58565f",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
     "D1.1.10": {
         "account_id": "a5cbd8bb1cd52eea0b38b21c40106d53",
         "database_id": "99d131db-69bc-418d-ba33-6c28a44d46f3",
+        "token_env": "CLOUDFLARE_API_TOKEN_1",
     },
 
 
@@ -95,51 +105,61 @@ D1_DATABASES = {
     "D1.2.1": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "fab77f46-362e-4e63-9f42-cf6139968c6b",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.2": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "3f91cacc-17e8-46b6-b891-fde9c5d9004e",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.3": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "121ba3de-6215-40b1-bcdf-c27e364d753f",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.4": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "04dd45ac-800d-45ed-8f13-7928ff6b0df8",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.5": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "2f7f4592-d755-483f-884f-300fd6ab6200",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.6": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "6157bec3-7298-40f9-ba63-b87dbb5b18cd",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.7": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "36aac910-96f9-44a1-820d-60cf9dea72f5",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.8": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "6024a1b1-e17c-45e5-b899-0f5ba4246087",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.9": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "17c4f304-d733-413e-b858-f9b3033e79c1",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 
     "D1.2.10": {
         "account_id": "b7bd135a9fb318c159851e18b38610ce",
         "database_id": "5c93444c-792b-4423-b0a9-437772e6e388",
+        "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
 }
 
@@ -3547,11 +3567,6 @@ import httpx
 
 async def d1_query(sql: str, params=None):
 
-    if not CLOUDFLARE_API_TOKEN:
-        raise RuntimeError(
-            "CLOUDFLARE_API_TOKEN is not configured"
-        )
-
     # ================== GET ACTIVE D1 ==================
 
     d1_config = D1_DATABASES.get(
@@ -3571,6 +3586,10 @@ async def d1_query(sql: str, params=None):
         "database_id"
     )
 
+    token_env = d1_config.get(
+        "token_env"
+    )
+
     if not account_id:
         raise RuntimeError(
             f"D1 ACCOUNT ID NOT CONFIGURED: {ACTIVE_D1}"
@@ -3579,6 +3598,22 @@ async def d1_query(sql: str, params=None):
     if not database_id:
         raise RuntimeError(
             f"D1 DATABASE ID NOT CONFIGURED: {ACTIVE_D1}"
+        )
+
+    if not token_env:
+        raise RuntimeError(
+            f"D1 TOKEN ENV NOT CONFIGURED: {ACTIVE_D1}"
+        )
+
+    # ================== GET API TOKEN ==================
+
+    api_token = os.getenv(
+        token_env
+    )
+
+    if not api_token:
+        raise RuntimeError(
+            f"{token_env} is not configured"
         )
 
     # ================== D1 URL ==================
@@ -3590,7 +3625,7 @@ async def d1_query(sql: str, params=None):
     )
 
     headers = {
-        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+        "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json",
     }
 
@@ -3601,10 +3636,11 @@ async def d1_query(sql: str, params=None):
 
     logger.info(
         "D1 ROUTER QUERY | "
-        "active_d1=%s | account=%s | database=%s",
+        "active_d1=%s | account=%s | database=%s | token=%s",
         ACTIVE_D1,
         account_id,
         database_id,
+        token_env,
     )
 
     async with httpx.AsyncClient() as client:
@@ -3637,8 +3673,12 @@ async def d1_query(sql: str, params=None):
 # ================== D1 TEST ==================
 
 async def test_d1():
+
     try:
-        result = await d1_query("SELECT 1 AS test")
+
+        result = await d1_query(
+            "SELECT 1 AS test"
+        )
 
         logger.info(
             "D1 CONNECTION SUCCESS | result=%s",
@@ -3646,23 +3686,29 @@ async def test_d1():
         )
 
     except Exception as e:
+
         logger.exception(
             "D1 CONNECTION ERROR | %s",
             e,
         )
 
+
 # ================== TEST D1.1.2 ==================
 
 async def test_d1_1_2():
 
+    d1_name = "D1.1.2"
+
     d1_config = D1_DATABASES.get(
-        "D1.1.2"
+        d1_name
     )
 
     if not d1_config:
+
         logger.error(
             "D1.1.2 TEST ERROR | database config not found"
         )
+
         return
 
     account_id = d1_config.get(
@@ -3673,6 +3719,31 @@ async def test_d1_1_2():
         "database_id"
     )
 
+    token_env = d1_config.get(
+        "token_env"
+    )
+
+    if not token_env:
+
+        logger.error(
+            "D1.1.2 TEST ERROR | token env not configured"
+        )
+
+        return
+
+    api_token = os.getenv(
+        token_env
+    )
+
+    if not api_token:
+
+        logger.error(
+            "D1.1.2 TEST ERROR | %s is not configured",
+            token_env,
+        )
+
+        return
+
     url = (
         f"https://api.cloudflare.com/client/v4/accounts/"
         f"{account_id}/d1/database/"
@@ -3680,7 +3751,7 @@ async def test_d1_1_2():
     )
 
     headers = {
-        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+        "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json",
     }
 
@@ -3717,9 +3788,10 @@ async def test_d1_1_2():
 
         logger.info(
             "D1.1.2 CONNECTION SUCCESS | "
-            "account=%s | database=%s | result=%s",
+            "account=%s | database=%s | token=%s | result=%s",
             account_id,
             database_id,
+            token_env,
             data,
         )
 
@@ -3729,6 +3801,8 @@ async def test_d1_1_2():
             "D1.1.2 CONNECTION ERROR | %s",
             e,
         )
+
+
 # ================== D1 MESSAGE BUFFER ==================
 
 import asyncio
