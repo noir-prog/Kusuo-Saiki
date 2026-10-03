@@ -3554,6 +3554,85 @@ async def test_d1():
             "D1 CONNECTION ERROR | %s",
             e,
         )
+
+# ================== TEST D1.1.2 ==================
+
+async def test_d1_1_2():
+
+    d1_config = D1_DATABASES.get(
+        "D1.1.2"
+    )
+
+    if not d1_config:
+        logger.error(
+            "D1.1.2 TEST ERROR | database config not found"
+        )
+        return
+
+    account_id = d1_config.get(
+        "account_id"
+    )
+
+    database_id = d1_config.get(
+        "database_id"
+    )
+
+    url = (
+        f"https://api.cloudflare.com/client/v4/accounts/"
+        f"{account_id}/d1/database/"
+        f"{database_id}/query"
+    )
+
+    headers = {
+        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "sql": "SELECT 1 AS test",
+        "params": [],
+    }
+
+    try:
+
+        async with httpx.AsyncClient() as client:
+
+            response = await client.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+
+        if response.status_code != 200:
+
+            raise RuntimeError(
+                f"HTTP {response.status_code}: "
+                f"{response.text}"
+            )
+
+        data = response.json()
+
+        if not data.get("success"):
+
+            raise RuntimeError(
+                f"D1.1.2 QUERY ERROR: {data}"
+            )
+
+        logger.info(
+            "D1.1.2 CONNECTION SUCCESS | "
+            "account=%s | database=%s | result=%s",
+            account_id,
+            database_id,
+            data,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "D1.1.2 CONNECTION ERROR | %s",
+            e,
+        )
 # ================== D1 MESSAGE BUFFER ==================
 
 import asyncio
@@ -7080,6 +7159,7 @@ async def startup():
 
     await init_db()
     await test_d1()
+    await test_d1_1_2()
 
     asyncio.create_task(
         trial_expiration_loop()
