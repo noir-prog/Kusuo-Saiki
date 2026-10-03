@@ -36,17 +36,28 @@ OWNER_ID = 6925580275
 
 # ================== D1 ROUTER ==================
 
-D1_DATABASES = {
-    "D1.1.1": {
-        "account_id": CLOUDFLARE_ACCOUNT_ID,
-        "database_id": D1_DATABASE_ID,
-    },
-    
-    "D1.1.2": {
-        "account_id": CLOUDFLARE_ACCOUNT_ID,
-        "database_id": "7e101e0b-9426-458b-92b2-b08cde11378c",
-    },
+D1_DATABASE_IDS = {
+    1: D1_DATABASE_ID,
+    2: "7e101e0b-9426-458b-92b2-b08cde11378c",
+    3: "e7c828de-a078-4f47-98d1-7e308e0652b5",
+    4: "7a82b7fa-b0c4-4887-bfa5-a9b3cf961eb9",
+    5: "ae4f4daf-4b95-4b64-9a38-d4fde305141d",
+    6: "d0500f4c-7c55-433e-add7-c87b296dfcd8",
+    7: "a2d714ab-f7ca-451a-bfb6-098a1af1312c",
+    8: "05a42544-6886-4e72-9d37-731233c79820",
+    9: "28670110-b025-4bc1-af15-45b58e58565f",
+    10: "99d131db-69bc-418d-ba33-6c28a44d46f3",
 }
+
+
+D1_DATABASES = {
+    f"D1.1.{number}": {
+        "account_id": CLOUDFLARE_ACCOUNT_ID,
+        "database_id": database_id,
+    }
+    for number, database_id in D1_DATABASE_IDS.items()
+}
+
 
 ACTIVE_D1 = "D1.1.2"
 
