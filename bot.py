@@ -6075,6 +6075,7 @@ async def handle_deleted_business_messages(message):
 
         if deleted_data is None:
             try:
+
                 result = await d1_query(
                     """
                     SELECT
@@ -6083,14 +6084,20 @@ async def handle_deleted_business_messages(message):
                         batch_id,
                         messages_json
                     FROM message_batches
-                    WHERE business_connection_id = ?
-                      AND chat_id = ?
-                      AND EXISTS (
-                          SELECT 1
-                          FROM json_each(messages_json)
-                          WHERE json_extract(value, '$.message_id') = ?
-                      )
-                    ORDER BY id DESC
+                    WHERE
+                        business_connection_id = ?
+                        AND chat_id = ?
+                        AND EXISTS (
+                            SELECT 1
+                            FROM json_each(messages_json)
+                            WHERE CAST(
+                                json_extract(
+                                    value,
+                                    '$.message_id'
+                                ) AS INTEGER
+                            ) = ?
+                        )
+                    ORDER BY rowid DESC
                     LIMIT 1
                     """,
                     [
@@ -6100,9 +6107,22 @@ async def handle_deleted_business_messages(message):
                     ],
                 )
 
-                results = result["result"][0]["results"]
+                result_data = result.get(
+                    "result",
+                    []
+                )
+
+                results = (
+                    result_data[0].get(
+                        "results",
+                        []
+                    )
+                    if result_data
+                    else []
+                )
 
                 if results:
+
                     row = results[0]
 
                     messages = json.loads(
@@ -6110,11 +6130,22 @@ async def handle_deleted_business_messages(message):
                     )
 
                     for item in messages:
-                        if item.get("message_id") == deleted_message_id:
+
+                        if (
+                            int(
+                                item.get(
+                                    "message_id"
+                                )
+                            )
+                            == deleted_message_id
+                        ):
+
                             deleted_data = item
+
                             break
 
                 if deleted_data:
+
                     logger.info(
                         "DELETED MESSAGE FOUND IN D1 | "
                         "connection=%s | chat=%s | message=%s | data=%s",
@@ -6124,7 +6155,18 @@ async def handle_deleted_business_messages(message):
                         deleted_data,
                     )
 
+                else:
+
+                    logger.warning(
+                        "DELETED MESSAGE NOT FOUND IN D1 | "
+                        "connection=%s | chat=%s | message=%s",
+                        message.business_connection_id,
+                        message.chat.id,
+                        deleted_message_id,
+                    )
+
             except Exception as e:
+
                 logger.exception(
                     "DELETED MESSAGE SEARCH ERROR | "
                     "connection=%s | chat=%s | message=%s | error=%s",
