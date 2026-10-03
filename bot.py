@@ -5641,24 +5641,18 @@ async def handle_edited_business_message(message):
         result = await d1_query(
             """
             SELECT
-                json_extract(value, '$.text_content') AS text_content,
-                json_extract(value, '$.log_message_id') AS log_message_id
-            FROM message_batches,
-                json_each(message_batches.messages_json)
+                batch_id,
+                messages_json
+            FROM message_batches
             WHERE
-                message_batches.business_connection_id = ?
-                AND message_batches.chat_id = ?
-                AND CAST(
-                    json_extract(value, '$.message_id')
-                    AS INTEGER
-                ) = ?
-            ORDER BY message_batches.rowid DESC
-            LIMIT 1
+                business_connection_id = ?
+                AND chat_id = ?
+            ORDER BY rowid DESC
+            LIMIT 5
             """,
             [
                 business_connection_id,
                 chat_id,
-                message_id,
             ],
         )
 
@@ -5669,25 +5663,14 @@ async def handle_edited_business_message(message):
                 []
             )
 
-            if rows:
-
-                row = rows[0]
-
-                old_text = row.get(
-                    "text_content"
-                )
-
-                log_message_id = row.get(
-                    "log_message_id"
-                )
-
-                logger.info(
-                    "EDIT OLD MESSAGE LOADED FROM D1 | "
-                    "connection=%s | chat=%s | message=%s",
-                    business_connection_id,
-                    chat_id,
-                    message_id,
-                )
+            logger.info(
+                "EDIT D1 DEBUG ROWS | "
+                "connection=%s | chat=%s | message=%s | rows=%s",
+                business_connection_id,
+                chat_id,
+                message_id,
+                rows,
+            )
                 
     except Exception as e:
 
