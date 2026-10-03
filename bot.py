@@ -5644,11 +5644,14 @@ async def handle_edited_business_message(message):
                 json_extract(value, '$.text_content') AS text_content,
                 json_extract(value, '$.log_message_id') AS log_message_id
             FROM message_batches,
-                 json_each(message_batches.messages_json)
+                json_each(message_batches.messages_json)
             WHERE
                 message_batches.business_connection_id = ?
                 AND message_batches.chat_id = ?
-                AND json_extract(value, '$.message_id') = ?
+                AND CAST(
+                    json_extract(value, '$.message_id')
+                    AS INTEGER
+                ) = ?
             ORDER BY message_batches.rowid DESC
             LIMIT 1
             """,
