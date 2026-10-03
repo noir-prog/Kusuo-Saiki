@@ -5649,9 +5649,18 @@ async def handle_edited_business_message(message):
 
         if result:
 
-            rows = result.get(
-                "results",
+            result_data = result.get(
+                "result",
                 []
+            )
+
+            rows = (
+                result_data[0].get(
+                    "results",
+                    []
+                )
+                if result_data
+                else []
             )
 
             logger.info(
