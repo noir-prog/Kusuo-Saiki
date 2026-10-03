@@ -3211,8 +3211,6 @@ async def handle_users_search(message):
 
 # ================== MESSAGE STORAGE ==================
 
-message_history = {}
-
 # Связь Business-подключения с топиком в LOG-группе
 business_topics = {}
 
@@ -4803,13 +4801,7 @@ async def handle_business_message(message):
         bool(message.quote),
     )
 
-    key = (message.chat.id, message.message_id)
-
     text = message.text or message.caption or ""
-
-    message_history[key] = {
-        "text": text,
-    }
 
     logger.info(
         "NEW MESSAGE | chat=%s | message=%s | text=%s",
@@ -5254,22 +5246,10 @@ async def handle_business_message(message):
                 reply_markup=profile_keyboard,
             )
 
-            message_history[
-                (
-                    message.business_connection_id,
-                    message.chat.id,
-                    message.message_id,
-                )
-            ] = {
-                "text": message.text,
-                "log_message_id": sent_message.message_id,
-                "topic_id": topic_id,
-            }
-
             await save_message_to_d1(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
-                    message_data={
+                message_data={
                     "message_id": message.message_id,
                     "log_message_id": sent_message.message_id,
                     "message_type": "text",
