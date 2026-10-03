@@ -5661,24 +5661,31 @@ async def handle_edited_business_message(message):
 
         if result:
 
-            row = result[0]
-
-            old_text = row.get(
-                "text_content"
+            rows = result.get(
+                "results",
+                []
             )
 
-            log_message_id = row.get(
-                "log_message_id"
-            )
+            if rows:
 
-            logger.info(
-                "EDIT OLD MESSAGE LOADED FROM D1 | "
-                "connection=%s | chat=%s | message=%s",
-                business_connection_id,
-                chat_id,
-                message_id,
-            )
+                row = rows[0]
 
+                old_text = row.get(
+                    "text_content"
+                )
+
+                log_message_id = row.get(
+                    "log_message_id"
+                )
+
+                logger.info(
+                    "EDIT OLD MESSAGE LOADED FROM D1 | "
+                    "connection=%s | chat=%s | message=%s",
+                    business_connection_id,
+                    chat_id,
+                    message_id,
+                )
+                
     except Exception as e:
 
         logger.exception(
