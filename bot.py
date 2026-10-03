@@ -5641,19 +5641,10 @@ async def handle_edited_business_message(message):
         result = await d1_query(
             """
             SELECT
-                batch_id,
-                messages_json
+                COUNT(*) AS total_rows
             FROM message_batches
-            WHERE
-                business_connection_id = ?
-                AND chat_id = ?
-            ORDER BY rowid DESC
-            LIMIT 5
             """,
-            [
-                business_connection_id,
-                chat_id,
-            ],
+            [],
         )
 
         if result:
@@ -5664,7 +5655,7 @@ async def handle_edited_business_message(message):
             )
 
             logger.info(
-                "EDIT D1 DEBUG ROWS | "
+                "EDIT D1 DEBUG COUNT | "
                 "connection=%s | chat=%s | message=%s | rows=%s",
                 business_connection_id,
                 chat_id,
