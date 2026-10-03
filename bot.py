@@ -5608,49 +5608,176 @@ async def handle_business_message(message):
 
 @dp.edited_business_message()
 async def handle_edited_business_message(message):
-    key = (
-        message.business_connection_id,
-        message.chat.id,
-        message.message_id,
+
+    business_connection_id = (
+        message.business_connection_id
     )
 
-    old_data = message_history.get(key)
+    chat_id = message.chat.id
+    message_id = message.message_id
 
-    old_text = (
-        old_data["text"]
-        if old_data
-        else "[старый текст не сохранён]"
+    new_text = (
+        message.text
+        or message.caption
+        or ""
     )
-
-    new_text = message.text or message.caption or ""
 
     logger.info(
-        "MESSAGE EDITED | chat=%s | message=%s\n"
-        "BEFORE: %s\n"
-        "AFTER: %s",
-        message.chat.id,
-        message.message_id,
-        old_text,
+        "MESSAGE EDITED | "
+        "connection=%s | chat=%s | message=%s | new_text=%s",
+        business_connection_id,
+        chat_id,
+        message_id,
         new_text,
     )
 
+    # ================== FIND OLD MESSAGE IN D1 ==================
+
+    old_text = None
+    log_message_id = None
+
+    try:
+
+        result = await d1_query(
+            """
+            SELECT
+                json_extract(value, '$.text_content') AS text_content,
+                json_extract(value, '$.log_message_id') AS log_message_id
+            FROM message_batches,
+                 json_each(message_batches.messages_json)
+            WHERE
+                message_batches.business_connection_id = ?
+                AND message_batches.chat_id = ?
+                AND json_extract(value, '$.message_id') = ?
+            ORDER BY message_batches.rowid DESC
+            LIMIT 1
+            """,
+            [
+                business_connection_id,
+                chat_id,
+                message_id,
+            ],
+        )
+
+        if result:
+
+            row = result[0]
+
+            old_text = row.get(
+                "text_content"
+            )
+
+            log_message_id = row.get(
+                "log_message_id"
+            )
+
+            logger.info(
+                "EDIT OLD MESSAGE LOADED FROM D1 | "
+                "connection=%s | chat=%s | message=%s",
+                business_connection_id,
+                chat_id,
+                message_id,
+            )
+
+    except Exception as e:
+
+        logger.exception(
+            "EDIT D1 READ ERROR | "
+            "connection=%s | chat=%s | message=%s | error=%s",
+            business_connection_id,
+            chat_id,
+            message_id,
+            e,
+        )
+
+    # ================== IF NOT IN D1 — CHECK RAM ==================
+
+    if old_text is None:
+
+        batch_key = (
+            business_connection_id,
+            chat_id,
+        )
+
+        batch = d1_message_batches.get(
+            batch_key
+        )
+
+        if batch:
+
+            for item in reversed(
+                batch["messages"]
+            ):
+
+                if item.get(
+                    "message_id"
+                ) == message_id:
+
+                    old_text = item.get(
+                        "text_content"
+                    )
+
+                    log_message_id = item.get(
+                        "log_message_id"
+                    )
+
+                    logger.info(
+                        "EDIT OLD MESSAGE LOADED FROM RAM | "
+                        "connection=%s | chat=%s | message=%s",
+                        business_connection_id,
+                        chat_id,
+                        message_id,
+                    )
+
+                    break
+
+    if old_text is None:
+
+        old_text = (
+            "[старый текст не найден]"
+        )
+
+        logger.warning(
+            "EDIT OLD MESSAGE NOT FOUND | "
+            "connection=%s | chat=%s | message=%s",
+            business_connection_id,
+            chat_id,
+            message_id,
+        )
+
     # ================== GET BUSINESS OWNER ==================
 
-    business_connection = await bot.get_business_connection(
-        business_connection_id=message.business_connection_id
-    )
+    try:
 
-    user = business_connection.user
+        business_connection = (
+            await bot.get_business_connection(
+                business_connection_id
+            )
+        )
+
+        user = business_connection.user
+
+    except Exception as e:
+
+        logger.exception(
+            "EDIT BUSINESS OWNER ERROR | "
+            "connection=%s | error=%s",
+            business_connection_id,
+            e,
+        )
+
+        return
 
     # ================== GET EDITED MESSAGE TOPIC ==================
 
     topic_id = business_topics.get(
-        message.business_connection_id
+        business_connection_id
     )
 
     if topic_id is None and db_pool is not None:
 
         async with db_pool.acquire() as conn:
+
             row = await conn.fetchrow(
                 """
                 SELECT topic_id
@@ -5661,20 +5788,23 @@ async def handle_edited_business_message(message):
             )
 
         if row:
+
             topic_id = row["topic_id"]
 
             business_topics[
-                message.business_connection_id
+                business_connection_id
             ] = topic_id
 
     if topic_id is None:
+
         logger.error(
             "EDITED MESSAGE TOPIC NOT FOUND | "
             "connection=%s | chat=%s | message=%s",
-            message.business_connection_id,
-            message.chat.id,
-            message.message_id,
+            business_connection_id,
+            chat_id,
+            message_id,
         )
+
         return
 
     # ================== GET CHAT USER ==================
@@ -5682,7 +5812,7 @@ async def handle_edited_business_message(message):
     try:
 
         chat = await bot.get_chat(
-            chat_id=message.chat.id
+            chat_id=chat_id
         )
 
         peer_name = (
@@ -5695,7 +5825,9 @@ async def handle_edited_business_message(message):
 
     except Exception:
 
-        peer_name = "Неизвестный пользователь"
+        peer_name = (
+            "Неизвестный пользователь"
+        )
 
     # ================== ESCAPE HTML ==================
 
@@ -5705,6 +5837,7 @@ async def handle_edited_business_message(message):
     )
 
     if user.last_name:
+
         business_name += (
             f" {user.last_name}"
         )
@@ -5730,8 +5863,11 @@ async def handle_edited_business_message(message):
     sender_id = message.from_user.id
 
     if sender_id == user.id:
-        recipient_id = message.chat.id
+
+        recipient_id = chat_id
+
     else:
+
         recipient_id = user.id
 
     profile_keyboard = InlineKeyboardMarkup(
@@ -5751,46 +5887,80 @@ async def handle_edited_business_message(message):
 
     # ================== SAVE EDIT TO LOG ==================
 
-    log_message_id = (
-        old_data["log_message_id"]
-        if old_data
-        else None
-    )
-
     edited_text = (
         "✏️ <b>СООБЩЕНИЕ ИЗМЕНЕНО</b>\n\n"
         f"👤 {business_name}\n"
         f"💬 {peer_name}\n"
-        f"🆔 Chat ID: <code>{message.chat.id}</code>\n\n"
+        f"🆔 Chat ID: <code>{chat_id}</code>\n\n"
         "⬅️ <b>БЫЛО:</b>\n"
         f"<code>{old_text_escaped}</code>\n\n"
         "➡️ <b>СТАЛО:</b>\n"
         f"<code>{new_text_escaped}</code>"
     )
 
-    await bot.send_message(
-        chat_id=int(LOG_CHAT_ID),
-        message_thread_id=topic_id,
-        text=edited_text,
-        parse_mode="HTML",
-        reply_markup=profile_keyboard,
-        reply_parameters=(
-            {
-                "message_id": log_message_id
-            }
-            if log_message_id
-            else None
-        ),
+    try:
+
+        sent_edit = await bot.send_message(
+            chat_id=int(LOG_CHAT_ID),
+            message_thread_id=topic_id,
+            text=edited_text,
+            parse_mode="HTML",
+            reply_markup=profile_keyboard,
+            reply_parameters=(
+                {
+                    "message_id": log_message_id
+                }
+                if log_message_id
+                else None
+            ),
+        )
+
+        logger.info(
+            "EDIT LOG SAVED | "
+            "connection=%s | topic=%s | message=%s",
+            business_connection_id,
+            topic_id,
+            message_id,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "EDIT LOG ERROR | "
+            "connection=%s | message=%s | error=%s",
+            business_connection_id,
+            message_id,
+            e,
+        )
+
+        sent_edit = None
+
+    # ================== SAVE NEW VERSION TO D1 ==================
+
+    await save_message_to_d1(
+        business_connection_id=business_connection_id,
+        chat_id=chat_id,
+        message_data={
+            "message_id": message_id,
+            "log_message_id": (
+                sent_edit.message_id
+                if sent_edit
+                else log_message_id
+            ),
+            "message_type": "text",
+            "file_id": None,
+            "text_content": new_text,
+            "event_type": "edit",
+        },
     )
 
-    # ================== UPDATE MESSAGE HISTORY ==================
-
-    message_history[key] = {
-        "text": new_text,
-        "log_message_id": log_message_id,
-        "topic_id": topic_id,
-    }
-
+    logger.info(
+        "EDIT NEW VERSION BUFFERED | "
+        "connection=%s | chat=%s | message=%s",
+        business_connection_id,
+        chat_id,
+        message_id,
+    )
 
 # ================== DELETED BUSINESS MESSAGES ==================
 
