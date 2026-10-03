@@ -3501,120 +3501,347 @@ async def test_d1():
             "D1 CONNECTION ERROR | %s",
             e,
         )
-    # ================== D1 MESSAGE BATCHING ==================
+# ================== D1 MESSAGE BUFFER ==================
 
 import asyncio
 import json
 import time
 
+
 MESSAGE_BATCH_SIZE = 100
 MESSAGE_BATCH_TIMEOUT = 90
 
+D1_RETRY_DELAY = 15
+
 d1_message_batches = {}
 d1_batch_tasks = {}
+d1_retry_tasks = {}
 
+
+# ================== FLUSH D1 BATCH ==================
 
 async def flush_d1_batch(batch_key):
+
     batch = d1_message_batches.get(batch_key)
 
     if not batch:
         return
 
-    business_connection_id, chat_id = batch_key
-
     messages = batch["messages"]
 
-    batch_id = f"{business_connection_id}_{chat_id}_{int(time.time())}"
-
-    messages_json = json.dumps(
-        messages,
-        ensure_ascii=False,
-    )
-
-    await d1_query(
-        """
-        INSERT INTO message_batches (
-            business_connection_id,
-            chat_id,
-            batch_id,
-            messages_json
+    if not messages:
+        d1_message_batches.pop(
+            batch_key,
+            None,
         )
-        VALUES (?, ?, ?, ?)
-        """,
-        [
-            business_connection_id,
-            chat_id,
-            batch_id,
-            messages_json,
-        ],
+        return
+
+    business_connection_id = batch_key[0]
+    chat_id = batch_key[1]
+
+    batch_id = (
+        f"{business_connection_id}:"
+        f"{chat_id}:"
+        f"{int(time.time() * 1000)}"
     )
 
     logger.info(
-        "D1 BATCH SAVED | connection=%s | chat=%s | messages=%s",
+        "D1 BATCH WRITE START | "
+        "connection=%s | chat=%s | messages=%s",
         business_connection_id,
         chat_id,
         len(messages),
     )
 
-    d1_message_batches.pop(batch_key, None)
+    try:
 
-    task = d1_batch_tasks.pop(batch_key, None)
+        await d1_query(
+            """
+            INSERT INTO message_batches (
+                business_connection_id,
+                chat_id,
+                batch_id,
+                messages_json
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                business_connection_id,
+                chat_id,
+                batch_id,
+                json.dumps(
+                    messages,
+                    ensure_ascii=False,
+                ),
+            ],
+        )
 
-    if task and not task.done():
-        task.cancel()
+        # ================== D1 WRITE SUCCESS ==================
 
+        logger.info(
+            "D1 BATCH WRITE SUCCESS | "
+            "connection=%s | chat=%s | messages=%s | batch_id=%s",
+            business_connection_id,
+            chat_id,
+            len(messages),
+            batch_id,
+        )
 
-async def d1_batch_timeout(batch_key):
-    await asyncio.sleep(MESSAGE_BATCH_TIMEOUT)
+        # После успешной записи D1
+        # удаляем сообщения из RAM.
 
-    if batch_key in d1_message_batches:
-        try:
-            await flush_d1_batch(batch_key)
+        d1_message_batches.pop(
+            batch_key,
+            None,
+        )
 
-        except Exception:
-            logger.exception(
-                "D1 BATCH TIMEOUT FLUSH ERROR | key=%s",
-                batch_key,
+        # Если существовала задача повторной попытки —
+        # она больше не нужна.
+
+        retry_task = d1_retry_tasks.pop(
+            batch_key,
+            None,
+        )
+
+        if (
+            retry_task is not None
+            and retry_task is not asyncio.current_task()
+        ):
+            retry_task.cancel()
+
+    except Exception as e:
+
+        logger.exception(
+            "D1 BATCH WRITE ERROR | "
+            "connection=%s | chat=%s | messages=%s | error=%s",
+            business_connection_id,
+            chat_id,
+            len(messages),
+            e,
+        )
+
+        # ВАЖНО:
+        # сообщения НЕ удаляем из RAM.
+        # Они останутся в d1_message_batches
+        # до успешной записи.
+
+        if batch_key not in d1_retry_tasks:
+
+            d1_retry_tasks[batch_key] = asyncio.create_task(
+                retry_d1_batch(batch_key)
             )
 
+
+# ================== D1 RETRY ==================
+
+async def retry_d1_batch(batch_key):
+
+    current_task = asyncio.current_task()
+
+    try:
+
+        while True:
+
+            await asyncio.sleep(
+                D1_RETRY_DELAY
+            )
+
+            if batch_key not in d1_message_batches:
+                return
+
+            logger.info(
+                "D1 RETRY | connection=%s | chat=%s",
+                batch_key[0],
+                batch_key[1],
+            )
+
+            await flush_d1_batch(
+                batch_key
+            )
+
+            # Если запись прошла успешно,
+            # flush_d1_batch удалит batch из RAM.
+
+            if batch_key not in d1_message_batches:
+                return
+
+    except asyncio.CancelledError:
+
+        logger.info(
+            "D1 RETRY TASK CANCELLED | "
+            "connection=%s | chat=%s",
+            batch_key[0],
+            batch_key[1],
+        )
+
+        raise
+
+    except Exception as e:
+
+        logger.exception(
+            "D1 RETRY LOOP ERROR | "
+            "connection=%s | chat=%s | error=%s",
+            batch_key[0],
+            batch_key[1],
+            e,
+        )
+
+    finally:
+
+        existing_task = d1_retry_tasks.get(
+            batch_key
+        )
+
+        if existing_task is current_task:
+
+            d1_retry_tasks.pop(
+                batch_key,
+                None,
+            )
+
+
+# ================== ADD MESSAGE TO D1 BUFFER ==================
 
 async def add_message_to_d1_batch(
     business_connection_id,
     chat_id,
     message_data,
 ):
+
     batch_key = (
         business_connection_id,
         chat_id,
     )
 
+    # ================== CREATE BATCH ==================
+
     if batch_key not in d1_message_batches:
-        d1_message_batches[batch_key] = {
+
+        d1_message_batches[
+            batch_key
+        ] = {
             "messages": [],
             "created_at": time.time(),
         }
 
-        d1_batch_tasks[batch_key] = asyncio.create_task(
-            d1_batch_timeout(batch_key)
-        )
+    # ================== ADD MESSAGE ==================
 
-    d1_message_batches[batch_key]["messages"].append(
+    d1_message_batches[
+        batch_key
+    ]["messages"].append(
         message_data
     )
 
-    batch_size = len(
-        d1_message_batches[batch_key]["messages"]
+    current_size = len(
+        d1_message_batches[
+            batch_key
+        ]["messages"]
     )
 
     logger.info(
-        "D1 BATCH ADD | connection=%s | chat=%s | size=%s",
+        "D1 MESSAGE BUFFERED | "
+        "connection=%s | chat=%s | messages_in_buffer=%s",
         business_connection_id,
         chat_id,
-        batch_size,
+        current_size,
     )
 
-    if batch_size >= MESSAGE_BATCH_SIZE:
-        await flush_d1_batch(batch_key)
+    # ================== BATCH SIZE ==================
+
+    if current_size >= MESSAGE_BATCH_SIZE:
+
+        existing_task = d1_batch_tasks.pop(
+            batch_key,
+            None,
+        )
+
+        if existing_task is not None:
+
+            existing_task.cancel()
+
+        await flush_d1_batch(
+            batch_key
+        )
+
+        return
+
+    # ================== BATCH TIMEOUT ==================
+
+    if batch_key not in d1_batch_tasks:
+
+        async def delayed_flush():
+
+            try:
+
+                await asyncio.sleep(
+                    MESSAGE_BATCH_TIMEOUT
+                )
+
+                if batch_key in d1_message_batches:
+
+                    await flush_d1_batch(
+                        batch_key
+                    )
+
+            except asyncio.CancelledError:
+
+                pass
+
+            except Exception as e:
+
+                logger.exception(
+                    "D1 DELAYED FLUSH ERROR | "
+                    "connection=%s | chat=%s | error=%s",
+                    business_connection_id,
+                    chat_id,
+                    e,
+                )
+
+            finally:
+
+                current_task = asyncio.current_task()
+
+                if d1_batch_tasks.get(
+                    batch_key
+                ) is current_task:
+
+                    d1_batch_tasks.pop(
+                        batch_key,
+                        None,
+                    )
+
+        d1_batch_tasks[
+            batch_key
+        ] = asyncio.create_task(
+            delayed_flush()
+        )
+
+
+# ================== SAVE MESSAGE TO D1 ==================
+
+async def save_message_to_d1(
+    business_connection_id,
+    chat_id,
+    message_data,
+):
+
+    try:
+
+        await add_message_to_d1_batch(
+            business_connection_id=business_connection_id,
+            chat_id=chat_id,
+            message_data=message_data,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "SAVE MESSAGE TO D1 ERROR | "
+            "connection=%s | chat=%s | error=%s",
+            business_connection_id,
+            chat_id,
+            e,
+        )
         
  
 # ================== ADMIN SUBSCRIPTION STATE ==================
@@ -4546,20 +4773,8 @@ async def send_log_reply(
             f"📝 {text}"
         ),
     )
-    
-# ================== SAVE MESSAGE TO D1 ==================
 
-async def save_message_to_d1(
-    business_connection_id,
-    chat_id,
-    message_data,
-):
-    await add_message_to_d1_batch(
-        business_connection_id=business_connection_id,
-        chat_id=chat_id,
-        message_data=message_data,
-    )
-     
+
 # ================== BUSINESS MESSAGES ==================
 
 LOG_CHAT_ID = os.getenv("LOG_CHAT_ID")
