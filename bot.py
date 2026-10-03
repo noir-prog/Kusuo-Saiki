@@ -144,7 +144,7 @@ D1_DATABASES = {
 }
 
 
-ACTIVE_D1 = "D1.1.2"
+ACTIVE_D1 = "D1.2.1"
 
 # ================== USER ACTIONS STATE ==================
 
