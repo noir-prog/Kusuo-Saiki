@@ -34,6 +34,16 @@ CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 D1_DATABASE_ID = os.getenv("D1_DATABASE_ID")
 OWNER_ID = 6925580275
 
+# ================== D1 ROUTER ==================
+
+D1_DATABASES = {
+    "D1.1.1": {
+        "account_id": CLOUDFLARE_ACCOUNT_ID,
+        "database_id": D1_DATABASE_ID,
+    },
+}
+
+ACTIVE_D1 = "D1.1.1"
 
 # ================== USER ACTIONS STATE ==================
 
@@ -3435,19 +3445,47 @@ import httpx
 
 
 async def d1_query(sql: str, params=None):
+
     if not CLOUDFLARE_API_TOKEN:
-        raise RuntimeError("CLOUDFLARE_API_TOKEN is not configured")
+        raise RuntimeError(
+            "CLOUDFLARE_API_TOKEN is not configured"
+        )
 
-    if not CLOUDFLARE_ACCOUNT_ID:
-        raise RuntimeError("CLOUDFLARE_ACCOUNT_ID is not configured")
+    # ================== GET ACTIVE D1 ==================
 
-    if not D1_DATABASE_ID:
-        raise RuntimeError("D1_DATABASE_ID is not configured")
+    d1_config = D1_DATABASES.get(
+        ACTIVE_D1
+    )
+
+    if not d1_config:
+        raise RuntimeError(
+            f"ACTIVE D1 NOT FOUND: {ACTIVE_D1}"
+        )
+
+    account_id = d1_config.get(
+        "account_id"
+    )
+
+    database_id = d1_config.get(
+        "database_id"
+    )
+
+    if not account_id:
+        raise RuntimeError(
+            f"D1 ACCOUNT ID NOT CONFIGURED: {ACTIVE_D1}"
+        )
+
+    if not database_id:
+        raise RuntimeError(
+            f"D1 DATABASE ID NOT CONFIGURED: {ACTIVE_D1}"
+        )
+
+    # ================== D1 URL ==================
 
     url = (
         f"https://api.cloudflare.com/client/v4/accounts/"
-        f"{CLOUDFLARE_ACCOUNT_ID}/d1/database/"
-        f"{D1_DATABASE_ID}/query"
+        f"{account_id}/d1/database/"
+        f"{database_id}/query"
     )
 
     headers = {
@@ -3460,7 +3498,16 @@ async def d1_query(sql: str, params=None):
         "params": params or [],
     }
 
+    logger.info(
+        "D1 ROUTER QUERY | "
+        "active_d1=%s | account=%s | database=%s",
+        ACTIVE_D1,
+        account_id,
+        database_id,
+    )
+
     async with httpx.AsyncClient() as client:
+
         response = await client.post(
             url,
             headers=headers,
@@ -3469,13 +3516,16 @@ async def d1_query(sql: str, params=None):
         )
 
     if response.status_code != 200:
+
         raise RuntimeError(
-            f"D1 API ERROR {response.status_code}: {response.text}"
+            f"D1 API ERROR {response.status_code}: "
+            f"{response.text}"
         )
 
     data = response.json()
 
     if not data.get("success"):
+
         raise RuntimeError(
             f"D1 QUERY ERROR: {data}"
         )
