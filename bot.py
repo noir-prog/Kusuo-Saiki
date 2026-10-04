@@ -291,14 +291,6 @@ if missing_d1:
         f"{missing_d1}"
     )
 
-
-logger.info(
-    "D1 ROUTER ORDER READY | count=%s | first=%s | last=%s",
-    len(D1_ORDER),
-    D1_ORDER[0],
-    D1_ORDER[-1],
-)
-
 ACTIVE_D1 = "D1.2.1"
 
 # ================== USER ACTIONS STATE ==================
