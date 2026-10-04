@@ -3695,6 +3695,205 @@ import httpx
 
 D1_MAX_STORAGE_BYTES = 500 * 1024 * 1024
 
+# ================== D1 DAILY WRITE LIMIT ==================
+
+D1_DAILY_WRITE_LIMIT = 100000
+
+CLOUDFLARE_GRAPHQL_URL = (
+    "https://api.cloudflare.com/client/v4/graphql"
+)
+
+
+async def get_d1_account_rows_written(
+    account_id: str,
+    token_env: str
+):
+
+    api_token = os.getenv(
+        token_env
+    )
+
+    if not api_token:
+
+        raise RuntimeError(
+            f"{token_env} is not configured"
+        )
+
+    # Cloudflare D1 daily limits reset at 00:00 UTC.
+    # GraphQL Date filters use UTC dates.
+
+    from datetime import datetime, timezone
+
+    today_utc = datetime.now(
+        timezone.utc
+    ).date().isoformat()
+
+    query = """
+    query D1DailyRowsWritten(
+        $accountTag: string!
+        $start: Date
+        $end: Date
+    ) {
+        viewer {
+            accounts(
+                filter: {
+                    accountTag: $accountTag
+                }
+            ) {
+                d1AnalyticsAdaptiveGroups(
+                    limit: 10000
+                    filter: {
+                        date_geq: $start
+                        date_leq: $end
+                    }
+                ) {
+                    sum {
+                        rowsWritten
+                    }
+                }
+            }
+        }
+    }
+    """
+
+    variables = {
+        "accountTag": account_id,
+        "start": today_utc,
+        "end": today_utc,
+    }
+
+    headers = {
+        "Authorization": (
+            f"Bearer {api_token}"
+        ),
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "query": query,
+        "variables": variables,
+    }
+
+    async with httpx.AsyncClient() as client:
+
+        response = await client.post(
+            CLOUDFLARE_GRAPHQL_URL,
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+
+    if response.status_code != 200:
+
+        raise RuntimeError(
+            f"CLOUDFLARE GRAPHQL HTTP ERROR "
+            f"{response.status_code}: "
+            f"{response.text}"
+        )
+
+    data = response.json()
+
+    if data.get("errors"):
+
+        raise RuntimeError(
+            f"CLOUDFLARE GRAPHQL ERROR: "
+            f"{data['errors']}"
+        )
+
+    accounts = (
+        data
+        .get("data", {})
+        .get("viewer", {})
+        .get("accounts", [])
+    )
+
+    if not accounts:
+
+        return 0
+
+    analytics = (
+        accounts[0]
+        .get(
+            "d1AnalyticsAdaptiveGroups",
+            []
+        )
+    )
+
+    total_rows_written = 0
+
+    for group in analytics:
+
+        rows_written = (
+            group
+            .get("sum", {})
+            .get("rowsWritten")
+        )
+
+        if rows_written is not None:
+
+            total_rows_written += int(
+                rows_written
+            )
+
+    return total_rows_written
+    
+    # ================== D1 DAILY WRITE TEST ==================
+
+async def test_d1_daily_write_usage():
+
+    accounts = [
+        (
+            "D1.1",
+            "a5cbd8bb1cd52eea0b38b21c40106d53",
+            "CLOUDFLARE_API_TOKEN_1",
+        ),
+        (
+            "D1.2",
+            "b7bd135a9fb318c159851e18b38610ce",
+            "CLOUDFLARE_API_TOKEN_2",
+        ),
+        (
+            "D1.3",
+            "f2bf38f76018c112bffc762e4b67bfff",
+            "CLOUDFLARE_API_TOKEN_3",
+        ),
+    ]
+
+    for group_name, account_id, token_env in accounts:
+
+        try:
+
+            rows_written = (
+                await get_d1_account_rows_written(
+                    account_id,
+                    token_env,
+                )
+            )
+
+            remaining = max(
+                0,
+                D1_DAILY_WRITE_LIMIT
+                - rows_written,
+            )
+
+            logger.info(
+                "D1 DAILY WRITE USAGE | "
+                "group=%s | "
+                "rows_written=%s | "
+                "remaining=%s",
+                group_name,
+                rows_written,
+                remaining,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "D1 DAILY WRITE TEST ERROR | "
+                "group=%s | error=%s",
+                group_name,
+                e,
+            )
 
 async def get_d1_storage_size(
     d1_name: str
@@ -7739,6 +7938,7 @@ async def startup():
     await test_d1_1_2()
     await test_d1_storage()
     await test_d1_router_storage()
+    await test_d1_daily_write_usage()
 
     asyncio.create_task(
         trial_expiration_loop()
