@@ -226,6 +226,79 @@ D1_DATABASES = {
     },
 }
 
+# ================== D1 ROUTER ORDER ==================
+
+D1_ORDER = [
+    # D1.1
+    "D1.1.1",
+    "D1.1.2",
+    "D1.1.3",
+    "D1.1.4",
+    "D1.1.5",
+    "D1.1.6",
+    "D1.1.7",
+    "D1.1.8",
+    "D1.1.9",
+    "D1.1.10",
+
+    # D1.2
+    "D1.2.1",
+    "D1.2.2",
+    "D1.2.3",
+    "D1.2.4",
+    "D1.2.5",
+    "D1.2.6",
+    "D1.2.7",
+    "D1.2.8",
+    "D1.2.9",
+    "D1.2.10",
+
+    # D1.3
+    "D1.3.1",
+    "D1.3.2",
+    "D1.3.3",
+    "D1.3.4",
+    "D1.3.5",
+    "D1.3.6",
+    "D1.3.7",
+    "D1.3.8",
+    "D1.3.9",
+    "D1.3.10",
+]
+
+
+# ================== D1 ROUTER CHECK ==================
+
+if len(D1_ORDER) != 30:
+
+    raise RuntimeError(
+        f"D1 ROUTER ORDER INVALID: "
+        f"expected 30 databases, got {len(D1_ORDER)}"
+    )
+
+
+missing_d1 = [
+    d1_name
+    for d1_name in D1_ORDER
+    if d1_name not in D1_DATABASES
+]
+
+
+if missing_d1:
+
+    raise RuntimeError(
+        f"D1 ROUTER ORDER HAS MISSING DATABASES: "
+        f"{missing_d1}"
+    )
+
+
+logger.info(
+    "D1 ROUTER ORDER READY | count=%s | first=%s | last=%s",
+    len(D1_ORDER),
+    D1_ORDER[0],
+    D1_ORDER[-1],
+)
+
 ACTIVE_D1 = "D1.2.1"
 
 # ================== USER ACTIONS STATE ==================
