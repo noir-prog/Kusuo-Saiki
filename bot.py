@@ -4100,7 +4100,36 @@ async def get_available_d1_from_router():
     
     # ================== D1 COMBINED ROUTER TEST ==================
 
+# ================== D1 COMBINED ROUTER TEST ==================
+
 async def test_d1_combined_router():
+
+    original_get_d1_storage_size = (
+        globals()["get_d1_storage_size"]
+    )
+
+    async def test_get_d1_storage_size(
+        d1_name: str
+    ):
+
+        if d1_name == "D1.1.1":
+
+            logger.info(
+                "D1 COMBINED ROUTER TEST | "
+                "simulating FULL storage | "
+                "d1=%s",
+                d1_name,
+            )
+
+            return D1_MAX_STORAGE_BYTES
+
+        return await original_get_d1_storage_size(
+            d1_name
+        )
+
+    globals()["get_d1_storage_size"] = (
+        test_get_d1_storage_size
+    )
 
     try:
 
@@ -4119,6 +4148,12 @@ async def test_d1_combined_router():
         logger.exception(
             "D1 COMBINED ROUTER TEST ERROR | %s",
             e,
+        )
+
+    finally:
+
+        globals()["get_d1_storage_size"] = (
+            original_get_d1_storage_size
         )
 
 async def get_d1_storage_size(
