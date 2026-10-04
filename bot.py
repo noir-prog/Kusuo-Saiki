@@ -3894,6 +3894,128 @@ async def test_d1_daily_write_usage():
                 group_name,
                 e,
             )
+            
+# ================== D1 DAILY WRITE ROUTER ==================
+
+D1_GROUPS = {
+    "D1.1": [
+        "D1.1.1",
+        "D1.1.2",
+        "D1.1.3",
+        "D1.1.4",
+        "D1.1.5",
+        "D1.1.6",
+        "D1.1.7",
+        "D1.1.8",
+        "D1.1.9",
+        "D1.1.10",
+    ],
+    "D1.2": [
+        "D1.2.1",
+        "D1.2.2",
+        "D1.2.3",
+        "D1.2.4",
+        "D1.2.5",
+        "D1.2.6",
+        "D1.2.7",
+        "D1.2.8",
+        "D1.2.9",
+        "D1.2.10",
+    ],
+    "D1.3": [
+        "D1.3.1",
+        "D1.3.2",
+        "D1.3.3",
+        "D1.3.4",
+        "D1.3.5",
+        "D1.3.6",
+        "D1.3.7",
+        "D1.3.8",
+        "D1.3.9",
+        "D1.3.10",
+    ],
+}
+
+
+D1_GROUP_ACCOUNTS = {
+    "D1.1": (
+        "a5cbd8bb1cd52eea0b38b21c40106d53",
+        "CLOUDFLARE_API_TOKEN_1",
+    ),
+    "D1.2": (
+        "b7bd135a9fb318c159851e18b38610ce",
+        "CLOUDFLARE_API_TOKEN_2",
+    ),
+    "D1.3": (
+        "f2bf38f76018c112bffc762e4b67bfff",
+        "CLOUDFLARE_API_TOKEN_3",
+    ),
+}
+
+
+async def get_available_d1_group():
+
+    for group_name in (
+        "D1.1",
+        "D1.2",
+        "D1.3",
+    ):
+
+        account_id, token_env = (
+            D1_GROUP_ACCOUNTS[group_name]
+        )
+
+        try:
+
+            rows_written = (
+                await get_d1_account_rows_written(
+                    account_id,
+                    token_env,
+                )
+            )
+
+            if rows_written < D1_DAILY_WRITE_LIMIT:
+
+                remaining = (
+                    D1_DAILY_WRITE_LIMIT
+                    - rows_written
+                )
+
+                logger.info(
+                    "D1 ROUTER GROUP AVAILABLE | "
+                    "group=%s | "
+                    "rows_written=%s | "
+                    "remaining=%s",
+                    group_name,
+                    rows_written,
+                    remaining,
+                )
+
+                return group_name
+
+            logger.info(
+                "D1 ROUTER GROUP DAILY LIMIT | "
+                "group=%s | "
+                "rows_written=%s",
+                group_name,
+                rows_written,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "D1 ROUTER GROUP CHECK ERROR | "
+                "group=%s | error=%s",
+                group_name,
+                e,
+            )
+
+            continue
+
+    raise RuntimeError(
+        "D1 ROUTER: "
+        "NO DATABASE GROUP WITH AVAILABLE DAILY WRITE LIMIT"
+    )
 
 async def get_d1_storage_size(
     d1_name: str
