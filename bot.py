@@ -4016,6 +4016,110 @@ async def get_available_d1_group():
         "D1 ROUTER: "
         "NO DATABASE GROUP WITH AVAILABLE DAILY WRITE LIMIT"
     )
+    
+    # ================== D1 COMBINED ROUTER ==================
+
+async def get_available_d1_from_router():
+
+    selected_group = await get_available_d1_group()
+
+    group_databases = D1_GROUPS.get(
+        selected_group
+    )
+
+    if not group_databases:
+
+        raise RuntimeError(
+            f"D1 ROUTER: "
+            f"DATABASE GROUP NOT FOUND: {selected_group}"
+        )
+
+    for d1_name in group_databases:
+
+        try:
+
+            size_bytes = await get_d1_storage_size(
+                d1_name
+            )
+
+            if size_bytes < D1_MAX_STORAGE_BYTES:
+
+                available_bytes = (
+                    D1_MAX_STORAGE_BYTES
+                    - size_bytes
+                )
+
+                available_mb = (
+                    available_bytes
+                    / 1024
+                    / 1024
+                )
+
+                logger.info(
+                    "D1 COMBINED ROUTER AVAILABLE | "
+                    "group=%s | "
+                    "d1=%s | "
+                    "size_bytes=%s | "
+                    "available_mb=%.2f",
+                    selected_group,
+                    d1_name,
+                    size_bytes,
+                    available_mb,
+                )
+
+                return d1_name
+
+            logger.info(
+                "D1 COMBINED ROUTER STORAGE FULL | "
+                "group=%s | "
+                "d1=%s | "
+                "size_bytes=%s",
+                selected_group,
+                d1_name,
+                size_bytes,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "D1 COMBINED ROUTER STORAGE CHECK ERROR | "
+                "group=%s | "
+                "d1=%s | error=%s",
+                selected_group,
+                d1_name,
+                e,
+            )
+
+            continue
+
+    raise RuntimeError(
+        f"D1 ROUTER: "
+        f"NO DATABASE WITH AVAILABLE STORAGE "
+        f"IN GROUP {selected_group}"
+    )
+    
+    # ================== D1 COMBINED ROUTER TEST ==================
+
+async def test_d1_combined_router():
+
+    try:
+
+        selected_d1 = (
+            await get_available_d1_from_router()
+        )
+
+        logger.info(
+            "D1 COMBINED ROUTER TEST SUCCESS | "
+            "selected_d1=%s",
+            selected_d1,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "D1 COMBINED ROUTER TEST ERROR | %s",
+            e,
+        )
 
 async def get_d1_storage_size(
     d1_name: str
@@ -8085,6 +8189,7 @@ async def startup():
     await test_d1_router_storage()
     await test_d1_daily_write_usage()
     await test_d1_daily_write_router()
+    await test_d1_combined_router()
 
     asyncio.create_task(
         trial_expiration_loop()
