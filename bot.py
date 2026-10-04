@@ -161,8 +161,70 @@ D1_DATABASES = {
         "database_id": "5c93444c-792b-4423-b0a9-437772e6e388",
         "token_env": "CLOUDFLARE_API_TOKEN_2",
     },
-}
 
+
+    # ================== D1.3 ==================
+
+    "D1.3.1": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "8b96ef57-d63d-47b1-bcd3-f7dee8ac9634",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.2": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "16fe894c-9316-41c2-915a-6d317b27bce7",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.3": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "b46644ac-f405-4545-ba61-9b2379619c79",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.4": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "e2fe703b-e07b-4cee-9118-4075a261a9ea",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.5": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "c096fa0f-78fb-428d-adc5-50fb4d66c2c0",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.6": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "a701f494-bc40-462c-bdf7-5e2fea09847e",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.7": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "6464544a-793c-474e-bb9c-52a6f11b056a",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.8": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "5e922691-72bd-4dd9-b909-c55db3af7548",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.9": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "0aa787aa-317b-4bcc-aeb2-9cda666ecf91",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+
+    "D1.3.10": {
+        "account_id": "f2bf38f76018c112bffc762e4b67bfff",
+        "database_id": "8ad226e1-a3d9-4d77-bd40-c54133286746",
+        "token_env": "CLOUDFLARE_API_TOKEN_3",
+    },
+}
 
 ACTIVE_D1 = "D1.2.1"
 
