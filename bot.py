@@ -4712,17 +4712,102 @@ async def flush_d1_batch(batch_key):
 
     try:
 
-        await d1_query(
-            """
-            INSERT INTO message_batches (
-                business_connection_id,
-                chat_id,
-                batch_id,
-                messages_json
+        # ================== SELECT D1 ==================
+
+        selected_d1 = (
+            await get_available_d1_from_router()
+        )
+
+        logger.info(
+            "D1 BATCH ROUTER SELECTED | "
+            "connection=%s | chat=%s | d1=%s",
+            business_connection_id,
+            chat_id,
+            selected_d1,
+        )
+
+        # ================== GET D1 CONFIG ==================
+
+        d1_config = D1_DATABASES.get(
+            selected_d1
+        )
+
+        if not d1_config:
+
+            raise RuntimeError(
+                f"D1 CONFIG NOT FOUND: "
+                f"{selected_d1}"
             )
-            VALUES (?, ?, ?, ?)
+
+        account_id = d1_config.get(
+            "account_id"
+        )
+
+        database_id = d1_config.get(
+            "database_id"
+        )
+
+        token_env = d1_config.get(
+            "token_env"
+        )
+
+        if not account_id:
+
+            raise RuntimeError(
+                f"D1 ACCOUNT ID NOT CONFIGURED: "
+                f"{selected_d1}"
+            )
+
+        if not database_id:
+
+            raise RuntimeError(
+                f"D1 DATABASE ID NOT CONFIGURED: "
+                f"{selected_d1}"
+            )
+
+        if not token_env:
+
+            raise RuntimeError(
+                f"D1 TOKEN ENV NOT CONFIGURED: "
+                f"{selected_d1}"
+            )
+
+        api_token = os.getenv(
+            token_env
+        )
+
+        if not api_token:
+
+            raise RuntimeError(
+                f"{token_env} is not configured"
+            )
+
+        # ================== D1 API ==================
+
+        url = (
+            f"https://api.cloudflare.com/client/v4/accounts/"
+            f"{account_id}/d1/database/"
+            f"{database_id}/query"
+        )
+
+        headers = {
+            "Authorization": (
+                f"Bearer {api_token}"
+            ),
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "sql": """
+                INSERT INTO message_batches (
+                    business_connection_id,
+                    chat_id,
+                    batch_id,
+                    messages_json
+                )
+                VALUES (?, ?, ?, ?)
             """,
-            [
+            "params": [
                 business_connection_id,
                 chat_id,
                 batch_id,
@@ -4731,17 +4816,54 @@ async def flush_d1_batch(batch_key):
                     ensure_ascii=False,
                 ),
             ],
+        }
+
+        logger.info(
+            "D1 BATCH WRITE REQUEST | "
+            "d1=%s | account=%s | database=%s | token=%s",
+            selected_d1,
+            account_id,
+            database_id,
+            token_env,
         )
+
+        async with httpx.AsyncClient() as client:
+
+            response = await client.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+
+        if response.status_code != 200:
+
+            raise RuntimeError(
+                f"D1 API ERROR "
+                f"{response.status_code}: "
+                f"{response.text}"
+            )
+
+        data = response.json()
+
+        if not data.get("success"):
+
+            raise RuntimeError(
+                f"D1 QUERY ERROR: "
+                f"{data}"
+            )
 
         # ================== D1 WRITE SUCCESS ==================
 
         logger.info(
             "D1 BATCH WRITE SUCCESS | "
-            "connection=%s | chat=%s | messages=%s | batch_id=%s",
+            "connection=%s | chat=%s | "
+            "messages=%s | batch_id=%s | d1=%s",
             business_connection_id,
             chat_id,
             len(messages),
             batch_id,
+            selected_d1,
         )
 
         # После успешной записи D1
@@ -4770,7 +4892,8 @@ async def flush_d1_batch(batch_key):
 
         logger.exception(
             "D1 BATCH WRITE ERROR | "
-            "connection=%s | chat=%s | messages=%s | error=%s",
+            "connection=%s | chat=%s | "
+            "messages=%s | error=%s",
             business_connection_id,
             chat_id,
             len(messages),
@@ -4787,8 +4910,7 @@ async def flush_d1_batch(batch_key):
             d1_retry_tasks[batch_key] = asyncio.create_task(
                 retry_d1_batch(batch_key)
             )
-
-
+            
 # ================== D1 RETRY ==================
 
 async def retry_d1_batch(batch_key):
