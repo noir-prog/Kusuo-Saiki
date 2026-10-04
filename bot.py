@@ -3832,6 +3832,88 @@ async def get_d1_storage_size(
     )
 
     return size_after
+    
+# ================== D1 AVAILABLE DATABASE ==================
+
+async def get_available_d1():
+
+    for d1_name in D1_ORDER:
+
+        try:
+
+            size_bytes = await get_d1_storage_size(
+                d1_name
+            )
+
+            if size_bytes < D1_MAX_STORAGE_BYTES:
+
+                available_bytes = (
+                    D1_MAX_STORAGE_BYTES
+                    - size_bytes
+                )
+
+                available_mb = (
+                    available_bytes
+                    / 1024
+                    / 1024
+                )
+
+                logger.info(
+                    "D1 ROUTER STORAGE AVAILABLE | "
+                    "d1=%s | "
+                    "size_bytes=%s | "
+                    "available_mb=%.2f",
+                    d1_name,
+                    size_bytes,
+                    available_mb,
+                )
+
+                return d1_name
+
+            logger.info(
+                "D1 ROUTER STORAGE FULL | "
+                "d1=%s | "
+                "size_bytes=%s",
+                d1_name,
+                size_bytes,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "D1 ROUTER STORAGE CHECK ERROR | "
+                "d1=%s | error=%s",
+                d1_name,
+                e,
+            )
+
+            continue
+
+    raise RuntimeError(
+        "D1 ROUTER: "
+        "NO DATABASE WITH AVAILABLE STORAGE"
+    )
+
+# ================== D1 ROUTER STORAGE TEST ==================
+
+async def test_d1_router_storage():
+
+    try:
+
+        selected_d1 = await get_available_d1()
+
+        logger.info(
+            "D1 ROUTER STORAGE TEST SUCCESS | "
+            "selected=%s",
+            selected_d1,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "D1 ROUTER STORAGE TEST ERROR | %s",
+            e,
+        )
 
 async def d1_query(sql: str, params=None):
 
@@ -7656,6 +7738,7 @@ async def startup():
     await test_d1()
     await test_d1_1_2()
     await test_d1_storage()
+    await test_d1_router_storage()
 
     asyncio.create_task(
         trial_expiration_loop()
