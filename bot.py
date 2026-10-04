@@ -4529,6 +4529,29 @@ async def test_d1_storage():
                 d1_name,
                 e,
             )
+            
+# ================== D1 DAILY WRITE ROUTER TEST ==================
+
+async def test_d1_daily_write_router():
+
+    try:
+
+        selected_group = (
+            await get_available_d1_group()
+        )
+
+        logger.info(
+            "D1 DAILY WRITE ROUTER TEST SUCCESS | "
+            "selected_group=%s",
+            selected_group,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "D1 DAILY WRITE ROUTER TEST ERROR | %s",
+            e,
+        )
 
 
 # ================== D1 MESSAGE BUFFER ==================
@@ -8061,6 +8084,7 @@ async def startup():
     await test_d1_storage()
     await test_d1_router_storage()
     await test_d1_daily_write_usage()
+    await test_d1_daily_write_router()
 
     asyncio.create_task(
         trial_expiration_loop()
