@@ -3691,6 +3691,147 @@ async def check_expired_trials():
 
 import httpx
 
+# ================== D1 STORAGE CHECK ==================
+
+D1_MAX_STORAGE_BYTES = 500 * 1024 * 1024
+
+
+async def get_d1_storage_size(
+    d1_name: str
+):
+
+    d1_config = D1_DATABASES.get(
+        d1_name
+    )
+
+    if not d1_config:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK: "
+            f"database config not found: {d1_name}"
+        )
+
+    account_id = d1_config.get(
+        "account_id"
+    )
+
+    database_id = d1_config.get(
+        "database_id"
+    )
+
+    token_env = d1_config.get(
+        "token_env"
+    )
+
+    if not account_id:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK: "
+            f"account id not configured: {d1_name}"
+        )
+
+    if not database_id:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK: "
+            f"database id not configured: {d1_name}"
+        )
+
+    if not token_env:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK: "
+            f"token env not configured: {d1_name}"
+        )
+
+    api_token = os.getenv(
+        token_env
+    )
+
+    if not api_token:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK: "
+            f"{token_env} is not configured"
+        )
+
+    url = (
+        f"https://api.cloudflare.com/client/v4/accounts/"
+        f"{account_id}/d1/database/"
+        f"{database_id}/query"
+    )
+
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "sql": "SELECT 1 AS storage_check",
+        "params": [],
+    }
+
+    async with httpx.AsyncClient() as client:
+
+        response = await client.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+
+    if response.status_code != 200:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK HTTP ERROR "
+            f"{d1_name}: "
+            f"{response.status_code}: "
+            f"{response.text}"
+        )
+
+    data = response.json()
+
+    if not data.get("success"):
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK QUERY ERROR "
+            f"{d1_name}: "
+            f"{data}"
+        )
+
+    result_data = data.get(
+        "result",
+        []
+    )
+
+    if not result_data:
+
+        raise RuntimeError(
+            f"D1 STORAGE CHECK EMPTY RESULT: "
+            f"{d1_name}"
+        )
+
+    meta = result_data[0].get(
+        "meta",
+        {}
+    )
+
+    size_after = meta.get(
+        "size_after"
+    )
+
+    if size_after is None:
+
+        raise RuntimeError(
+            f"D1 STORAGE SIZE NOT RETURNED: "
+            f"{d1_name}"
+        )
+
+    size_after = int(
+        size_after
+    )
+
+    return size_after
 
 async def d1_query(sql: str, params=None):
 
@@ -3928,6 +4069,63 @@ async def test_d1_1_2():
             "D1.1.2 CONNECTION ERROR | %s",
             e,
         )
+        
+# ================== D1 STORAGE TEST ==================
+
+async def test_d1_storage():
+
+    test_databases = [
+        "D1.1.1",
+        "D1.1.2",
+        "D1.2.1",
+        "D1.3.1",
+    ]
+
+    for d1_name in test_databases:
+
+        try:
+
+            size_bytes = await get_d1_storage_size(
+                d1_name
+            )
+
+            size_mb = (
+                size_bytes
+                / 1024
+                / 1024
+            )
+
+            available_bytes = (
+                D1_MAX_STORAGE_BYTES
+                - size_bytes
+            )
+
+            available_mb = (
+                available_bytes
+                / 1024
+                / 1024
+            )
+
+            logger.info(
+                "D1 STORAGE TEST | "
+                "d1=%s | "
+                "size_bytes=%s | "
+                "size_mb=%.2f | "
+                "available_mb=%.2f",
+                d1_name,
+                size_bytes,
+                size_mb,
+                available_mb,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "D1 STORAGE TEST ERROR | "
+                "d1=%s | error=%s",
+                d1_name,
+                e,
+            )
 
 
 # ================== D1 MESSAGE BUFFER ==================
@@ -7457,6 +7655,7 @@ async def startup():
     await init_db()
     await test_d1()
     await test_d1_1_2()
+    await test_d1_storage()
 
     asyncio.create_task(
         trial_expiration_loop()
