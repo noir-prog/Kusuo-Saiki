@@ -8045,13 +8045,107 @@ async def handle_deleted_business_messages(message):
                 ),
             )
 
-                    # ================== SEND DELETED MESSAGE TO USER ==================
+# ================== SEND DELETED MESSAGE TO USER ==================
 
         try:
 
+            # ================== USER / CHAT INFO ==================
+
+            deleted_by_name = (
+                user.full_name
+                if getattr(user, "full_name", None)
+                else (
+                    user.first_name
+                    if getattr(user, "first_name", None)
+                    else "Пользователь"
+                )
+            )
+
+            chat_first_name = getattr(
+                message.chat,
+                "first_name",
+                None,
+            )
+
+            chat_last_name = getattr(
+                message.chat,
+                "last_name",
+                None,
+            )
+
+            chat_username = getattr(
+                message.chat,
+                "username",
+                None,
+            )
+
+            interlocutor_name = "Неизвестный пользователь"
+
+            if chat_first_name or chat_last_name:
+
+                interlocutor_name = " ".join(
+                    part
+                    for part in (
+                        chat_first_name,
+                        chat_last_name,
+                    )
+                    if part
+                )
+
+            elif chat_username:
+
+                interlocutor_name = f"@{chat_username}"
+
+            # ================== CHAT PROFILE BUTTON ==================
+
+            chat_button = None
+
+            if message.chat.id:
+
+                chat_button = InlineKeyboardButton(
+                    text=f"Чат с {interlocutor_name}",
+                    url=f"tg://user?id={message.chat.id}",
+                )
+
+            # ================== ACTION BUTTONS ==================
+
+            action_buttons = [
+                InlineKeyboardButton(
+                    text="Посмотреть тут",
+                    callback_data=(
+                        f"deleted_view:{deleted_message_id}"
+                    ),
+                ),
+                InlineKeyboardButton(
+                    text="Посмотреть в приложении",
+                    callback_data=(
+                        f"deleted_app:{deleted_message_id}"
+                    ),
+                ),
+            ]
+
+            keyboard_rows = []
+
+            if chat_button:
+
+                keyboard_rows.append(
+                    [chat_button]
+                )
+
+            keyboard_rows.append(
+                action_buttons
+            )
+
+            deleted_message_keyboard = InlineKeyboardMarkup(
+                inline_keyboard=keyboard_rows
+            )
+
+            # ================== NOTIFICATION ==================
+
             notification_text = (
-                "🗑 ТВОЁ СООБЩЕНИЕ БЫЛО УДАЛЕНО\n\n"
-                f"📦 Тип: {message_type}\n\n"
+                "‼️ ВНИМАНИЕ ‼️\n\n"
+                f"🗑️ Пользователь {deleted_by_name} "
+                "удалил сообщение 🗑️"
             )
 
             # ================== TEXT ==================
@@ -8060,14 +8154,8 @@ async def handle_deleted_business_messages(message):
 
                 await bot.send_message(
                     chat_id=user.id,
-                    text=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else "Текст сообщения отсутствует."
-                        )
-                    ),
+                    text=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== PHOTO ==================
@@ -8077,14 +8165,8 @@ async def handle_deleted_business_messages(message):
                 await bot.send_photo(
                     chat_id=user.id,
                     photo=file_id,
-                    caption=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else ""
-                        )
-                    ),
+                    caption=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== VIDEO ==================
@@ -8094,14 +8176,8 @@ async def handle_deleted_business_messages(message):
                 await bot.send_video(
                     chat_id=user.id,
                     video=file_id,
-                    caption=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else ""
-                        )
-                    ),
+                    caption=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== AUDIO ==================
@@ -8111,14 +8187,8 @@ async def handle_deleted_business_messages(message):
                 await bot.send_audio(
                     chat_id=user.id,
                     audio=file_id,
-                    caption=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else ""
-                        )
-                    ),
+                    caption=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== VOICE ==================
@@ -8133,6 +8203,7 @@ async def handle_deleted_business_messages(message):
                 await bot.send_message(
                     chat_id=user.id,
                     text=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== DOCUMENT ==================
@@ -8142,14 +8213,8 @@ async def handle_deleted_business_messages(message):
                 await bot.send_document(
                     chat_id=user.id,
                     document=file_id,
-                    caption=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else ""
-                        )
-                    ),
+                    caption=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== STICKER ==================
@@ -8164,6 +8229,7 @@ async def handle_deleted_business_messages(message):
                 await bot.send_message(
                     chat_id=user.id,
                     text=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== ANIMATION / GIF ==================
@@ -8173,14 +8239,8 @@ async def handle_deleted_business_messages(message):
                 await bot.send_animation(
                     chat_id=user.id,
                     animation=file_id,
-                    caption=(
-                        notification_text
-                        + (
-                            text_content
-                            if text_content
-                            else ""
-                        )
-                    ),
+                    caption=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== VIDEO NOTE / CIRCLE ==================
@@ -8195,19 +8255,15 @@ async def handle_deleted_business_messages(message):
                 await bot.send_message(
                     chat_id=user.id,
                     text=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== LOCATION ==================
 
             elif message_type == "location":
 
-                latitude = deleted_data.get(
-                    "latitude"
-                )
-
-                longitude = deleted_data.get(
-                    "longitude"
-                )
+                latitude = deleted_data.get("latitude")
+                longitude = deleted_data.get("longitude")
 
                 if latitude is not None and longitude is not None:
 
@@ -8220,6 +8276,7 @@ async def handle_deleted_business_messages(message):
                     await bot.send_message(
                         chat_id=user.id,
                         text=notification_text,
+                        reply_markup=deleted_message_keyboard,
                     )
 
             # ================== CONTACT ==================
@@ -8245,6 +8302,7 @@ async def handle_deleted_business_messages(message):
                 await bot.send_message(
                     chat_id=user.id,
                     text=notification_text,
+                    reply_markup=deleted_message_keyboard,
                 )
 
             # ================== UNKNOWN TYPE ==================
@@ -8255,8 +8313,10 @@ async def handle_deleted_business_messages(message):
                     chat_id=user.id,
                     text=(
                         notification_text
+                        + "\n\n"
                         + "Не удалось определить содержимое сообщения."
                     ),
+                    reply_markup=deleted_message_keyboard,
                 )
 
             logger.info(
