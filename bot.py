@@ -291,8 +291,6 @@ if missing_d1:
         f"{missing_d1}"
     )
 
-ACTIVE_D1 = "D1.2.1"
-
 # ================== USER ACTIONS STATE ==================
 
 trial_days_waiting = {}
@@ -8445,7 +8443,6 @@ async def startup():
     logger.info("STARTUP: BEFORE DATABASE")
 
     await init_db()
-    await test_d1()
     await test_d1_1_2()
     await test_d1_storage()
     await test_d1_router_storage()
