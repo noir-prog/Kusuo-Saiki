@@ -635,10 +635,12 @@ async def handle_ui_callback(callback: CallbackQuery):
                 row["business_connection_id"]
             )
 
-            # ================== SEARCH D1 ==================
+                        # ================== SEARCH D1 ==================
 
             deleted_data = None
             found_d1 = None
+
+            import json
 
             for d1_name in D1_ORDER:
 
@@ -649,17 +651,6 @@ async def handle_ui_callback(callback: CallbackQuery):
                 if not config:
                     continue
 
-                token_env = config.get(
-                    "token_env"
-                )
-
-                token = os.getenv(
-                    token_env
-                )
-
-                if not token:
-                    continue
-
                 account_id = config.get(
                     "account_id"
                 )
@@ -668,13 +659,36 @@ async def handle_ui_callback(callback: CallbackQuery):
                     "database_id"
                 )
 
-                if not account_id or not database_id:
+                token_env = config.get(
+                    "token_env"
+                )
+
+                token = os.getenv(
+                    token_env
+                )
+
+                if (
+                    not account_id
+                    or not database_id
+                    or not token
+                ):
                     continue
 
                 try:
 
+                    url = (
+                        "https://api.cloudflare.com/client/v4/"
+                        f"accounts/{account_id}/d1/"
+                        f"database/{database_id}/query"
+                    )
+
+                    import httpx
+
                     query = """
                         SELECT
+                            business_connection_id,
+                            chat_id,
+                            batch_id,
                             messages_json
                         FROM message_batches
                         WHERE
@@ -694,21 +708,37 @@ async def handle_ui_callback(callback: CallbackQuery):
                         LIMIT 1
                     """
 
-                    result = await cloudflare_d1_query(
-                        account_id=account_id,
-                        database_id=database_id,
-                        token=token,
-                        query=query,
-                        params=[
-                            business_connection_id,
-                            chat_id,
-                            deleted_message_id,
-                        ],
-                    )
+                    async with httpx.AsyncClient(
+                        timeout=30
+                    ) as client:
+
+                        response = await client.post(
+                            url,
+                            headers={
+                                "Authorization": (
+                                    f"Bearer {token}"
+                                ),
+                                "Content-Type": (
+                                    "application/json"
+                                ),
+                            },
+                            json={
+                                "sql": query,
+                                "params": [
+                                    business_connection_id,
+                                    chat_id,
+                                    deleted_message_id,
+                                ],
+                            },
+                        )
+
+                    response.raise_for_status()
+
+                    result = response.json()
 
                     result_data = result.get(
                         "result",
-                        [],
+                        []
                     )
 
                     rows = (
@@ -722,8 +752,6 @@ async def handle_ui_callback(callback: CallbackQuery):
 
                     if not rows:
                         continue
-
-                    import json
 
                     messages = json.loads(
                         rows[0]["messages_json"]
@@ -740,6 +768,19 @@ async def handle_ui_callback(callback: CallbackQuery):
 
                             deleted_data = item
                             found_d1 = d1_name
+
+                            logger.info(
+                                "DELETED VIEW FOUND | "
+                                "d1=%s | user=%s | "
+                                "connection=%s | chat=%s | "
+                                "message=%s",
+                                d1_name,
+                                user_id,
+                                business_connection_id,
+                                chat_id,
+                                deleted_message_id,
+                            )
+
                             break
 
                     if deleted_data:
