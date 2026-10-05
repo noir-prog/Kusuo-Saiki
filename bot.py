@@ -584,6 +584,426 @@ trial_days_waiting = {}
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
 
+    # ================== VIEW DELETED MESSAGE ==================
+
+    if callback.data.startswith("deleted_view:"):
+
+        try:
+
+            parts = callback.data.split(":")
+
+            if len(parts) != 3:
+                await callback.answer(
+                    "❌ Не удалось определить сообщение.",
+                    show_alert=True,
+                )
+                return
+
+            chat_id = int(parts[1])
+            deleted_message_id = int(parts[2])
+
+            user_id = callback.from_user.id
+
+            logger.info(
+                "DELETED VIEW REQUEST | "
+                "user=%s | chat=%s | message=%s",
+                user_id,
+                chat_id,
+                deleted_message_id,
+            )
+
+            # ================== GET BUSINESS CONNECTION ==================
+
+            row = await db_pool.fetchrow(
+                """
+                SELECT business_connection_id
+                FROM business_accounts
+                WHERE telegram_user_id = $1
+                """,
+                user_id,
+            )
+
+            if not row:
+
+                await callback.answer(
+                    "❌ Не удалось найти подключение.",
+                    show_alert=True,
+                )
+                return
+
+            business_connection_id = (
+                row["business_connection_id"]
+            )
+
+            # ================== SEARCH D1 ==================
+
+            deleted_data = None
+            found_d1 = None
+
+            for d1_name in D1_ORDER:
+
+                config = D1_DATABASES.get(
+                    d1_name
+                )
+
+                if not config:
+                    continue
+
+                token_env = config.get(
+                    "token_env"
+                )
+
+                token = os.getenv(
+                    token_env
+                )
+
+                if not token:
+                    continue
+
+                account_id = config.get(
+                    "account_id"
+                )
+
+                database_id = config.get(
+                    "database_id"
+                )
+
+                if not account_id or not database_id:
+                    continue
+
+                try:
+
+                    query = """
+                        SELECT
+                            messages_json
+                        FROM message_batches
+                        WHERE
+                            business_connection_id = ?
+                            AND chat_id = ?
+                            AND EXISTS (
+                                SELECT 1
+                                FROM json_each(messages_json)
+                                WHERE CAST(
+                                    json_extract(
+                                        value,
+                                        '$.message_id'
+                                    ) AS INTEGER
+                                ) = ?
+                            )
+                        ORDER BY rowid DESC
+                        LIMIT 1
+                    """
+
+                    result = await cloudflare_d1_query(
+                        account_id=account_id,
+                        database_id=database_id,
+                        token=token,
+                        query=query,
+                        params=[
+                            business_connection_id,
+                            chat_id,
+                            deleted_message_id,
+                        ],
+                    )
+
+                    result_data = result.get(
+                        "result",
+                        [],
+                    )
+
+                    rows = (
+                        result_data[0].get(
+                            "results",
+                            []
+                        )
+                        if result_data
+                        else []
+                    )
+
+                    if not rows:
+                        continue
+
+                    import json
+
+                    messages = json.loads(
+                        rows[0]["messages_json"]
+                    )
+
+                    for item in messages:
+
+                        if int(
+                            item.get(
+                                "message_id",
+                                0,
+                            )
+                        ) == deleted_message_id:
+
+                            deleted_data = item
+                            found_d1 = d1_name
+                            break
+
+                    if deleted_data:
+                        break
+
+                except Exception as e:
+
+                    logger.exception(
+                        "DELETED VIEW D1 SEARCH ERROR | "
+                        "d1=%s | user=%s | chat=%s | "
+                        "message=%s | error=%s",
+                        d1_name,
+                        user_id,
+                        chat_id,
+                        deleted_message_id,
+                        e,
+                    )
+
+            # ================== MESSAGE NOT FOUND ==================
+
+            if not deleted_data:
+
+                await callback.answer(
+                    "❌ Не удалось найти это сообщение.",
+                    show_alert=True,
+                )
+
+                logger.warning(
+                    "DELETED VIEW MESSAGE NOT FOUND | "
+                    "user=%s | chat=%s | message=%s",
+                    user_id,
+                    chat_id,
+                    deleted_message_id,
+                )
+
+                return
+
+            logger.info(
+                "DELETED VIEW MESSAGE FOUND | "
+                "d1=%s | user=%s | chat=%s | message=%s",
+                found_d1,
+                user_id,
+                chat_id,
+                deleted_message_id,
+            )
+
+            await callback.answer(
+                "📦 Показываю удалённое сообщение..."
+            )
+
+            # ================== EXTRACT DATA ==================
+
+            message_type = deleted_data.get(
+                "message_type"
+            )
+
+            text_content = deleted_data.get(
+                "text_content"
+            )
+
+            file_id = deleted_data.get(
+                "file_id"
+            )
+
+            # ================== TEXT ==================
+
+            if message_type == "text":
+
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=(
+                        "♻️ УДАЛЁННОЕ СООБЩЕНИЕ\n\n"
+                        f"{text_content or '[пусто]'}"
+                    ),
+                )
+
+            # ================== PHOTO ==================
+
+            elif message_type == "photo" and file_id:
+
+                await bot.send_photo(
+                    chat_id=user_id,
+                    photo=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ ФОТО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VIDEO ==================
+
+            elif message_type == "video" and file_id:
+
+                await bot.send_video(
+                    chat_id=user_id,
+                    video=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ ВИДЕО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== AUDIO ==================
+
+            elif message_type == "audio" and file_id:
+
+                await bot.send_audio(
+                    chat_id=user_id,
+                    audio=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННОЕ АУДИО"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VOICE ==================
+
+            elif message_type == "voice" and file_id:
+
+                await bot.send_voice(
+                    chat_id=user_id,
+                    voice=file_id,
+                )
+
+                await bot.send_message(
+                    chat_id=user_id,
+                    text="♻️ УДАЛЁННОЕ ГОЛОСОВОЕ СООБЩЕНИЕ",
+                )
+
+            # ================== DOCUMENT ==================
+
+            elif message_type == "document" and file_id:
+
+                await bot.send_document(
+                    chat_id=user_id,
+                    document=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННЫЙ ДОКУМЕНТ"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== STICKER ==================
+
+            elif message_type == "sticker" and file_id:
+
+                await bot.send_sticker(
+                    chat_id=user_id,
+                    sticker=file_id,
+                )
+
+            # ================== ANIMATION / GIF ==================
+
+            elif message_type == "animation" and file_id:
+
+                await bot.send_animation(
+                    chat_id=user_id,
+                    animation=file_id,
+                    caption=(
+                        "♻️ УДАЛЁННАЯ АНИМАЦИЯ"
+                        + (
+                            f"\n\n📝 Подпись:\n{text_content}"
+                            if text_content
+                            else ""
+                        )
+                    ),
+                )
+
+            # ================== VIDEO NOTE ==================
+
+            elif message_type == "video_note" and file_id:
+
+                await bot.send_video_note(
+                    chat_id=user_id,
+                    video_note=file_id,
+                )
+
+            # ================== LOCATION ==================
+
+            elif message_type == "location":
+
+                latitude = deleted_data.get(
+                    "latitude"
+                )
+
+                longitude = deleted_data.get(
+                    "longitude"
+                )
+
+                if (
+                    latitude is not None
+                    and longitude is not None
+                ):
+
+                    await bot.send_location(
+                        chat_id=user_id,
+                        latitude=latitude,
+                        longitude=longitude,
+                    )
+
+            # ================== CONTACT ==================
+
+            elif message_type == "contact":
+
+                await bot.send_contact(
+                    chat_id=user_id,
+                    phone_number=deleted_data.get(
+                        "phone_number"
+                    ),
+                    first_name=deleted_data.get(
+                        "first_name"
+                    ),
+                    last_name=deleted_data.get(
+                        "last_name"
+                    ),
+                    vcard=deleted_data.get(
+                        "vcard"
+                    ),
+                )
+
+            # ================== UNKNOWN ==================
+
+            else:
+
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=(
+                        "♻️ УДАЛЁННОЕ СООБЩЕНИЕ\n\n"
+                        f"Тип: {message_type}\n"
+                        f"Message ID: {deleted_message_id}"
+                    ),
+                )
+
+        except Exception as e:
+
+            logger.exception(
+                "DELETED VIEW ERROR | "
+                "user=%s | error=%s",
+                callback.from_user.id,
+                e,
+            )
+
+            await callback.answer(
+                "❌ Не удалось показать сообщение.",
+                show_alert=True,
+            )
+
+        return
     # ================== TRIAL OK ==================
 
     if callback.data == "trial_ok":
@@ -8103,7 +8523,7 @@ async def handle_deleted_business_messages(message):
                 InlineKeyboardButton(
                     text="Посмотреть тут",
                     callback_data=(
-                        f"deleted_view:{deleted_message_id}"
+                        f"deleted_view:{message.chat.id}:{deleted_message_id}"
                     ),
                 ),
                 InlineKeyboardButton(
