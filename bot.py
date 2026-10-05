@@ -6894,50 +6894,193 @@ async def handle_edited_business_message(message):
 
     # ================== FIND OLD MESSAGE IN D1 ==================
 
-    old_text = None
-    log_message_id = None
+old_text = None
+log_message_id = None
+found_d1 = None
+
+for d1_name in D1_ORDER:
 
     try:
 
-        result = await d1_query(
-            """
-            SELECT
-                json_extract(value, '$.text_content') AS text_content,
-                json_extract(value, '$.log_message_id') AS log_message_id
-            FROM message_batches,
-                 json_each(message_batches.messages_json)
-            WHERE
-                message_batches.business_connection_id = ?
-                AND message_batches.chat_id = ?
-                AND CAST(
-                    json_extract(value, '$.message_id')
-                    AS INTEGER
-                ) = ?
-            ORDER BY message_batches.rowid DESC
-            LIMIT 1
+        d1_config = D1_DATABASES.get(
+            d1_name
+        )
+
+        if not d1_config:
+
+            logger.warning(
+                "EDIT D1 CONFIG NOT FOUND | "
+                "d1=%s | connection=%s | chat=%s | message=%s",
+                d1_name,
+                business_connection_id,
+                chat_id,
+                message_id,
+            )
+
+            continue
+
+        account_id = d1_config.get(
+            "account_id"
+        )
+
+        database_id = d1_config.get(
+            "database_id"
+        )
+
+        token_env = d1_config.get(
+            "token_env"
+        )
+
+        if not account_id:
+
+            logger.warning(
+                "EDIT D1 ACCOUNT ID NOT CONFIGURED | "
+                "d1=%s",
+                d1_name,
+            )
+
+            continue
+
+        if not database_id:
+
+            logger.warning(
+                "EDIT D1 DATABASE ID NOT CONFIGURED | "
+                "d1=%s",
+                d1_name,
+            )
+
+            continue
+
+        if not token_env:
+
+            logger.warning(
+                "EDIT D1 TOKEN ENV NOT CONFIGURED | "
+                "d1=%s",
+                d1_name,
+            )
+
+            continue
+
+        api_token = os.getenv(
+            token_env
+        )
+
+        if not api_token:
+
+            logger.warning(
+                "EDIT D1 TOKEN NOT CONFIGURED | "
+                "d1=%s | token=%s",
+                d1_name,
+                token_env,
+            )
+
+            continue
+
+        url = (
+            f"https://api.cloudflare.com/client/v4/accounts/"
+            f"{account_id}/d1/database/"
+            f"{database_id}/query"
+        )
+
+        headers = {
+            "Authorization": (
+                f"Bearer {api_token}"
+            ),
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "sql": """
+                SELECT
+                    json_extract(
+                        value,
+                        '$.text_content'
+                    ) AS text_content,
+                    json_extract(
+                        value,
+                        '$.log_message_id'
+                    ) AS log_message_id
+                FROM message_batches,
+                     json_each(
+                         message_batches.messages_json
+                     )
+                WHERE
+                    message_batches.business_connection_id = ?
+                    AND message_batches.chat_id = ?
+                    AND CAST(
+                        json_extract(
+                            value,
+                            '$.message_id'
+                        )
+                        AS INTEGER
+                    ) = ?
+                ORDER BY
+                    message_batches.rowid DESC
+                LIMIT 1
             """,
-            [
+            "params": [
                 business_connection_id,
                 chat_id,
                 message_id,
             ],
+        }
+
+        logger.info(
+            "EDIT D1 SEARCH | "
+            "d1=%s | connection=%s | chat=%s | message=%s",
+            d1_name,
+            business_connection_id,
+            chat_id,
+            message_id,
         )
 
-        if result:
+        async with httpx.AsyncClient() as client:
 
-            result_data = result.get(
-                "result",
+            response = await client.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+
+        if response.status_code != 200:
+
+            logger.warning(
+                "EDIT D1 SEARCH HTTP ERROR | "
+                "d1=%s | status=%s | response=%s",
+                d1_name,
+                response.status_code,
+                response.text,
+            )
+
+            continue
+
+        result = response.json()
+
+        if not result.get("success"):
+
+            logger.warning(
+                "EDIT D1 SEARCH QUERY ERROR | "
+                "d1=%s | result=%s",
+                d1_name,
+                result,
+            )
+
+            continue
+
+        result_data = result.get(
+            "result",
+            []
+        )
+
+        rows = (
+            result_data[0].get(
+                "results",
                 []
             )
-
-            rows = (
-                result_data[0].get(
-                    "results",
-                    []
-                )
-                if result_data
-                else []
-            )
+            if result_data
+            else []
+        )
 
         if rows:
 
@@ -6951,24 +7094,33 @@ async def handle_edited_business_message(message):
                 "log_message_id"
             )
 
+            found_d1 = d1_name
+
             logger.info(
                 "EDIT OLD MESSAGE LOADED FROM D1 | "
-                "connection=%s | chat=%s | message=%s",
+                "d1=%s | connection=%s | chat=%s | message=%s",
+                found_d1,
                 business_connection_id,
                 chat_id,
                 message_id,
             )
-                
+
+            break
+
     except Exception as e:
 
         logger.exception(
-            "EDIT D1 READ ERROR | "
-            "connection=%s | chat=%s | message=%s | error=%s",
+            "EDIT D1 SEARCH ERROR | "
+            "d1=%s | connection=%s | chat=%s | "
+            "message=%s | error=%s",
+            d1_name,
             business_connection_id,
             chat_id,
             message_id,
             e,
         )
+
+        continue
 
     # ================== IF NOT IN D1 — CHECK RAM ==================
 
