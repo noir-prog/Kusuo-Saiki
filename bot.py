@@ -584,7 +584,144 @@ trial_days_waiting = {}
 @dp.callback_query()
 async def handle_ui_callback(callback: CallbackQuery):
 
-    # ================== VIEW DELETED MESSAGE ==================
+       # ================== HIDE DELETED MESSAGE ==================
+
+    if callback.data.startswith("deleted_hide:"):
+
+        try:
+
+            parts = callback.data.split(":")
+
+            if len(parts) != 3:
+                await callback.answer(
+                    "❌ Не удалось восстановить уведомление.",
+                    show_alert=True,
+                )
+                return
+
+            chat_id = int(parts[1])
+            deleted_message_id = int(parts[2])
+
+            # ================== GET INTERLOCUTOR ==================
+
+            interlocutor_name = "Неизвестный пользователь"
+
+            try:
+
+                chat_info = await bot.get_chat(
+                    chat_id
+                )
+
+                if (
+                    getattr(
+                        chat_info,
+                        "first_name",
+                        None,
+                    )
+                    or getattr(
+                        chat_info,
+                        "last_name",
+                        None,
+                    )
+                ):
+
+                    interlocutor_name = " ".join(
+                        part
+                        for part in (
+                            getattr(
+                                chat_info,
+                                "first_name",
+                                None,
+                            ),
+                            getattr(
+                                chat_info,
+                                "last_name",
+                                None,
+                            ),
+                        )
+                        if part
+                    )
+
+                elif getattr(
+                    chat_info,
+                    "username",
+                    None,
+                ):
+
+                    interlocutor_name = (
+                        f"@{chat_info.username}"
+                    )
+
+            except Exception:
+                pass
+
+            # ================== KEYBOARD ==================
+
+            deleted_message_keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=f"Чат с {interlocutor_name}",
+                            url=f"tg://user?id={chat_id}",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="Посмотреть тут",
+                            callback_data=(
+                                f"deleted_view:"
+                                f"{chat_id}:"
+                                f"{deleted_message_id}"
+                            ),
+                        ),
+                        InlineKeyboardButton(
+                            text="Посмотреть в приложении",
+                            callback_data=(
+                                f"deleted_app:"
+                                f"{chat_id}:"
+                                f"{deleted_message_id}"
+                            ),
+                        ),
+                    ],
+                ]
+            )
+
+            # ================== NOTIFICATION ==================
+
+            notification_text = (
+                "‼️ ВНИМАНИЕ ‼️\n\n"
+                f"🗑️ Пользователь {interlocutor_name} "
+                "удалил сообщение 🗑️"
+            )
+
+            # ================== RESTORE ==================
+
+            if callback.message:
+
+                await callback.message.edit_text(
+                    text=notification_text,
+                    reply_markup=deleted_message_keyboard,
+                )
+
+            await callback.answer()
+
+        except Exception as e:
+
+            logger.exception(
+                "DELETED HIDE ERROR | "
+                "user=%s | error=%s",
+                callback.from_user.id,
+                e,
+            )
+
+            await callback.answer(
+                "❌ Не удалось скрыть сообщение.",
+                show_alert=True,
+            )
+
+        return
+    
+     # ================== VIEW DELETED MESSAGE ==================
 
     if callback.data.startswith("deleted_view:"):
 
@@ -844,17 +981,99 @@ async def handle_ui_callback(callback: CallbackQuery):
             file_id = deleted_data.get(
                 "file_id"
             )
+            
+                        # ================== VIEW KEYBOARD ==================
+
+            interlocutor_name = "Пользователь"
+
+            try:
+
+                chat_info = await bot.get_chat(
+                    chat_id
+                )
+
+                if (
+                    getattr(
+                        chat_info,
+                        "first_name",
+                        None,
+                    )
+                    or getattr(
+                        chat_info,
+                        "last_name",
+                        None,
+                    )
+                ):
+
+                    interlocutor_name = " ".join(
+                        part
+                        for part in (
+                            getattr(
+                                chat_info,
+                                "first_name",
+                                None,
+                            ),
+                            getattr(
+                                chat_info,
+                                "last_name",
+                                None,
+                            ),
+                        )
+                        if part
+                    )
+
+                elif getattr(
+                    chat_info,
+                    "username",
+                    None,
+                ):
+
+                    interlocutor_name = (
+                        f"@{chat_info.username}"
+                    )
+
+            except Exception:
+                pass
+
+            view_keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=interlocutor_name,
+                            url=f"tg://user?id={chat_id}",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="Скрыть",
+                            callback_data=(
+                                f"deleted_hide:"
+                                f"{chat_id}:"
+                                f"{deleted_message_id}"
+                            ),
+                        ),
+                        InlineKeyboardButton(
+                            text="Посмотреть в приложении",
+                            callback_data=(
+                                f"deleted_app:"
+                                f"{chat_id}:"
+                                f"{deleted_message_id}"
+                            ),
+                        ),
+                    ],
+                ]
+            )
 
             # ================== TEXT ==================
 
             if message_type == "text":
 
-                await bot.send_message(
-                    chat_id=user_id,
+                await callback.message.edit_text(
                     text=(
-                        "♻️ УДАЛЁННОЕ СООБЩЕНИЕ\n\n"
+                        "🗑️ Удалённое сообщение:\n\n"
                         f"{text_content or '[пусто]'}"
                     ),
+                    reply_markup=view_keyboard,
                 )
 
             # ================== PHOTO ==================
