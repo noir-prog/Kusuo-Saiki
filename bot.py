@@ -7484,57 +7484,177 @@ async def handle_deleted_business_messages(message):
                 deleted_data,
             )
 
-        # ================== SEARCH IN D1 ==================
+                # ================== SEARCH IN D1 ==================
 
         if deleted_data is None:
-            try:
 
-                result = await d1_query(
-                    """
-                    SELECT
-                        business_connection_id,
-                        chat_id,
-                        batch_id,
-                        messages_json
-                    FROM message_batches
-                    WHERE
-                        business_connection_id = ?
-                        AND chat_id = ?
-                        AND EXISTS (
-                            SELECT 1
-                            FROM json_each(messages_json)
-                            WHERE CAST(
-                                json_extract(
-                                    value,
-                                    '$.message_id'
-                                ) AS INTEGER
-                            ) = ?
+            for d1_name in D1_ORDER:
+
+                try:
+
+                    d1_config = D1_DATABASES.get(
+                        d1_name
+                    )
+
+                    if not d1_config:
+                        logger.warning(
+                            "DELETE D1 CONFIG NOT FOUND | "
+                            "d1=%s | connection=%s | chat=%s | message=%s",
+                            d1_name,
+                            message.business_connection_id,
+                            message.chat.id,
+                            deleted_message_id,
                         )
-                    ORDER BY rowid DESC
-                    LIMIT 1
-                    """,
-                    [
+                        continue
+
+                    account_id = d1_config.get(
+                        "account_id"
+                    )
+
+                    database_id = d1_config.get(
+                        "database_id"
+                    )
+
+                    token_env = d1_config.get(
+                        "token_env"
+                    )
+
+                    if not account_id:
+                        logger.warning(
+                            "DELETE D1 ACCOUNT ID MISSING | "
+                            "d1=%s",
+                            d1_name,
+                        )
+                        continue
+
+                    if not database_id:
+                        logger.warning(
+                            "DELETE D1 DATABASE ID MISSING | "
+                            "d1=%s",
+                            d1_name,
+                        )
+                        continue
+
+                    if not token_env:
+                        logger.warning(
+                            "DELETE D1 TOKEN ENV MISSING | "
+                            "d1=%s",
+                            d1_name,
+                        )
+                        continue
+
+                    api_token = os.getenv(
+                        token_env
+                    )
+
+                    if not api_token:
+                        logger.warning(
+                            "DELETE D1 API TOKEN MISSING | "
+                            "d1=%s | token=%s",
+                            d1_name,
+                            token_env,
+                        )
+                        continue
+
+                    url = (
+                        f"https://api.cloudflare.com/client/v4/accounts/"
+                        f"{account_id}/d1/database/"
+                        f"{database_id}/query"
+                    )
+
+                    headers = {
+                        "Authorization": f"Bearer {api_token}",
+                        "Content-Type": "application/json",
+                    }
+
+                    payload = {
+                        "sql": """
+                            SELECT
+                                business_connection_id,
+                                chat_id,
+                                batch_id,
+                                messages_json
+                            FROM message_batches
+                            WHERE
+                                business_connection_id = ?
+                                AND chat_id = ?
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM json_each(messages_json)
+                                    WHERE CAST(
+                                        json_extract(
+                                            value,
+                                            '$.message_id'
+                                        ) AS INTEGER
+                                    ) = ?
+                                )
+                            ORDER BY rowid DESC
+                            LIMIT 1
+                        """,
+                        "params": [
+                            message.business_connection_id,
+                            message.chat.id,
+                            deleted_message_id,
+                        ],
+                    }
+
+                    logger.info(
+                        "DELETE D1 SEARCH | "
+                        "d1=%s | connection=%s | chat=%s | message=%s",
+                        d1_name,
                         message.business_connection_id,
                         message.chat.id,
                         deleted_message_id,
-                    ],
-                )
+                    )
 
-                result_data = result.get(
-                    "result",
-                    []
-                )
+                    async with httpx.AsyncClient() as client:
 
-                results = (
-                    result_data[0].get(
-                        "results",
+                        response = await client.post(
+                            url,
+                            headers=headers,
+                            json=payload,
+                            timeout=30,
+                        )
+
+                    if response.status_code != 200:
+                        logger.warning(
+                            "DELETE D1 SEARCH HTTP ERROR | "
+                            "d1=%s | status=%s | connection=%s | chat=%s | message=%s",
+                            d1_name,
+                            response.status_code,
+                            message.business_connection_id,
+                            message.chat.id,
+                            deleted_message_id,
+                        )
+                        continue
+
+                    result = response.json()
+
+                    if not result.get("success"):
+                        logger.warning(
+                            "DELETE D1 SEARCH FAILED | "
+                            "d1=%s | result=%s",
+                            d1_name,
+                            result,
+                        )
+                        continue
+
+                    result_data = result.get(
+                        "result",
                         []
                     )
-                    if result_data
-                    else []
-                )
 
-                if results:
+                    results = (
+                        result_data[0].get(
+                            "results",
+                            []
+                        )
+                        if result_data
+                        else []
+                    )
+
+                    if not results:
+                        continue
 
                     row = results[0]
 
@@ -7555,39 +7675,34 @@ async def handle_deleted_business_messages(message):
 
                             deleted_data = item
 
+                            logger.info(
+                                "DELETED MESSAGE FOUND IN D1 | "
+                                "d1=%s | connection=%s | chat=%s | message=%s | data=%s",
+                                d1_name,
+                                message.business_connection_id,
+                                message.chat.id,
+                                deleted_message_id,
+                                deleted_data,
+                            )
+
                             break
 
-                if deleted_data:
+                    if deleted_data is not None:
+                        break
 
-                    logger.info(
-                        "DELETED MESSAGE FOUND IN D1 | "
-                        "connection=%s | chat=%s | message=%s | data=%s",
+                except Exception as e:
+
+                    logger.exception(
+                        "DELETE D1 SEARCH ERROR | "
+                        "d1=%s | connection=%s | chat=%s | message=%s | error=%s",
+                        d1_name,
                         message.business_connection_id,
                         message.chat.id,
                         deleted_message_id,
-                        deleted_data,
+                        e,
                     )
 
-                else:
-
-                    logger.warning(
-                        "DELETED MESSAGE NOT FOUND IN D1 | "
-                        "connection=%s | chat=%s | message=%s",
-                        message.business_connection_id,
-                        message.chat.id,
-                        deleted_message_id,
-                    )
-
-            except Exception as e:
-
-                logger.exception(
-                    "DELETED MESSAGE SEARCH ERROR | "
-                    "connection=%s | chat=%s | message=%s | error=%s",
-                    message.business_connection_id,
-                    message.chat.id,
-                    deleted_message_id,
-                    e,
-                )
+                    continue
 
         # ================== MESSAGE NOT FOUND ==================
 
