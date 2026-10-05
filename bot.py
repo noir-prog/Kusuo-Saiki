@@ -8049,17 +8049,7 @@ async def handle_deleted_business_messages(message):
 
         try:
 
-            # ================== USER / CHAT INFO ==================
-
-            deleted_by_name = (
-                user.full_name
-                if getattr(user, "full_name", None)
-                else (
-                    user.first_name
-                    if getattr(user, "first_name", None)
-                    else "Пользователь"
-                )
-            )
+            # ================== USER / CHAT INFO =================
 
             chat_first_name = getattr(
                 message.chat,
@@ -8144,7 +8134,7 @@ async def handle_deleted_business_messages(message):
 
             notification_text = (
                 "‼️ ВНИМАНИЕ ‼️\n\n"
-                f"🗑️ Пользователь {deleted_by_name} "
+                f"🗑️ Пользователь {interlocutor_name} "
                 "удалил сообщение 🗑️"
             )
 
