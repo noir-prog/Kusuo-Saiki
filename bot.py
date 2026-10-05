@@ -698,10 +698,28 @@ async def handle_ui_callback(callback: CallbackQuery):
 
             if callback.message:
 
-                await callback.message.edit_text(
-                    text=notification_text,
-                    reply_markup=deleted_message_keyboard,
-                )
+                if (
+                    callback.message.photo
+                    or callback.message.video
+                    or callback.message.audio
+                    or callback.message.document
+                    or callback.message.animation
+                ):
+
+                    await callback.message.delete()
+
+                    await bot.send_message(
+                        chat_id=callback.from_user.id,
+                        text=notification_text,
+                        reply_markup=deleted_message_keyboard,
+                    )
+
+                else:
+
+                    await callback.message.edit_text(
+                        text=notification_text,
+                        reply_markup=deleted_message_keyboard,
+                    )
 
             await callback.answer()
 
