@@ -1080,17 +1080,21 @@ async def handle_ui_callback(callback: CallbackQuery):
 
             elif message_type == "photo" and file_id:
 
-                await bot.send_photo(
-                    chat_id=user_id,
-                    photo=file_id,
-                    caption=(
-                        "♻️ УДАЛЁННОЕ ФОТО"
-                        + (
-                            f"\n\n📝 Подпись:\n{text_content}"
-                            if text_content
-                            else ""
-                        )
+                from aiogram.types import InputMediaPhoto
+
+                await callback.message.edit_media(
+                    media=InputMediaPhoto(
+                        media=file_id,
+                        caption=(
+                            "🗑️ Удалённое сообщение:"
+                            + (
+                                f"\n\n{text_content}"
+                                if text_content
+                                else ""
+                            )
+                        ),
                     ),
+                    reply_markup=view_keyboard,
                 )
 
             # ================== VIDEO ==================
