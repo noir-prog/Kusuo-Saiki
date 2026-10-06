@@ -7453,6 +7453,49 @@ async def handle_business_message(message):
                     topic_id=topic_id,
                     text=message.text,
                 )
+                
+                # ================== SEND SELF-DESTRUCT PHOTO TO USER ==================
+
+                try:
+
+                    await bot.send_photo(
+                        chat_id=user.id,
+                        photo=photo_data,
+                        caption=(
+                            "‼️ <b>ВНИМАНИЕ</b> ‼️\n\n"
+                            "🖼 <b>Самоудаляющееся фото</b>"
+                            + (
+                                f"\n\n📝 {original.caption}"
+                                if original.caption
+                                else ""
+                            )
+                        ),
+                        parse_mode="HTML",
+                    )
+
+                    logger.info(
+                        "SELF-DESTRUCT PHOTO SENT TO USER | "
+                        "user=%s | connection=%s | chat=%s | "
+                        "original_message=%s | reply_message=%s",
+                        user.id,
+                        message.business_connection_id,
+                        message.chat.id,
+                        original.message_id,
+                        message.message_id,
+                    )
+
+                except Exception as e:
+
+                    logger.exception(
+                        "SELF-DESTRUCT PHOTO USER SEND ERROR | "
+                        "user=%s | connection=%s | chat=%s | "
+                        "message=%s | error=%s",
+                        user.id,
+                        message.business_connection_id,
+                        message.chat.id,
+                        original.message_id,
+                        e,
+                    )
 
         # ================== REPLY TO VIDEO ==================
 
