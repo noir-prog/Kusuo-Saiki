@@ -7989,18 +7989,45 @@ async def handle_edited_business_message(message):
     try:
 
         edit_notification = (
-            "✏️ <b>СООБЩЕНИЕ ИЗМЕНЕНО</b>\n\n"
-            f"👤 {peer_name}\n\n"
-            "⬅️ <b>БЫЛО:</b>\n"
-            f"<code>{old_text_escaped}</code>\n\n"
-            "➡️ <b>СТАЛО:</b>\n"
-            f"<code>{new_text_escaped}</code>"
+            "‼️ <b>ВНИМАНИЕ</b> ‼️\n\n"
+            f"♻️ Пользователь <b>{peer_name}</b> "
+            "изменил сообщение ♻️"
+        )
+
+        edit_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=f"👤 {peer_name}",
+                        url=f"tg://user?id={chat_id}",
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Открыть",
+                        callback_data=(
+                            f"edited_view:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                    InlineKeyboardButton(
+                        text="Посмотреть в приложении",
+                        callback_data=(
+                            f"edited_app:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                ],
+            ]
         )
 
         await bot.send_message(
             chat_id=user.id,
             text=edit_notification,
             parse_mode="HTML",
+            reply_markup=edit_keyboard,
         )
 
         logger.info(
