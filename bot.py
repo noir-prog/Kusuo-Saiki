@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import asyncpg
 import hashlib
 import hmac
+import asyncio
+import httpx
 
 from fastapi import FastAPI, Request
 from urllib.parse import parse_qsl
@@ -318,6 +320,36 @@ dp = Dispatcher()
 # ================== FASTAPI ==================
 
 app = FastAPI()
+
+# ================== KEEP ALIVE ==================
+
+async def keep_alive():
+
+    url = "https://kusuo-saiki.onrender.com"
+
+    while True:
+
+        try:
+
+            async with httpx.AsyncClient(
+                timeout=20
+            ) as client:
+
+                response = await client.get(url)
+
+                logger.info(
+                    "KEEP ALIVE | status=%s",
+                    response.status_code,
+                )
+
+        except Exception as e:
+
+            logger.warning(
+                "KEEP ALIVE ERROR | error=%s",
+                e,
+            )
+
+        await asyncio.sleep(5 * 60)
 
 
 # ================== CORS ==================
@@ -9204,6 +9236,11 @@ async def trial_expiration_loop():
 
 @app.on_event("startup")
 async def startup():
+    
+    asyncio.create_task(
+        keep_alive()
+    )
+    
     logger.info("STARTUP: BEFORE DATABASE")
 
     await init_db()
