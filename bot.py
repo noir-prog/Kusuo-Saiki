@@ -770,6 +770,344 @@ async def handle_ui_callback(callback: CallbackQuery):
             )
 
         return
+        
+            # ================== EDITED VIEW ==================
+
+    if callback.data.startswith("edited_view:"):
+
+        try:
+
+            _, chat_id_str, message_id_str = (
+                callback.data.split(":")
+            )
+
+            chat_id = int(chat_id_str)
+            message_id = int(message_id_str)
+
+        except Exception:
+
+            await callback.answer(
+                "❌ Ошибка данных сообщения",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== GET BUSINESS OWNER ==================
+
+        try:
+
+            row = None
+
+            if db_pool is not None:
+
+                async with db_pool.acquire() as conn:
+
+                    row = await conn.fetchrow(
+                        """
+                        SELECT
+                            telegram_user_id,
+                            business_connection_id
+                        FROM business_accounts
+                        WHERE topic_id = (
+                            SELECT topic_id
+                            FROM business_accounts
+                            WHERE telegram_user_id = $1
+                            LIMIT 1
+                        )
+                        LIMIT 1
+                        """,
+                        callback.from_user.id,
+                    )
+
+            business_connection_id = (
+                row["business_connection_id"]
+                if row
+                else None
+            )
+
+        except Exception:
+
+            business_connection_id = None
+
+        # ================== FIND VERSIONS IN D1 ==================
+
+        old_text = None
+        new_text = None
+        found_d1 = None
+
+        for d1_name in D1_ORDER:
+
+            try:
+
+                d1_config = D1_DATABASES.get(
+                    d1_name
+                )
+
+                if not d1_config:
+                    continue
+
+                account_id = d1_config.get(
+                    "account_id"
+                )
+
+                database_id = d1_config.get(
+                    "database_id"
+                )
+
+                token_env = d1_config.get(
+                    "token_env"
+                )
+
+                api_token = (
+                    os.getenv(token_env)
+                    if token_env
+                    else None
+                )
+
+                if not account_id or not database_id:
+                    continue
+
+                if not api_token:
+                    continue
+
+                url = (
+                    f"https://api.cloudflare.com/client/v4/accounts/"
+                    f"{account_id}/d1/database/"
+                    f"{database_id}/query"
+                )
+
+                headers = {
+                    "Authorization": (
+                        f"Bearer {api_token}"
+                    ),
+                    "Content-Type": "application/json",
+                }
+
+                payload = {
+                    "sql": """
+                        SELECT
+                            json_extract(
+                                value,
+                                '$.text_content'
+                            ) AS text_content,
+                            json_extract(
+                                value,
+                                '$.event_type'
+                            ) AS event_type,
+                            message_batches.rowid AS batch_rowid
+                        FROM message_batches,
+                             json_each(
+                                 message_batches.messages_json
+                             )
+                        WHERE
+                            message_batches.chat_id = ?
+                            AND CAST(
+                                json_extract(
+                                    value,
+                                    '$.message_id'
+                                )
+                                AS INTEGER
+                            ) = ?
+                        ORDER BY
+                            message_batches.rowid ASC
+                    """,
+                    "params": [
+                        chat_id,
+                        message_id,
+                    ],
+                }
+
+                async with httpx.AsyncClient() as client:
+
+                    response = await client.post(
+                        url,
+                        headers=headers,
+                        json=payload,
+                        timeout=30,
+                    )
+
+                if response.status_code != 200:
+                    continue
+
+                result = response.json()
+
+                if not result.get("success"):
+                    continue
+
+                result_data = result.get(
+                    "result",
+                    []
+                )
+
+                rows = (
+                    result_data[0].get(
+                        "results",
+                        []
+                    )
+                    if result_data
+                    else []
+                )
+
+                if not rows:
+                    continue
+
+                # Самая первая версия = БЫЛО
+                # Последняя версия = СТАЛО
+
+                for item in rows:
+
+                    text_value = (
+                        item.get("text_content")
+                        or ""
+                    )
+
+                    event_type = (
+                        item.get("event_type")
+                    )
+
+                    if event_type == "edit":
+
+                        new_text = text_value
+
+                    elif old_text is None:
+
+                        old_text = text_value
+
+                if old_text is not None:
+
+                    if new_text is None:
+
+                        new_text = old_text
+
+                    found_d1 = d1_name
+
+                    logger.info(
+                        "EDIT VERSIONS LOADED | "
+                        "d1=%s | chat=%s | message=%s",
+                        found_d1,
+                        chat_id,
+                        message_id,
+                    )
+
+                    break
+
+            except Exception as e:
+
+                logger.exception(
+                    "EDIT VIEW D1 ERROR | "
+                    "d1=%s | chat=%s | message=%s | error=%s",
+                    d1_name,
+                    chat_id,
+                    message_id,
+                    e,
+                )
+
+                continue
+
+        # ================== CHECK RESULT ==================
+
+        if old_text is None:
+
+            await callback.answer(
+                "❌ История изменения не найдена",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== GET CHAT USER ==================
+
+        try:
+
+            chat = await bot.get_chat(
+                chat_id=chat_id
+            )
+
+            peer_name = (
+                chat.full_name
+                if getattr(
+                    chat,
+                    "full_name",
+                    None,
+                )
+                else getattr(
+                    chat,
+                    "first_name",
+                    None,
+                )
+                or getattr(
+                    chat,
+                    "title",
+                    None,
+                )
+                or "Пользователь"
+            )
+
+        except Exception:
+
+            peer_name = "Пользователь"
+
+        peer_name = html.escape(
+            peer_name
+        )
+
+        old_text = html.escape(
+            old_text
+        )
+
+        new_text = html.escape(
+            new_text or ""
+        )
+
+        # ================== VIEW KEYBOARD ==================
+
+        view_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=f"👤 {peer_name}",
+                        url=f"tg://user?id={chat_id}",
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Скрыть",
+                        callback_data=(
+                            f"edited_hide:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                    InlineKeyboardButton(
+                        text="Посмотреть в приложении",
+                        callback_data=(
+                            f"edited_app:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                ],
+            ]
+        )
+
+        # ================== SHOW EDIT ==================
+
+        await callback.message.edit_text(
+            text=(
+                "✏️ <b>Изменённое сообщение</b>\n\n"
+                "⬅️ <b>Было</b>\n"
+                f"<code>{old_text}</code>\n\n"
+                "➡️ <b>Стало</b>\n"
+                f"<code>{new_text}</code>"
+            ),
+            parse_mode="HTML",
+            reply_markup=view_keyboard,
+        )
+
+        await callback.answer()
+
+        return
     
      # ================== VIEW DELETED MESSAGE ==================
 
