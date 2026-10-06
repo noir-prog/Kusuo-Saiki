@@ -7984,6 +7984,44 @@ async def handle_edited_business_message(message):
 
         sent_edit = None
 
+    # ================== SEND EDIT TO USER ==================
+
+    try:
+
+        edit_notification = (
+            "✏️ <b>СООБЩЕНИЕ ИЗМЕНЕНО</b>\n\n"
+            f"👤 {peer_name}\n\n"
+            "⬅️ <b>БЫЛО:</b>\n"
+            f"<code>{old_text_escaped}</code>\n\n"
+            "➡️ <b>СТАЛО:</b>\n"
+            f"<code>{new_text_escaped}</code>"
+        )
+
+        await bot.send_message(
+            chat_id=user.id,
+            text=edit_notification,
+            parse_mode="HTML",
+        )
+
+        logger.info(
+            "EDIT NOTIFICATION SENT TO USER | "
+            "user=%s | chat=%s | message=%s",
+            user.id,
+            chat_id,
+            message_id,
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            "EDIT USER NOTIFICATION ERROR | "
+            "user=%s | chat=%s | message=%s | error=%s",
+            user.id,
+            chat_id,
+            message_id,
+            e,
+        )
+
     # ================== SAVE NEW VERSION TO D1 ==================
 
     await save_message_to_d1(
