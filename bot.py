@@ -1282,7 +1282,6 @@ async def handle_ui_callback(callback: CallbackQuery):
                         f"database/{database_id}/query"
                     )
 
-                    import httpx
 
                     query = """
                         SELECT
