@@ -1305,6 +1305,17 @@ async def handle_ui_callback(callback: CallbackQuery):
             )
 
         return
+        
+    # ================== EDITED APP ==================
+
+    if callback.data.startswith("edited_app:"):
+
+        await callback.answer(
+            "🚧 В разработке",
+            show_alert=True,
+        )
+
+        return
     
      # ================== VIEW DELETED MESSAGE ==================
 
