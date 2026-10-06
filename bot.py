@@ -1286,6 +1286,18 @@ async def handle_ui_callback(callback: CallbackQuery):
             )
 
         return
+        
+    # ================== DELETED APP ==================
+
+    if callback.data.startswith("deleted_app:"):
+
+        await callback.answer(
+            "🚧 В разработке",
+            show_alert=True,
+        )
+
+        return
+        
     # ================== TRIAL OK ==================
 
     if callback.data == "trial_ok":
