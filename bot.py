@@ -1183,6 +1183,128 @@ async def handle_ui_callback(callback: CallbackQuery):
         await callback.answer()
 
         return
+        
+            # ================== EDITED HIDE ==================
+
+    if callback.data.startswith("edited_hide:"):
+
+        try:
+
+            _, chat_id_str, message_id_str = (
+                callback.data.split(":")
+            )
+
+            chat_id = int(chat_id_str)
+            message_id = int(message_id_str)
+
+        except Exception:
+
+            await callback.answer(
+                "❌ Ошибка данных сообщения",
+                show_alert=True,
+            )
+
+            return
+
+        # ================== GET CHAT USER ==================
+
+        try:
+
+            chat = await bot.get_chat(
+                chat_id=chat_id
+            )
+
+            peer_name = (
+                chat.full_name
+                if getattr(
+                    chat,
+                    "full_name",
+                    None,
+                )
+                else getattr(
+                    chat,
+                    "first_name",
+                    None,
+                )
+                or getattr(
+                    chat,
+                    "title",
+                    None,
+                )
+                or "Пользователь"
+            )
+
+        except Exception:
+
+            peer_name = "Пользователь"
+
+        peer_name = html.escape(
+            peer_name
+        )
+
+        # ================== RESTORE NOTIFICATION ==================
+
+        edit_notification = (
+            "‼️ <b>ВНИМАНИЕ</b> ‼️\n\n"
+            f"♻️ Пользователь <b>{peer_name}</b> "
+            "изменил сообщение ♻️"
+        )
+
+        edit_keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=f"👤 {peer_name}",
+                        url=f"tg://user?id={chat_id}",
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Открыть",
+                        callback_data=(
+                            f"edited_view:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                    InlineKeyboardButton(
+                        text="Посмотреть в приложении",
+                        callback_data=(
+                            f"edited_app:"
+                            f"{chat_id}:"
+                            f"{message_id}"
+                        ),
+                    ),
+                ],
+            ]
+        )
+
+        try:
+
+            await callback.message.edit_text(
+                text=edit_notification,
+                parse_mode="HTML",
+                reply_markup=edit_keyboard,
+            )
+
+            await callback.answer()
+
+        except Exception as e:
+
+            logger.exception(
+                "EDIT HIDE ERROR | "
+                "chat=%s | message=%s | error=%s",
+                chat_id,
+                message_id,
+                e,
+            )
+
+            await callback.answer(
+                "❌ Не удалось скрыть сообщение",
+                show_alert=True,
+            )
+
+        return
     
      # ================== VIEW DELETED MESSAGE ==================
 
