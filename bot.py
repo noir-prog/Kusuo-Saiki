@@ -7458,19 +7458,17 @@ async def handle_business_message(message):
 
                 try:
 
-                    await bot.send_photo(
+                  await bot.send_photo(
                         chat_id=user.id,
-                        photo=photo_data,
-                        caption=(
-                            "‼️ <b>ВНИМАНИЕ</b> ‼️\n\n"
-                            "🖼 <b>Самоудаляющееся фото</b>"
-                            + (
-                                f"\n\n📝 {original.caption}"
-                                if original.caption
-                                else ""
-                            )
+                        photo=BufferedInputFile(
+                            photo_data,
+                            filename="self_destruct_photo.jpg",
+                        ), 
+                        caption=create_log_media_caption(
+                            header_text=header_text,
+                            message_type="🖼 Самоудаляющееся фото",
+                            caption=original.caption,
                         ),
-                        parse_mode="HTML",
                     )
 
                     logger.info(
