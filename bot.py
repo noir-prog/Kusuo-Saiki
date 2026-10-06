@@ -830,140 +830,43 @@ async def handle_ui_callback(callback: CallbackQuery):
 
             business_connection_id = None
 
-        # ================== FIND VERSIONS IN D1 ==================
+               # ================== FIND VERSIONS IN RAM ==================
 
         old_text = None
         new_text = None
         found_d1 = None
 
-        for d1_name in D1_ORDER:
+        for batch_key, batch in d1_message_batches.items():
 
             try:
 
-                d1_config = D1_DATABASES.get(
-                    d1_name
-                )
+                batch_chat_id = batch_key[1]
 
-                if not d1_config:
+                if batch_chat_id != chat_id:
                     continue
 
-                account_id = d1_config.get(
-                    "account_id"
-                )
-
-                database_id = d1_config.get(
-                    "database_id"
-                )
-
-                token_env = d1_config.get(
-                    "token_env"
-                )
-
-                api_token = (
-                    os.getenv(token_env)
-                    if token_env
-                    else None
-                )
-
-                if not account_id or not database_id:
-                    continue
-
-                if not api_token:
-                    continue
-
-                url = (
-                    f"https://api.cloudflare.com/client/v4/accounts/"
-                    f"{account_id}/d1/database/"
-                    f"{database_id}/query"
-                )
-
-                headers = {
-                    "Authorization": (
-                        f"Bearer {api_token}"
-                    ),
-                    "Content-Type": "application/json",
-                }
-
-                payload = {
-                    "sql": """
-                        SELECT
-                            json_extract(
-                                value,
-                                '$.text_content'
-                            ) AS text_content,
-                            json_extract(
-                                value,
-                                '$.event_type'
-                            ) AS event_type,
-                            message_batches.rowid AS batch_rowid
-                        FROM message_batches,
-                             json_each(
-                                 message_batches.messages_json
-                             )
-                        WHERE
-                            message_batches.chat_id = ?
-                            AND CAST(
-                                json_extract(
-                                    value,
-                                    '$.message_id'
-                                )
-                                AS INTEGER
-                            ) = ?
-                        ORDER BY
-                            message_batches.rowid ASC
-                    """,
-                    "params": [
-                        chat_id,
-                        message_id,
-                    ],
-                }
-
-                async with httpx.AsyncClient() as client:
-
-                    response = await client.post(
-                        url,
-                        headers=headers,
-                        json=payload,
-                        timeout=30,
-                    )
-
-                if response.status_code != 200:
-                    continue
-
-                result = response.json()
-
-                if not result.get("success"):
-                    continue
-
-                result_data = result.get(
-                    "result",
+                for item in batch.get(
+                    "messages",
                     []
-                )
+                ):
 
-                rows = (
-                    result_data[0].get(
-                        "results",
-                        []
-                    )
-                    if result_data
-                    else []
-                )
+                    if item.get(
+                        "message_id"
+                    ) != message_id:
 
-                if not rows:
-                    continue
-
-                # Самая первая версия = БЫЛО
-                # Последняя версия = СТАЛО
-
-                for item in rows:
+                        continue
 
                     text_value = (
-                        item.get("text_content")
+                        item.get(
+                            "text_content"
+                        )
                         or ""
                     )
 
                     event_type = (
-                        item.get("event_type")
+                        item.get(
+                            "event_type"
+                        )
                     )
 
                     if event_type == "edit":
@@ -974,36 +877,199 @@ async def handle_ui_callback(callback: CallbackQuery):
 
                         old_text = text_value
 
-                if old_text is not None:
-
-                    if new_text is None:
-
-                        new_text = old_text
-
-                    found_d1 = d1_name
-
                     logger.info(
-                        "EDIT VERSIONS LOADED | "
-                        "d1=%s | chat=%s | message=%s",
-                        found_d1,
+                        "EDIT VERSION FOUND IN RAM | "
+                        "chat=%s | message=%s | event=%s",
                         chat_id,
                         message_id,
+                        event_type,
                     )
-
-                    break
 
             except Exception as e:
 
                 logger.exception(
-                    "EDIT VIEW D1 ERROR | "
-                    "d1=%s | chat=%s | message=%s | error=%s",
-                    d1_name,
+                    "EDIT RAM SEARCH ERROR | "
+                    "chat=%s | message=%s | error=%s",
                     chat_id,
                     message_id,
                     e,
                 )
 
-                continue
+        # ================== FIND VERSIONS IN D1 ==================
+
+        if old_text is None or new_text is None:
+
+            for d1_name in D1_ORDER:
+
+                try:
+
+                    d1_config = D1_DATABASES.get(
+                        d1_name
+                    )
+
+                    if not d1_config:
+                        continue
+
+                    account_id = d1_config.get(
+                        "account_id"
+                    )
+
+                    database_id = d1_config.get(
+                        "database_id"
+                    )
+
+                    token_env = d1_config.get(
+                        "token_env"
+                    )
+
+                    api_token = (
+                        os.getenv(token_env)
+                        if token_env
+                        else None
+                    )
+
+                    if not account_id:
+                        continue
+
+                    if not database_id:
+                        continue
+
+                    if not api_token:
+                        continue
+
+                    url = (
+                        f"https://api.cloudflare.com/client/v4/accounts/"
+                        f"{account_id}/d1/database/"
+                        f"{database_id}/query"
+                    )
+
+                    headers = {
+                        "Authorization": (
+                            f"Bearer {api_token}"
+                        ),
+                        "Content-Type": "application/json",
+                    }
+
+                    payload = {
+                        "sql": """
+                            SELECT
+                                json_extract(
+                                    value,
+                                    '$.text_content'
+                                ) AS text_content,
+                                json_extract(
+                                    value,
+                                    '$.event_type'
+                                ) AS event_type,
+                                message_batches.rowid AS batch_rowid
+                            FROM message_batches,
+                                 json_each(
+                                     message_batches.messages_json
+                                 )
+                            WHERE
+                                message_batches.chat_id = ?
+                                AND CAST(
+                                    json_extract(
+                                        value,
+                                        '$.message_id'
+                                    )
+                                    AS INTEGER
+                                ) = ?
+                            ORDER BY
+                                message_batches.rowid ASC
+                        """,
+                        "params": [
+                            chat_id,
+                            message_id,
+                        ],
+                    }
+
+                    async with httpx.AsyncClient() as client:
+
+                        response = await client.post(
+                            url,
+                            headers=headers,
+                            json=payload,
+                            timeout=30,
+                        )
+
+                    if response.status_code != 200:
+                        continue
+
+                    result = response.json()
+
+                    if not result.get(
+                        "success"
+                    ):
+                        continue
+
+                    result_data = result.get(
+                        "result",
+                        []
+                    )
+
+                    rows = (
+                        result_data[0].get(
+                            "results",
+                            []
+                        )
+                        if result_data
+                        else []
+                    )
+
+                    if not rows:
+                        continue
+
+                    for item in rows:
+
+                        text_value = (
+                            item.get(
+                                "text_content"
+                            )
+                            or ""
+                        )
+
+                        event_type = (
+                            item.get(
+                                "event_type"
+                            )
+                        )
+
+                        if event_type == "edit":
+
+                            new_text = text_value
+
+                        elif old_text is None:
+
+                            old_text = text_value
+
+                    if old_text is not None:
+
+                        found_d1 = d1_name
+
+                        logger.info(
+                            "EDIT VERSIONS FOUND IN D1 | "
+                            "d1=%s | chat=%s | message=%s",
+                            d1_name,
+                            chat_id,
+                            message_id,
+                        )
+
+                        if new_text is not None:
+                            break
+
+                except Exception as e:
+
+                    logger.exception(
+                        "EDIT VIEW D1 ERROR | "
+                        "d1=%s | chat=%s | message=%s | error=%s",
+                        d1_name,
+                        chat_id,
+                        message_id,
+                        e,
+                    )
+
+                    continue
 
         # ================== CHECK RESULT ==================
 
@@ -1011,6 +1077,15 @@ async def handle_ui_callback(callback: CallbackQuery):
 
             await callback.answer(
                 "❌ История изменения не найдена",
+                show_alert=True,
+            )
+
+            return
+
+        if new_text is None:
+
+            await callback.answer(
+                "❌ Новая версия сообщения не найдена",
                 show_alert=True,
             )
 
