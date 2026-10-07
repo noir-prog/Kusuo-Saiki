@@ -771,7 +771,65 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         return
         
-            # ================== EDITED VIEW ==================
+    # ================== SELF-DESTRUCT PHOTO VIEW ==================
+
+    if callback.data.startswith("self_destruct_view:"):
+
+        await callback.answer()
+
+        _, chat_id, message_id = callback.data.split(":")
+
+        chat_id = int(chat_id)
+        message_id = int(message_id)
+
+        logger.info(
+            "SELF-DESTRUCT PHOTO VIEW | "
+            "user=%s | chat=%s | message=%s",
+            callback.from_user.id,
+            chat_id,
+            message_id,
+        )
+
+        try:
+
+            await callback.message.edit_reply_markup(
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="Скрыть",
+                                callback_data=(
+                                    f"self_destruct_hide:"
+                                    f"{chat_id}:"
+                                    f"{message_id}"
+                                ),
+                            ),
+                            InlineKeyboardButton(
+                                text="Посмотреть в приложении",
+                                callback_data=(
+                                    f"self_destruct_app:"
+                                    f"{chat_id}:"
+                                    f"{message_id}"
+                                ),
+                            ),
+                        ]
+                    ]
+                )
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "SELF-DESTRUCT PHOTO VIEW ERROR | "
+                "chat=%s | message=%s | error=%s",
+                chat_id,
+                message_id,
+                e,
+            )
+
+        return
+        
+    # ================== EDITED VIEW ==================
 
     if callback.data.startswith("edited_view:"):
 
