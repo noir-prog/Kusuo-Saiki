@@ -790,6 +790,15 @@ async def handle_ui_callback(callback: CallbackQuery):
             message_id,
         )
 
+        chat_info = await bot.get_chat(chat_id)
+
+        peer_name = (
+            chat_info.full_name
+            or chat_info.first_name
+            or chat_info.title
+            or "Пользователь"
+        )
+
         try:
 
             await callback.message.edit_reply_markup(
@@ -797,10 +806,7 @@ async def handle_ui_callback(callback: CallbackQuery):
                     inline_keyboard=[
                         [
                             InlineKeyboardButton(
-                                text=(
-                                    f"👤 "
-                                    f"{callback.message.chat.full_name or 'Пользователь'}"
-                                ),
+                                text=f"👤 {peer_name}",
                                 url=f"tg://user?id={chat_id}",
                             )
                         ],
