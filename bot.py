@@ -7464,10 +7464,42 @@ async def handle_business_message(message):
                             photo_data,
                             filename="self_destruct_photo.jpg",
                         ),
-                        caption=create_log_media_caption(
-                            header_text=header_text,
-                            message_type="🖼 Самоудаляющееся фото",
-                            caption=original.caption,
+                        caption=(
+                            f"🖼️ Пользователь <b>"
+                            f"{html.escape(message.chat.full_name or message.chat.first_name or 'Пользователь')}"
+                            f"</b> отправил фото с таймером"
+                        ),
+                        parse_mode="HTML",
+                        reply_markup=InlineKeyboardMarkup(
+                            inline_keyboard=[
+                                [
+                                    InlineKeyboardButton(
+                                        text=(
+                                            f"👤 "
+                                            f"{message.chat.full_name or message.chat.first_name or 'Пользователь'}"
+                                        ),
+                                        url=f"tg://user?id={message.chat.id}",
+                                    )
+                                ],
+                                [
+                                    InlineKeyboardButton(
+                                        text="Открыть",
+                                        callback_data=(
+                                            f"self_destruct_view:"
+                                            f"{message.chat.id}:"
+                                            f"{original.message_id}"
+                                        ),
+                                    ),
+                                    InlineKeyboardButton(
+                                        text="Посмотреть в приложении",
+                                        callback_data=(
+                                            f"self_destruct_app:"
+                                            f"{message.chat.id}:"
+                                            f"{original.message_id}"
+                                        ),
+                                    ),
+                                ],
+                            ]
                         ),
                     )
 
