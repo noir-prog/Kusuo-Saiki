@@ -797,6 +797,15 @@ async def handle_ui_callback(callback: CallbackQuery):
                     inline_keyboard=[
                         [
                             InlineKeyboardButton(
+                                text=(
+                                    f"👤 "
+                                    f"{callback.message.chat.full_name or 'Пользователь'}"
+                                ),
+                                url=f"tg://user?id={chat_id}",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
                                 text="Скрыть",
                                 callback_data=(
                                     f"self_destruct_hide:"
