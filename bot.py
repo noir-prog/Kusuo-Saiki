@@ -7454,16 +7454,16 @@ async def handle_business_message(message):
                     text=message.text,
                 )
                 
-                # ================== SEND SELF-DESTRUCT PHOTO TO USER ==================
+               # ================== SEND SELF-DESTRUCT PHOTO TO USER ==================
 
                 try:
 
-                  await bot.send_photo(
+                    await bot.send_photo(
                         chat_id=user.id,
                         photo=BufferedInputFile(
                             photo_data,
                             filename="self_destruct_photo.jpg",
-                        ), 
+                        ),
                         caption=create_log_media_caption(
                             header_text=header_text,
                             message_type="🖼 Самоудаляющееся фото",
