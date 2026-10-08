@@ -844,6 +844,92 @@ async def handle_ui_callback(callback: CallbackQuery):
 
         return
         
+    # ================== SELF-DESTRUCT PHOTO HIDE ==================
+
+    if callback.data.startswith("self_destruct_hide:"):
+
+        await callback.answer()
+
+        _, chat_id, message_id = callback.data.split(":")
+
+        chat_id = int(chat_id)
+        message_id = int(message_id)
+
+        try:
+
+            chat_info = await bot.get_chat(chat_id)
+
+            peer_name = (
+                chat_info.full_name
+                or chat_info.first_name
+                or chat_info.title
+                or "Пользователь"
+            )
+
+            notification_text = (
+                f"🖼️ Пользователь <b>"
+                f"{html.escape(peer_name)}"
+                f"</b> отправил фото с таймером"
+            )
+
+            hide_keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text=f"👤 {peer_name}",
+                            url=f"tg://user?id={chat_id}",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text="Открыть",
+                            callback_data=(
+                                f"self_destruct_view:"
+                                f"{chat_id}:"
+                                f"{message_id}"
+                            ),
+                        ),
+                        InlineKeyboardButton(
+                            text="Посмотреть в приложении",
+                            callback_data=(
+                                f"self_destruct_app:"
+                                f"{chat_id}:"
+                                f"{message_id}"
+                            ),
+                        ),
+                    ],
+                ]
+            )
+
+            await callback.message.edit_caption(
+                caption=notification_text,
+                parse_mode="HTML",
+                reply_markup=hide_keyboard,
+            )
+
+        except Exception as e:
+
+            logger.exception(
+                "SELF-DESTRUCT PHOTO HIDE ERROR | "
+                "chat=%s | message=%s | error=%s",
+                chat_id,
+                message_id,
+                e,
+            )
+
+        return
+        
+    # ================== SELF-DESTRUCT PHOTO APP ==================
+
+    if callback.data.startswith("self_destruct_app:"):
+
+        await callback.answer(
+            "🚧 В разработке",
+            show_alert=True,
+        )
+
+        return
+        
     # ================== EDITED VIEW ==================
 
     if callback.data.startswith("edited_view:"):
