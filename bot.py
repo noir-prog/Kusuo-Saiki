@@ -14,6 +14,7 @@ from urllib.parse import parse_qsl
 from fastapi.middleware.cors import CORSMiddleware
 
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart
 from aiogram.types import (
     Update,
@@ -7198,13 +7199,28 @@ async def send_log_text(
     text,
     reply_markup=None,
 ):
-    return await bot.send_message(
-        chat_id=int(LOG_CHAT_ID),
-        message_thread_id=topic_id,
-        text=text,
-        reply_markup=reply_markup,
-        parse_mode="HTML",
-    )
+    try:
+        return await bot.send_message(
+            chat_id=int(LOG_CHAT_ID),
+            message_thread_id=topic_id,
+            text=text,
+            reply_markup=reply_markup,
+            parse_mode="HTML",
+        )
+    except TelegramBadRequest as e:
+        if "BUTTON_USER_PRIVACY_RESTRICTED" not in str(e):
+            raise
+        logger.warning(
+            "PROFILE BUTTON BLOCKED BY PRIVACY | "
+            "topic=%s | отправляем сообщение без кнопок",
+            topic_id,
+        )
+        return await bot.send_message(
+            chat_id=int(LOG_CHAT_ID),
+            message_thread_id=topic_id,
+            text=text,
+            parse_mode="HTML",
+        )
     
 # ================== LOG PHOTO ==================
 
