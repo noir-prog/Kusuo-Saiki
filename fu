@@ -1,12 +1,1 @@
-@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ find work/extracted -type f \( -name "*.lang" -o -name "languages.json" -o -name "manifest.json" \) -print 
-work/extracted/Jerry'sColRP/manifest.json
-work/extracted/Jerry'sColRP/texts/pt_BR.lang
-work/extracted/Jerry'sColRP/texts/pt_PT.lang
-work/extracted/Jerry'sColRP/texts/de_DE.lang
-work/extracted/Jerry'sColRP/texts/ru_RU.lang
-work/extracted/Jerry'sColRP/texts/en_US.lang
-work/extracted/Jerry'sColRP/texts/es_ES.lang
-work/extracted/Jerry'sColRP/texts/fr_FR.lang
-work/extracted/Jerry'sColRP/texts/languages.json
-work/extracted/Jerry'sColRP/texts/ja_JP.lang
-work/extracted/Jerry'sColBP/manifest.json
+echo "=== РУССКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== АНГЛИЙСКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/en_US.lang" && echo "=== ПЕРВЫЕ СТРОКИ РУССКОГО ===" && head -30 "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== ФАЙЛЫ BP ===" && find "work/extracted/Jerry'sColBP" -maxdepth 3 -type f | head -50
