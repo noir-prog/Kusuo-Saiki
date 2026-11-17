@@ -1,27 +1,8 @@
-cp "work/extracted/Jerry'sColRP/texts/ru_RU.lang" "work/extracted/Jerry'sColRP/texts/ru_RU.backup.lang"
-
 python3 - <<'PY'
-from pathlib import Path
-
-base = Path("work/extracted/Jerry'sColRP/texts")
-en = (base / "en_US.lang").read_text(encoding="utf-8-sig").splitlines()
-ru = (base / "ru_RU.lang").read_text(encoding="utf-8-sig").splitlines()
-
-def parse(lines):
-    result = {}
-    for line in lines:
-        if "=" in line and not line.strip().startswith("#"):
-            k, v = line.split("=", 1)
-            result[k.strip()] = v.strip()
-    return result
-
-e, r = parse(en), parse(ru)
-same = [(k, e[k]) for k in e if k in r and e[k] == r[k]]
-
-out = "\n".join(f"{k}={v}" for k, v in same)
-Path("work/untranslated.txt").write_text(out, encoding="utf-8")
-
-print("Резервная копия создана.")
-print("Список непереведённых строк: work/untranslated.txt")
-print("Количество строк:", len(same))
+import urllib.request
+try:
+    urllib.request.urlopen("https://translate.googleapis.com", timeout=10)
+    print("Интернет доступен")
+except Exception as e:
+    print("Проверка интернета:", e)
 PY
