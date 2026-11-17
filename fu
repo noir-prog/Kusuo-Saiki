@@ -1,8 +1,25 @@
+python3 - <<'PY'
 import urllib.request
+import urllib.parse
+import json
+
+params = {
+    "client": "gtx",
+    "sl": "en",
+    "tl": "ru",
+    "dt": "t",
+    "q": "Welcome to your new colony!"
+}
+
+url = "https://translate.googleapis.com/translate_a/single?" + urllib.parse.urlencode(params)
+req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+
 try:
-    urllib.request.urlopen("https://translate.googleapis.com", timeout=10)
-    print("Интернет доступен")
+    with urllib.request.urlopen(req, timeout=20) as response:
+        data = json.loads(response.read().decode("utf-8"))
+        translated = "".join(part[0] for part in data[0] if part[0])
+        print("СЕРВИС РАБОТАЕТ")
+        print("Перевод:", translated)
 except Exception as e:
-    print("Проверка интернета:", e)
+    print("ОШИБКА:", repr(e))
 PY
-Проверка интернета: HTTP Error 404: Not Found
