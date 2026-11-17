@@ -1,1 +1,22 @@
 echo "=== РУССКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== АНГЛИЙСКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/en_US.lang" && echo "=== ПЕРВЫЕ СТРОКИ РУССКОГО ===" && head -30 "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== ФАЙЛЫ BP ===" && find "work/extracted/Jerry'sColBP" -maxdepth 3 -type f | head -50
+work/extracted/Jerry'sColBP/blocks/table/mailbox.block.json
+work/extracted/Jerry'sColBP/blocks/table/food_crate.block.json
+work/extracted/Jerry'sColBP/blocks/table/bounty_board.block.json
+work/extracted/Jerry'sColBP/blocks/table/ballot_box.block.json
+work/extracted/Jerry'sColBP/blocks/table/marketpalce_board.block.json
+work/extracted/Jerry'sColBP/blocks/other/microphone.block.json
+work/extracted/Jerry'sColBP/blocks/other/springfront.block.json
+work/extracted/Jerry'sColBP/blocks/other/red_territory_marker_block.block.json
+work/extracted/Jerry'sColBP/blocks/other/construction_mark.json
+work/extracted/Jerry'sColBP/blocks/other/market_stall.json
+work/extracted/Jerry'sColBP/blocks/other/tavern_sign.block.json
+work/extracted/Jerry'sColBP/blocks/other/grave_block.json
+work/extracted/Jerry'sColBP/blocks/other/arena_teleporter.block.json
+work/extracted/Jerry'sColBP/blocks/other/housing_marker.json
+work/extracted/Jerry'sColBP/blocks/other/stall.json
+work/extracted/Jerry'sColBP/feature_rules/marauder_outpost_placement_rule.json
+work/extracted/Jerry'sColBP/scripts/module/persistenceManager.js
+work/extracted/Jerry'sColBP/scripts/module/toolInterface.js
+work/extracted/Jerry'sColBP/scripts/module/diplomacy.js
+work/extracted/Jerry'sColBP/scripts/module/index.js
+work/extracted/Jerry'sColBP/scripts/module/citizenDialogueSystem.js
