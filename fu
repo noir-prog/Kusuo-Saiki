@@ -143,3 +143,36 @@ item.jerrys_colonies:blueprint_library=Library Blueprint
 6.1M    work/extracted/Jerry'sColBP
 16M     work/extracted/Jerry'sColRP
 @noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ 
+
+python3 - <<'PY'
+from pathlib import Path
+
+base = Path("work/extracted/Jerry'sColRP/texts")
+en = (base / "en_US.lang").read_text(encoding="utf-8-sig").splitlines()
+ru = (base / "ru_RU.lang").read_text(encoding="utf-8-sig").splitlines()
+
+def parse(lines):
+    result = {}
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        result[key.strip()] = value.strip()
+    return result
+
+e, r = parse(en), parse(ru)
+missing = [k for k in e if k not in r]
+same = [(k, e[k]) for k in e if k in r and e[k] == r[k]]
+
+print("Английских ключей:", len(e))
+print("Русских ключей:", len(r))
+print("Отсутствует в русском:", len(missing))
+print("Полностью совпадает с английским:", len(same))
+print("\nПРОПУЩЕННЫЕ КЛЮЧИ:")
+for k in missing[:30]:
+    print(k, "=", e[k])
+print("\nСОВПАДАЮЩИЕ АНГЛИЙСКИЕ СТРОКИ:")
+for k, v in same[:60]:
+    print(k, "=", v)
+PY
