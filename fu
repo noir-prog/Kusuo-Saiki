@@ -1,4 +1,91 @@
-echo "===== РУССКИЙ ФАЙЛ ====="
+@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ echo "=== РУССКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== АНГЛИЙСКИЙ ===" && wc -l "work/extracted/Jerry'sColRP/texts/en_US.lang" && echo "=== ПЕРВЫЕ СТРОКИ РУССКОГО ===" && head -30 "work/extracted/Jerry'sColRP/texts/ru_RU.lang" && echo "=== ФАЙЛЫ BP ===" && find "work/extracted/Jerry'sColBP" -maxdepth 3 -type f | head -50
+=== РУССКИЙ ===
+4378 work/extracted/Jerry'sColRP/texts/ru_RU.lang
+=== АНГЛИЙСКИЙ ===
+4377 work/extracted/Jerry'sColRP/texts/en_US.lang
+=== ПЕРВЫЕ СТРОКИ РУССКОГО ===
+## ── Vanilla entity/item names (keep as-is) ──────────────────────────────────
+tile.jerrys_colonies:mayor_table.name=Стол мэра
+item.jerrys_colonies:totem_of_peace=Тотем мира
+item.jerrys_colonies:colony_flag=Флаг колонии
+tile.jerrys_colonies:colony_flag_block.name=Флаг колонии
+item.jerrys_colonies:guidebook=Справочник колонии Джерри
+entity.jerrys_colonies:exclamation.name=Восклицательный знак
+entity.jerrys_colonies:exclamation_red.name=Красный восклицательный знак
+entity.jerrys_colonies:exclamation_pink.name=Розовый восклицательный знак
+jerrys.ui.mayor.claim_starter_citizens=§a[Recruit 4 Starter Citizens]
+jerrys.ui.mayor.starter_citizens_claimed=§a4 жителя прибыли, чтобы основать вашу колонию!
+jerrys.ui.mayor.starter_citizens_desc=§7Бесплатно наймите первых 4 жителей (2 мужчин и 2 женщин), чтобы начать развитие колонии.
+item.jerrys_colonies:crown=Корона
+item.jerrys_colonies:blueprint_forge=Чертёж кузницы
+item.jerrys_colonies:blueprint_barracks=Чертёж казарм
+item.jerrys_colonies:blueprint_cow_pen=Чертёж коровника
+item.jerrys_colonies:blueprint_house_chimney=Чертёж дома с дымоходом
+item.jerrys_colonies:blueprint_house_farm=Чертёж фермерского дома
+item.jerrys_colonies:blueprint_jail=Чертёж тюрьмы
+item.jerrys_colonies:blueprint_library=Чертёж библиотеки
+item.jerrys_colonies:blueprint_market_stand=Чертёж торгового прилавка
+item.jerrys_colonies:blueprint_road=Чертёж дороги
+item.jerrys_colonies:blueprint_silo=Чертёж силоса
+item.jerrys_colonies:blueprint_tower_house=Чертёж башенного дома
+item.jerrys_colonies:blueprint_watchtower=Чертёж сторожевой башни
+item.jerrys_colonies:blueprint_wheat_farm=Чертёж пшеничной фермы
+item.jerrys_colonies:blueprint_desert_delux_house=Чертёж роскошного пустынного дома
+item.jerrys_colonies:blueprint_desert_arena=Чертёж пустынной арены
+item.jerrys_colonies:blueprint_desert_barn=Чертёж пустынного амбара
+item.jerrys_colonies:blueprint_desert_base=Чертёж пустынной базы
+=== ФАЙЛЫ BP ===
+work/extracted/Jerry'sColBP/functions/spawn_copper_golem.mcfunction
+work/extracted/Jerry'sColBP/functions/spawn_bandit.mcfunction
+work/extracted/Jerry'sColBP/functions/spawn_marauder_flag.mcfunction
+work/extracted/Jerry'sColBP/functions/spawn_bandit_flag.mcfunction
+work/extracted/Jerry'sColBP/functions/spawn_marauder.mcfunction
+work/extracted/Jerry'sColBP/functions/spawn_citizen.mcfunction
+work/extracted/Jerry'sColBP/blocks/workstation/craft_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/logger_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/research_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/miner_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/hunter_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/knight_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/builder_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/farm_station.json
+work/extracted/Jerry'sColBP/blocks/workstation/cook_station.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_spooky.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_the_harvest.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_christmas.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_thunderstrike.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_heatwave.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_winter_offensive.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_sweet_treat.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_winner_winner_turkey_dinner.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_sparkleburst.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_love_and_war.block.json
+work/extracted/Jerry'sColBP/blocks/trophy/trophy_cinco_de_mayo.block.json
+work/extracted/Jerry'sColBP/blocks/table/blueprint_workbench.block.json
+work/extracted/Jerry'sColBP/blocks/table/taxation_table.block.json
+work/extracted/Jerry'sColBP/blocks/table/mayor_table.block.json
+work/extracted/Jerry'sColBP/blocks/table/mailbox.block.json
+work/extracted/Jerry'sColBP/blocks/table/food_crate.block.json
+work/extracted/Jerry'sColBP/blocks/table/bounty_board.block.json
+work/extracted/Jerry'sColBP/blocks/table/ballot_box.block.json
+work/extracted/Jerry'sColBP/blocks/table/marketpalce_board.block.json
+work/extracted/Jerry'sColBP/blocks/other/microphone.block.json
+work/extracted/Jerry'sColBP/blocks/other/springfront.block.json
+work/extracted/Jerry'sColBP/blocks/other/red_territory_marker_block.block.json
+work/extracted/Jerry'sColBP/blocks/other/construction_mark.json
+work/extracted/Jerry'sColBP/blocks/other/market_stall.json
+work/extracted/Jerry'sColBP/blocks/other/tavern_sign.block.json
+work/extracted/Jerry'sColBP/blocks/other/grave_block.json
+work/extracted/Jerry'sColBP/blocks/other/arena_teleporter.block.json
+work/extracted/Jerry'sColBP/blocks/other/housing_marker.json
+work/extracted/Jerry'sColBP/blocks/other/stall.json
+work/extracted/Jerry'sColBP/feature_rules/marauder_outpost_placement_rule.json
+work/extracted/Jerry'sColBP/scripts/module/persistenceManager.js
+work/extracted/Jerry'sColBP/scripts/module/toolInterface.js
+work/extracted/Jerry'sColBP/scripts/module/diplomacy.js
+work/extracted/Jerry'sColBP/scripts/module/index.js
+work/extracted/Jerry'sColBP/scripts/module/citizenDialogueSystem.js
+@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ echo "===== РУССКИЙ ФАЙЛ ====="
 wc -l "work/extracted/Jerry'sColRP/texts/ru_RU.lang"
 head -20 "work/extracted/Jerry'sColRP/texts/ru_RU.lang"
 
@@ -8,3 +95,51 @@ head -20 "work/extracted/Jerry'sColRP/texts/en_US.lang"
 
 echo "===== РАЗМЕРЫ ПАКЕТОВ ====="
 du -sh work/extracted/*
+===== РУССКИЙ ФАЙЛ =====
+4378 work/extracted/Jerry'sColRP/texts/ru_RU.lang
+## ── Vanilla entity/item names (keep as-is) ──────────────────────────────────
+tile.jerrys_colonies:mayor_table.name=Стол мэра
+item.jerrys_colonies:totem_of_peace=Тотем мира
+item.jerrys_colonies:colony_flag=Флаг колонии
+tile.jerrys_colonies:colony_flag_block.name=Флаг колонии
+item.jerrys_colonies:guidebook=Справочник колонии Джерри
+entity.jerrys_colonies:exclamation.name=Восклицательный знак
+entity.jerrys_colonies:exclamation_red.name=Красный восклицательный знак
+entity.jerrys_colonies:exclamation_pink.name=Розовый восклицательный знак
+jerrys.ui.mayor.claim_starter_citizens=§a[Recruit 4 Starter Citizens]
+jerrys.ui.mayor.starter_citizens_claimed=§a4 жителя прибыли, чтобы основать вашу колонию!
+jerrys.ui.mayor.starter_citizens_desc=§7Бесплатно наймите первых 4 жителей (2 мужчин и 2 женщин), чтобы начать развитие колонии.
+item.jerrys_colonies:crown=Корона
+item.jerrys_colonies:blueprint_forge=Чертёж кузницы
+item.jerrys_colonies:blueprint_barracks=Чертёж казарм
+item.jerrys_colonies:blueprint_cow_pen=Чертёж коровника
+item.jerrys_colonies:blueprint_house_chimney=Чертёж дома с дымоходом
+item.jerrys_colonies:blueprint_house_farm=Чертёж фермерского дома
+item.jerrys_colonies:blueprint_jail=Чертёж тюрьмы
+item.jerrys_colonies:blueprint_library=Чертёж библиотеки
+===== АНГЛИЙСКИЙ ФАЙЛ =====
+4377 work/extracted/Jerry'sColRP/texts/en_US.lang
+## ── Vanilla entity/item names (keep as-is) ──────────────────────────────────
+tile.jerrys_colonies:mayor_table.name=Mayor's Table
+item.jerrys_colonies:totem_of_peace=Totem of Peace
+item.jerrys_colonies:colony_flag=Colony Flag
+tile.jerrys_colonies:colony_flag_block.name=Colony Flag
+item.jerrys_colonies:guidebook=Jerry's Colonies Guidebook
+entity.jerrys_colonies:exclamation.name=Exclamation
+entity.jerrys_colonies:exclamation_red.name=Red Exclamation
+entity.jerrys_colonies:exclamation_pink.name=Pink Exclamation
+jerrys.ui.mayor.claim_starter_citizens=§a[Recruit 4 Starter Citizens]
+jerrys.ui.mayor.starter_citizens_claimed=§a4 citizens have arrived to found your colony!
+jerrys.ui.mayor.starter_citizens_desc=§7Recruit your first group of 4 citizens (2 men, 2 women) for free to jumpstart your colony.
+item.jerrys_colonies:crown=Crown
+item.jerrys_colonies:blueprint_forge=Forge Blueprint
+item.jerrys_colonies:blueprint_barracks=Barracks Blueprint
+item.jerrys_colonies:blueprint_cow_pen=Cow Pen Blueprint
+item.jerrys_colonies:blueprint_house_chimney=House with Chimney Blueprint
+item.jerrys_colonies:blueprint_house_farm=House with Farm Blueprint
+item.jerrys_colonies:blueprint_jail=Jail Blueprint
+item.jerrys_colonies:blueprint_library=Library Blueprint
+===== РАЗМЕРЫ ПАКЕТОВ =====
+6.1M    work/extracted/Jerry'sColBP
+16M     work/extracted/Jerry'sColRP
+@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ 
