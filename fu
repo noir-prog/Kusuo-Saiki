@@ -1,61 +1,6 @@
-@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ echo "===== РУССКИЙ ФАЙЛ ====="
-wc -l "work/extracted/Jerry'sColRP/texts/ru_RU.lang"
-head -20 "work/extracted/Jerry'sColRP/texts/ru_RU.lang"
+cp "work/extracted/Jerry'sColRP/texts/ru_RU.lang" "work/extracted/Jerry'sColRP/texts/ru_RU.backup.lang"
 
-echo "===== АНГЛИЙСКИЙ ФАЙЛ ====="
-wc -l "work/extracted/Jerry'sColRP/texts/en_US.lang"
-head -20 "work/extracted/Jerry'sColRP/texts/en_US.lang"
-
-echo "===== РАЗМЕРЫ ПАКЕТОВ ====="
-du -sh work/extracted/*
-===== РУССКИЙ ФАЙЛ =====
-4378 work/extracted/Jerry'sColRP/texts/ru_RU.lang
-## ── Vanilla entity/item names (keep as-is) ──────────────────────────────────
-tile.jerrys_colonies:mayor_table.name=Стол мэра
-item.jerrys_colonies:totem_of_peace=Тотем мира
-item.jerrys_colonies:colony_flag=Флаг колонии
-tile.jerrys_colonies:colony_flag_block.name=Флаг колонии
-item.jerrys_colonies:guidebook=Справочник колонии Джерри
-entity.jerrys_colonies:exclamation.name=Восклицательный знак
-entity.jerrys_colonies:exclamation_red.name=Красный восклицательный знак
-entity.jerrys_colonies:exclamation_pink.name=Розовый восклицательный знак
-jerrys.ui.mayor.claim_starter_citizens=§a[Recruit 4 Starter Citizens]
-jerrys.ui.mayor.starter_citizens_claimed=§a4 жителя прибыли, чтобы основать вашу колонию!
-jerrys.ui.mayor.starter_citizens_desc=§7Бесплатно наймите первых 4 жителей (2 мужчин и 2 женщин), чтобы начать развитие колонии.
-item.jerrys_colonies:crown=Корона
-item.jerrys_colonies:blueprint_forge=Чертёж кузницы
-item.jerrys_colonies:blueprint_barracks=Чертёж казарм
-item.jerrys_colonies:blueprint_cow_pen=Чертёж коровника
-item.jerrys_colonies:blueprint_house_chimney=Чертёж дома с дымоходом
-item.jerrys_colonies:blueprint_house_farm=Чертёж фермерского дома
-item.jerrys_colonies:blueprint_jail=Чертёж тюрьмы
-item.jerrys_colonies:blueprint_library=Чертёж библиотеки
-===== АНГЛИЙСКИЙ ФАЙЛ =====
-4377 work/extracted/Jerry'sColRP/texts/en_US.lang
-## ── Vanilla entity/item names (keep as-is) ──────────────────────────────────
-tile.jerrys_colonies:mayor_table.name=Mayor's Table
-item.jerrys_colonies:totem_of_peace=Totem of Peace
-item.jerrys_colonies:colony_flag=Colony Flag
-tile.jerrys_colonies:colony_flag_block.name=Colony Flag
-item.jerrys_colonies:guidebook=Jerry's Colonies Guidebook
-entity.jerrys_colonies:exclamation.name=Exclamation
-entity.jerrys_colonies:exclamation_red.name=Red Exclamation
-entity.jerrys_colonies:exclamation_pink.name=Pink Exclamation
-jerrys.ui.mayor.claim_starter_citizens=§a[Recruit 4 Starter Citizens]
-jerrys.ui.mayor.starter_citizens_claimed=§a4 citizens have arrived to found your colony!
-jerrys.ui.mayor.starter_citizens_desc=§7Recruit your first group of 4 citizens (2 men, 2 women) for free to jumpstart your colony.
-item.jerrys_colonies:crown=Crown
-item.jerrys_colonies:blueprint_forge=Forge Blueprint
-item.jerrys_colonies:blueprint_barracks=Barracks Blueprint
-item.jerrys_colonies:blueprint_cow_pen=Cow Pen Blueprint
-item.jerrys_colonies:blueprint_house_chimney=House with Chimney Blueprint
-item.jerrys_colonies:blueprint_house_farm=House with Farm Blueprint
-item.jerrys_colonies:blueprint_jail=Jail Blueprint
-item.jerrys_colonies:blueprint_library=Library Blueprint
-===== РАЗМЕРЫ ПАКЕТОВ =====
-6.1M    work/extracted/Jerry'sColBP
-16M     work/extracted/Jerry'sColRP
-@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ python3 - <<'PY'
+python3 - <<'PY'
 from pathlib import Path
 
 base = Path("work/extracted/Jerry'sColRP/texts")
@@ -65,88 +10,18 @@ ru = (base / "ru_RU.lang").read_text(encoding="utf-8-sig").splitlines()
 def parse(lines):
     result = {}
     for line in lines:
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        result[key.strip()] = value.strip()
+        if "=" in line and not line.strip().startswith("#"):
+            k, v = line.split("=", 1)
+            result[k.strip()] = v.strip()
     return result
 
 e, r = parse(en), parse(ru)
-missing = [k for k in e if k not in r]
 same = [(k, e[k]) for k in e if k in r and e[k] == r[k]]
 
-print("Английских ключей:", len(e))
-print("Русских ключей:", len(r))
-print("Отсутствует в русском:", len(missing))
-print("Полностью совпадает с английским:", len(same))
-PY  print(k, "=", v)]:НГЛИЙСКИЕ СТРОКИ:")
-Английских ключей: 3237
-Русских ключей: 3237
-Отсутствует в русском: 0
-Полностью совпадает с английским: 2975
+out = "\n".join(f"{k}={v}" for k, v in same)
+Path("work/untranslated.txt").write_text(out, encoding="utf-8")
 
-ПРОПУЩЕННЫЕ КЛЮЧИ:
-
-СОВПАДАЮЩИЕ АНГЛИЙСКИЕ СТРОКИ:
-jerrys.ui.mayor.claim_starter_citizens = §a[Recruit 4 Starter Citizens]
-item.jerrys_colonies:dark_crown = Dark Crown
-item.jerrys_colonies:luxerious_crown = Luxurious Crown
-item.jerrys_colonies:vine_crown = Vine Crown
-item.jerrys_colonies:ice_crown = Ice Crown
-item.jerrys_colonies:divine_crown = Divine Crown
-item.jerrys_colonies:consort_crown = Consort Crown
-item.jerrys_colonies:imperial_crown = Imperial Crown
-item.jerrys_colonies:wreath_crown = Wreath Crown
-item.jerrys_colonies:pale_crown = Pale Crown
-item.jerrys_colonies:cross_crown = Cross Crown
-item.jerrys_colonies:studded_crown = Studded Crown
-item.jerrys_colonies:filigree_crown = Filigree Crown
-item.record.thearena.desc = Jerry's Colonies - theArena
-item.jerrys_colonies:wedding_ring = Diamond Ring
-progressScreen.message.modifiedWorldWarning.6 = Read the full Jerry's Colonies Wiki at jerryeatsbeans.com/Colonies
-tile.jerrys_colonies:trophy_winter_offensive.name = [Trophy] Winter Offensive
-tile.jerrys_colonies:trophy_love_and_war.name = [Trophy] Love and War
-tile.jerrys_colonies:trophy_thunderstrike.name = [Trophy] Thunderstrike
-tile.jerrys_colonies:springfront.name = [Trophy] Springfront
-tile.jerrys_colonies:trophy_cinco_de_mayo.name = [Trophy] Cinco De Mayo
-tile.jerrys_colonies:trophy_heatwave.name = [Trophy] Heatwave
-tile.jerrys_colonies:trophy_sparkleburst.name = [Trophy] Sparkleburst
-tile.jerrys_colonies:trophy_sweet_treat.name = [Trophy] Sweet Treat
-tile.jerrys_colonies:trophy_the_harvest.name = [Trophy] The Harvest
-tile.jerrys_colonies:trophy_spooky.name = [Trophy] Spooky
-tile.jerrys_colonies:trophy_winner_winner_turkey_dinner.name = [Trophy] Winner Winner, Turkey Dinner
-tile.jerrys_colonies:trophy_christmas.name = [Trophy] Ole' Saint Nick
-item.jerrys_colonies:match_manager = Match Manager
-tile.jerrys_colonies:red_territory_marker_block.name = Red Territory Marker Block
-tile.jerrys_colonies:marketplace_board.name = Marketplace Board
-jerrys.general.separator = §6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-jerrys.general.hotbar_hint = §7§o(Use the items in your hotbar to move, rotate, confirm or cancel)
-jerrys.general.loading_anim = <loading_anim>
-jerrys.colony.no_flag_linked = §cCould not find colony linked to this flag.
-jerrys.colony.no_flag_entity = §cCould not find the flag entity. Make sure a flag is placed.
-jerrys.colony.no_valid_flag_locs = §cNo valid flag locations for this colony.
-jerrys.colony.name_cancelled = §7City name cancelled — using default name.
-jerrys.colony.start_guidebook = §7Start by opening the §eGuidebook§7,
-jerrys.colony.start_wiki = §7and learning how to access the wiki. Good luck!
-jerrys.colony.deleted_error = §cAn error occurred while deleting the colony. Please try again.
-jerrys.colony.no_mayors_table = §cNo colony flags found within 100 blocks. Place a Mayor's Table within 100 blocks of any colony flag to use it.
-jerrys.colony.no_taxation_table = §cNo colony flags found within 100 blocks. Place a Taxation Table within 100 blocks of any colony flag to use it.
-jerrys.colony.no_blueprint_workbench = §cNo colony flags found within 100 blocks. Place the Blueprint Workbench within 100 blocks of any colony flag to use it.
-jerrys.colony.no_flag_near_table = §cNo colony found within 100 blocks of this Mayor Table.
-jerrys.colony.cannot_delete_notfound = §cError: Cannot find colony to delete. It may have been deleted already.
-jerrys.colony.cannot_delete_noexist = §cError: Colony no longer exists in the system.
-jerrys.colony.cannot_delete_invalid = §cError: Invalid colony data. Cannot delete.
-jerrys.colony.warning_removed = §cWarning: Colony was already removed from the system.
-jerrys.colony.democracy_required = §cDemocracy must be enabled when creating a new colony and cannot be changed later.
-jerrys.colony.democracy_not_enabled = §cDemocracy is not enabled in your colony!
-jerrys.colony.updated_all = §7Updated all citizens, knights, players, and flags.
-jerrys.colony.browser_error = §cError displaying colony browser
-jerrys.colony.details_error = §cError displaying colony details
-jerrys.colony.election_results = §l=== ELECTION RESULTS ===
-jerrys.colony.population_updated = §aLimites de population mises à jour !
-jerrys.flag.placed_bandit = §aBandit flag placed!
-jerrys.flag.placed_marauder = §aMarauder flag placed!
-jerrys.flag.cannot_move_up = §cCannot move flag up - no fence post found!
-jerrys.flag.cannot_move_down = §cCannot move flag down - no fence post found!
-@noir-prog ➜ /workspaces/Jerrys-colonesRU (main) $ 
+print("Резервная копия создана.")
+print("Список непереведённых строк: work/untranslated.txt")
+print("Количество строк:", len(same))
+PY
